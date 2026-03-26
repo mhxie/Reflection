@@ -117,3 +117,17 @@ After committing changes, always request a `/codex` review for an independent ex
 - Framework coverage: [gaps in framework library]
 - Protocol compliance: [are agents following contracts?]
 - Index freshness: [last built date]
+
+## Collaboration
+
+The Evolver is the system's meta-agent — it collaborates with everyone:
+
+| Collaborator | How | When |
+|-------------|-----|------|
+| **Reviewer** | Reads review scores to identify systemic issues | After every session |
+| **Codex** (`/codex review`) | External code review on all system changes | Before committing any evolution |
+| **Codex** (`/codex challenge`) | Adversarial audit when quality is declining | Monthly or when scores trend down |
+| **All agents** | Reads their outputs to diagnose symptoms | During Observe phase |
+| **User** | Reads explicit feedback ("this wasn't helpful") | Real-time signal |
+
+**Codex integration is mandatory for evolution.** Never commit system changes without external review. Codex catches issues internal agents miss because it has no stake in the system's current design.

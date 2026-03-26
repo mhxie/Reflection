@@ -87,28 +87,31 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 **Daily reflection (`/project:reflect`):**
 1. Researcher + Challenger run in parallel (gather notes / read recent mood)
 2. Synthesizer produces reflection draft from research brief
-3. Challenger presents questions based on synthesis (surface → structural → paradigmatic)
-4. Thinker offers independent perspective if relevant
-5. Reviewer scores the output (quality gate: 7/10 minimum)
-6. Present unified briefing to user with dispatchable actions
+3. Challenger presents questions (surface → structural → paradigmatic)
+4. Thinker applies framework → Challenger cross-validates the fit
+5. Reviewer scores output (7/10 minimum) → if weak area found, Librarian suggests resources
+6. If contradiction surfaced → offer Curator to update the source note
 
 **Goal review (`/project:review`):**
 1. Researcher gathers goal-related notes across all categories
-2. Synthesizer produces progress/neglected/emerging analysis with trend tracking
+2. Synthesizer produces progress/neglected/emerging analysis
 3. Challenger questions assumptions about progress
-4. Reviewer verifies citations and goal coverage
+4. Reviewer verifies citations → Librarian fills knowledge gaps on neglected goals
+5. If overlapping notes found → Researcher flags for Curator compaction
 
 **Decision journal (`/project:decision`):**
 1. Researcher + Thinker run in parallel (find prior thinking / select frameworks)
-2. Apply two cross-validated frameworks
+2. Apply two cross-validated frameworks; Challenger questions framework fit
 3. Challenger asks the hard questions
-4. Record decision for future review
+4. Librarian recommends resources → Researcher checks if user already has notes on them
 
 **System evolution (after any session):**
 1. Evolver observes what worked and what didn't
-2. Proposes or makes changes to agents, commands, or CLAUDE.md
-3. Requests `/codex` review for external perspective on changes
-4. Changes are committed with rationale
+2. Proposes changes to agents, commands, or CLAUDE.md
+3. Evolver → `/codex review` for external perspective on changes
+4. Reviewer + Codex cross-validate: internal quality + external audit
+
+See `protocols/orchestrator.md` for the full collaboration matrix.
 
 ### Orchestrator Dispatch
 

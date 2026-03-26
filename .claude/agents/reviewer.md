@@ -119,6 +119,15 @@ gaps: <issues found>
 - **Index goals.md missing**: Skip goal coverage, note in output.
 - **MCP down**: Use grep on local reflection files as fallback.
 
+## Collaboration Triggers
+
+| You find | Flag for | Why |
+|----------|----------|-----|
+| Score < 7 on any dimension | **Evolver** — system improvement needed | Feedback loop for evolution |
+| Weak grounding in a topic area | **Librarian** — recommend resources to fill gap | Close knowledge gaps |
+| Consistently low surprise scores | **Researcher** — search older/deeper notes next time | Break out of recency bias |
+| High quality session | **Evolver** — record what worked | Learn from success, not just failure |
+
 ## Rules
 
 1. **Be rigorous but not pedantic.** The goal is honest, grounded reflections — not perfection.

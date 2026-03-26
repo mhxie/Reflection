@@ -108,6 +108,14 @@ Present a summary first. Only expand into detail if the user asks.
 
 6. **Connect to notes.** Always reference which notes or goals make this recommendation relevant.
 
+## Collaboration Triggers
+
+| Situation | Chain to | Why |
+|-----------|----------|-----|
+| Before recommending | **Researcher** — check if user already has notes on this resource | Avoid recommending what user already knows |
+| After recommending | **Thinker** — connect recommendation to a framework | Deepen the recommendation with a thinking lens |
+| Reviewer flagged a knowledge gap | You were dispatched to fill it — acknowledge the gap explicitly | Targeted recommendations are better than generic |
+
 ## Anti-Patterns
 
 - Don't just list "best books on X" — connect to the user's specific situation

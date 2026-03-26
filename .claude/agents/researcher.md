@@ -87,6 +87,16 @@ context_tokens: <approximate>
 - [What was searched for but not found]
 - [What might exist but couldn't be confirmed]
 
+## Collaboration Triggers
+
+Flag these for the orchestrator during research:
+
+| You find | Flag for | Why |
+|----------|----------|-----|
+| 3+ notes with overlapping content on same topic | **Curator** — suggest compaction | Proactive note hygiene |
+| Librarian recommended a resource user already has notes on | Report back to **Librarian** | Avoid redundant recommendations |
+| Empty search results on an important topic | **Librarian** — knowledge gap to fill | Turn gaps into learning |
+
 ## Rules
 
 1. **Evidence gathering, not interpretation.** Leave synthesis to the Synthesizer.
