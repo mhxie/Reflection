@@ -1,68 +1,99 @@
 # Coaching Progressions
 
-The system should adapt its depth and approach based on the user's reflection maturity — not treating every session the same way.
+The system adapts on two axes: **reflection maturity** (how deep you can go) and **life era** (where you are). Both shape how sessions run.
 
-## Reflection Maturity Levels
+## Life Eras
 
-### Level 1: Getting Started (sessions 1-5)
-**User state:** New to structured reflection. May not know what to expect.
-**System approach:**
-- More structure, less ambiguity
-- Concrete questions over open-ended ones
-- Focus on surface-level patterns first
-- Explain what the system does and why
-- Shorter sessions, lower bar for "good enough"
+Eras are personal milestones — chapters of life defined by the user, not the system. Each era has a theme, a set of directions, and a transition moment.
 
-**Question types:** Mirror, Evidence (see Challenger taxonomy)
-**Frameworks:** Start with Eisenhower Matrix, Five Whys — intuitive and practical
+### What Defines an Era
 
-### Level 2: Building Habit (sessions 5-15)
-**User state:** Familiar with the format. Starting to see value.
-**System approach:**
-- Introduce cross-session connections
-- Start surfacing contradictions gently
-- Begin using frameworks for deeper analysis
-- Encourage the user to push back on questions
+An era is a stretch of life with a coherent identity. Examples:
+- **PhD Era** — building research capability, academic identity
+- **Anyscale Era** — first industry role, proving IC competence, financial foundation
+- **Luma Era** — new company, deeper ML infra specialization, family planning
 
-**Question types:** Add Structural, Time-shift
-**Frameworks:** Add Ikigai, Growth Mindset, Pareto
+### Era State
 
-### Level 3: Deepening (sessions 15-30)
-**User state:** Engaged. Trusts the process. Ready for challenge.
-**System approach:**
-- Full Challenger engagement (paradigmatic questions)
-- Cross-validation with multiple frameworks
-- Values clarification and cognitive bias detection
-- Longer, more nuanced sessions
-- The user starts directing the session more
+Track the current era in `index/goals.md` under an `## Era` section:
 
-**Question types:** Full taxonomy including Paradigmatic, Generative
-**Frameworks:** Full library available
+```markdown
+## Era
+- **Current:** Luma Era (started 2026-03-30)
+- **Theme:** Prove worth at a new company while building toward family life
+- **Prior:** Anyscale Era (2023-08 → 2026-03)
+```
 
-### Level 4: Self-Directing (sessions 30+)
-**User state:** Knows what they need. Uses the system as a tool, not a guide.
-**System approach:**
-- Follow the user's lead
-- Offer frameworks and connections when asked, not proactively
-- Focus on surfacing what the user can't see (blind spots, patterns)
-- Meta-reflection becomes valuable
-- The system becomes a thought partner, not a coach
+### Era Transitions
 
-**Question types:** Whatever the moment calls for
-**Frameworks:** Cross-validation, novel pairings
+An era transition happens when the user's life context shifts meaningfully — new job, new city, new family structure, major identity shift. Transitions are **declared by the user**, not detected by the system.
 
-## Detecting Level
+At an era transition:
+- Run a full `/review` to close out the prior era
+- Ask: "What are you carrying forward? What are you leaving behind?"
+- Update era state in `index/goals.md`
+- Rebuild index with `/index`
 
-Assess maturity based on:
-- Number of sessions (check `reflections/` file count)
+### Golden Age vs. Dark Age
+
+At era transitions and quarterly reviews, assess momentum across all life directions:
+
+- **Golden Age:** Multiple directions showing Moments (see pattern-library.md), energy is high, compounding feels real. Lean into it — expand scope.
+- **Normal:** Steady progress in primary direction, others maintained. Keep going.
+- **Dark Age:** One or more directions show zero Moments for an extended period. Dark ages come from **neglect, not failure**. Surface the cost without judgment: "Your [direction] has gone quiet this quarter. Is that a deliberate choice?"
+- **Heroic Age:** Recovery from a dark age — if you push through stagnation and generate Moments again, the next period starts with extra momentum. The system should recognize and name this.
+
+## Directions
+
+Directions replace rigid goal categories with orientations — what matters most this era. They are not destinations to reach or victories to win. They are leanings.
+
+Five possible directions (user picks 1 primary + 1 secondary per era):
+
+| Direction | Orientation | Reflection Lens |
+|-----------|------------|-----------------|
+| **Mastery** | Getting sharper at a craft | "Am I learning, or just busy?" |
+| **Impact** | Changing something that matters | "What exists because I showed up?" |
+| **Freedom** | Control over time and choices | "Could I walk away and be okay?" |
+| **Connection** | Quality of relationships | "Who knows me well, and do I know them?" |
+| **Creation** | Making things that last | "What did I make that I'm proud of?" |
+
+Directions shape what "progress" means in reflection. Someone leaning toward Mastery asks different weekly questions than someone leaning toward Connection. Choosing a primary doesn't close other directions — it just sets the focus.
+
+### Direction Declaration
+
+Ask once per era (at era start or first session of a new era):
+"Which direction are you leaning toward this chapter?"
+
+Store in `index/goals.md` under the Era section. Don't re-ask — only revisit at era transitions or when the user initiates.
+
+## Reflection Maturity
+
+The system also adapts depth based on how experienced the user is with structured reflection. This is independent of life era.
+
+### Maturity Signals
+
+Assess from:
+- Session count (check `reflections/` file count)
 - Response depth (long, reflective answers = higher maturity)
-- User-initiated direction changes (asking for frameworks, pushing back on questions)
+- User-initiated direction changes (asking for frameworks, pushing back)
 - Self-awareness signals ("I notice I tend to..." = high maturity)
+
+### Depth Calibration
+
+| Maturity | System Approach | Question Types | Frameworks |
+|----------|----------------|---------------|------------|
+| **Early** (sessions 1-5) | More structure, concrete questions, explain the process | Mirror, Evidence | Eisenhower, Five Whys |
+| **Building** (sessions 5-15) | Cross-session connections, gentle contradictions | Add Structural, Time-shift | Add Ikigai, Growth Mindset, Pareto |
+| **Deepening** (sessions 15-30) | Full Challenger, values clarification, bias detection | Full taxonomy | Full library |
+| **Self-directing** (sessions 30+) | Follow user's lead, surface blind spots | Whatever fits | Cross-validation, novel pairings |
+
+### Per-topic calibration
+User might be self-directing on career but early on health. Calibrate per topic, not globally.
 
 ## Progression Rules
 
-1. **Adapt to the moment.** A Level 4 user having a rough day may need Level 2 gentleness. Read energy, not just history. The system controls its questions, not the user's readiness.
+1. **Adapt to the moment.** A self-directing user having a rough day may need early-stage gentleness. Read energy, not just history.
 2. **Let the user lead transitions.** Don't force depth they're not ready for.
-3. **Calibrate per topic.** User might be Level 4 on career but Level 1 on health.
-4. **Signal the shift.** When introducing deeper questions for the first time, frame it: "Let me push a bit further on this..."
-5. **Accept non-engagement.** If the user doesn't want to go deep today, that's valid data, not failure. A short session honestly engaged beats a long session forced.
+3. **Signal the shift.** When introducing deeper questions for the first time, frame it: "Let me push a bit further on this..."
+4. **Accept non-engagement.** If the user doesn't want to go deep today, that's valid data, not failure.
+5. **Era context matters.** Early in a new era, even a mature reflector may need more structure as they establish new patterns.

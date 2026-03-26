@@ -42,7 +42,7 @@ This project connects to a Reflect MCP server for reading and writing notes.
 The `index/` directory contains pre-synthesized reflection context:
 
 - `index/meta-summary.md` — Who the user is, their major themes, active life areas. Read this at the start of every reflection session.
-- `index/goals.md` — Extracted goals with categories (#capacity, #learning, #identity, #energy) and metrics. Read this for goal-related conversations.
+- `index/goals.md` — Extracted goals with categories (#capacity, #learning, #identity, #energy), era context, and directions. Read this for goal-related conversations.
 
 Both files include a `Last built:` timestamp. If the index is older than 7 days, warn the user: "Your reflection index is stale. Consider running `/project:index` to refresh it."
 
@@ -55,7 +55,10 @@ If index files don't exist, tell the user: "Run `/project:index` first to build 
 - **Match the user's language.** Respond in Chinese when discussing Chinese-language goals or notes. Use English otherwise. Bilingual conversations are fine. **Reading-intensive outputs (recommendations, summaries) should be presented in Chinese.**
 - **Recency matters.** Recent notes and goals carry more weight than old ones. Flag goals from >1 year ago as potentially stale.
 - **Be honest about uncertainty.** If you can't find relevant notes, say so rather than speculating.
-- **Adapt depth to maturity.** See `protocols/coaching-progressions.md` — early sessions are more structured, later sessions follow the user's lead.
+- **Adapt depth to maturity.** See `protocols/coaching-progressions.md` — early sessions are more structured, later sessions follow the user's lead. Also adapt to the user's current life era and declared directions.
+- **Track eras and directions.** The user's life has chapters (eras) with themes and directions. See `protocols/coaching-progressions.md` for era mechanics and `index/goals.md` for current era state.
+- **Surface Moments.** Flag real-life firsts and breakthroughs as Moments (see `protocols/pattern-library.md`). These accumulate toward era-level momentum assessment.
+- **Respect the amenity floor.** Each life area needs a sustainability minimum. When an area drops below its floor, name it. See `protocols/session-scoring.md`.
 
 ## Available Commands
 
@@ -127,18 +130,18 @@ The `protocols/` directory defines system behavior:
 | `agent-handoff.md` | Structured contracts for agent-to-agent communication |
 | `error-handling.md` | Graceful degradation when things fail |
 | `quality-gates.md` | 3-stage checkpoint architecture |
-| `session-scoring.md` | 5-dimension quality scoring for every session |
+| `session-scoring.md` | 5-dimension quality scoring with yield tracking and amenity floors |
 | `escalation.md` | When and how to escalate issues |
 | `feedback-loops.md` | 3 loops: within-session, between-session, cross-session |
 | `context-management.md` | Token budget guidelines per agent |
-| `pattern-library.md` | 14 cataloged reflection patterns |
-| `session-continuity.md` | How sessions connect across conversations |
+| `pattern-library.md` | 16 reflection patterns + Moments + trade routes |
+| `session-continuity.md` | How sessions connect + focus lock + policy cards |
 | `orchestrator.md` | User-facing hub for collecting results and dispatching actions |
 | `meta-reflection.md` | System self-assessment and evolution triggers |
 | `cognitive-bias-detection.md` | Bias detection through questions, not diagnosis |
 | `values-clarification.md` | Stated vs. revealed values analysis |
 | `integration.md` | Insight-to-action pipeline |
-| `coaching-progressions.md` | Adapting depth by reflection maturity |
+| `coaching-progressions.md` | Life eras, directions, maturity adaptation, golden/dark ages |
 | `contradiction-detection.md` | 4 strategies for surfacing contradictions in notes |
 
 ## Frameworks

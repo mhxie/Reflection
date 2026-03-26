@@ -12,6 +12,8 @@ reflections/
 !reflections/.gitkeep
 # Local MCP server URL
 .mcp.json
+# Codex session state
+.context/
 
 # Local tool config (symlinks to user's gstack installation)
 .claude/skills/

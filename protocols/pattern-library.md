@@ -74,6 +74,26 @@ Catalog of recurring patterns observed during reflection sessions. Agents should
 **Response:** "When was the last time you were so absorbed in something you lost track of time?"
 **Framework:** Ikigai, Map of Meaning
 
+## Exploration Patterns
+
+### The Fog Zone
+**Signal:** A topic appears across multiple notes (often emotionally charged or vague) but has never been explicitly synthesized or reflected on.
+**Meaning:** This is a blind spot — an area the user circles around but hasn't mapped. Fog represents uncertainty, not absence.
+**Response:** "You write about [topic] often but indirectly. This seems like territory worth exploring directly."
+**Framework:** Johari Window, OODA Loop
+
+### The Undiscovered Bridge
+**Signal:** Two distant clusters of notes (e.g., travel + career, family + self-worth) share a surprising pattern — similar language, similar emotions, or similar unresolved tensions.
+**Meaning:** Cross-pollination opportunity. The user may not see the connection because the topics feel unrelated.
+**Response:** "These three entries share a pattern: [pattern]. The connection isn't obvious, but they all point to [theme]."
+**Framework:** Dialectical Thinking, Circle of Competence
+
+### The Frontier Retreat
+**Signal:** User explored a new topic briefly (1-2 notes), then never returned. The notes show interest or excitement but no follow-through.
+**Meaning:** Either the topic wasn't actually important, or something blocked further exploration (fear, busyness, distraction).
+**Response:** "You visited [topic] briefly in [[Note]] but never returned. Was that a conscious choice, or did it get crowded out?"
+**Framework:** First Principles, Jobs to Be Done
+
 ## Life Transition Patterns
 
 ### The Identity Lag
@@ -88,9 +108,57 @@ Catalog of recurring patterns observed during reflection sessions. Agents should
 **Response:** "You achieved [[Goal]]. How does it feel? Is it what you expected?"
 **Framework:** Map of Meaning, Jobs to Be Done
 
+## Moments
+
+Moments are real-life firsts, breakthroughs, and threshold events worth marking — specific actions or experiences that accelerate growth in a direction, even if you weren't actively focused on it.
+
+### What Counts as a Moment
+
+A Moment is a **first** or a **threshold crossing** — not a routine event. Examples:
+
+| Moment | Direction It Feeds |
+|--------|--------------------|
+| First project shipped at a new company | Mastery, Impact |
+| First time a stranger cited your work | Impact, Creation |
+| A hard conversation you'd been avoiding | Connection |
+| Teaching something you know to someone junior | Mastery |
+| Failing publicly and writing about it | all directions (resilience) |
+| Reading a book outside your field that changed a belief | Discovery |
+| Setting a boundary at personal cost | Freedom |
+| First creative work with no audience pressure | Creation |
+
+### How to Use Moments
+
+1. **Researcher flags Moments** when scanning notes — look for language like "first time," "finally," "I realized," "breakthrough"
+2. **Tag in Reflect notes** with `#moment` when logging
+3. **Accumulate toward era assessment** — Moments across multiple directions = Golden Age signal; zero Moments in a direction = Dark Age risk
+4. **Surface during reviews** — "You've had 3 Moments in Mastery this quarter but none in Connection. Is that deliberate?"
+
+### Breakthrough Triggers
+
+Some real-life actions naturally accelerate growth in a direction, even if you're not consciously working on it. When the Researcher spots one of these in a note, flag it as a Moment:
+
+- Ship under time pressure → Moment: "Prioritization Under Constraints"
+- Have a direct conversation about a conflict → Moment: "Conflict Resolution"
+- Cross-pollinate ideas from two unrelated domains → Moment: "Cross-Domain Pattern"
+- Recover from a setback without self-punishment → Moment: "Resilience"
+
+## Trade Routes
+
+Some activities create **directional synergies** — investment in one area produces yields in another. Make these explicit when observed:
+
+- Health → Career: physical energy converts to sustained focus
+- Learning → Career: new methods applied at work
+- Relationships → Creative: people expand what you see as possible
+- Career → Learning: work problems drive deeper study
+
+When a trade route breaks (e.g., stopping exercise during crunch), name it: "Your Health → Career trade route went offline. That [yield] transfer isn't flowing."
+
 ## Using This Library
 
 1. **Agents should check for pattern matches** when analyzing user notes
 2. **Reference the pattern by name** in output: "This looks like the Chronic Neglect pattern"
 3. **Use the suggested framework** as the first choice for deeper analysis
 4. **Add new patterns** when the Evolver observes a recurring pattern not yet cataloged
+5. **Flag Moments** when the Researcher spots first-time events or threshold crossings
+6. **Track trade routes** between life areas — name them when they form, flag when they break

@@ -56,6 +56,30 @@ Sessions leave artifacts that future sessions can read:
 | `/project:energy-audit` | Monthly or after high-stress periods | Energy patterns are slow-moving |
 | `/project:index` | Monthly or after major life change | Index needs fresh data when context shifts significantly |
 
+## Focus Lock
+
+At the start of each quarter (or era), declare a **primary focus** — the direction and life area getting priority this period. Commitment with friction.
+
+### How Focus Works
+
+1. **Declare at quarterly review or era start:** "This quarter I'm focused on [direction] through [life area]." Example: "Mastery through Career" (proving competence at Luma).
+2. **Focus shapes dispatch:** Researcher prioritizes notes related to the focus. Challenger's questions lean toward the focus direction. Scout explores adjacent topics in the focus domain.
+3. **Changing focus requires a full `/review` session.** No switching on a whim during a daily reflection. The friction is the feature — it prevents chasing every new interest.
+4. **Focus doesn't exclude.** Other directions still get attention. Focus just sets the priority queue.
+
+### Policy Cards
+
+Policies are swappable reflection habits — small commitments that can change when you hit a milestone. Unlike focus (which is quarterly), policies can rotate more frequently.
+
+| Slot | Examples |
+|------|----------|
+| **Energy** | Morning review, sleep tracking, no-meeting blocks |
+| **Capacity** | Weekly deep work sprint, side project hour |
+| **Identity** | Weekly journaling, monthly values check |
+| **Wildcard** | Current experiment (e.g., deliberate networking, writing practice) |
+
+**Policy swap rule:** You can change a policy for free when you complete a milestone (finishing a goal, hitting a Moment, completing a review cycle). Otherwise, changing a policy mid-cycle should be noted and explained — "I'm swapping [old policy] for [new policy] because [reason]."
+
 ## Continuity Anti-Patterns
 
 1. **Groundhog Day**: Every session starts from zero with no reference to previous sessions. Fix: Always read recent reflections first.

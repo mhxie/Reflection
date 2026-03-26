@@ -42,6 +42,35 @@ Append to the end of every reflection/review output file:
 | **Overall** | **X/10** | |
 ```
 
+## Yields
+
+Session scores double as **yields** — visible outputs from your reflection practice. Each dimension maps to what the practice is producing:
+
+| Dimension | Yield | What It Produces |
+|-----------|-------|-----------------|
+| Grounding | **Evidence** | Connections to real notes and past thinking |
+| Depth | **Insight** | Patterns, tensions, implications beyond surface |
+| Relevance | **Alignment** | Connection to current era and active directions |
+| Actionability | **Momentum** | Specific next steps that move things forward |
+| Surprise | **Discovery** | Forgotten threads, unexpected connections |
+
+### Yield Accumulation
+
+Track yields across sessions to see what the practice is producing over time. In the trend section, note which yields are strong and which are underproduced.
+
+### Amenity Floor
+
+Each life area needs a sustainability floor — a minimum level of investment below which growth stops and burnout begins. Amenities cannot be borrowed across areas (career surplus doesn't offset health deficit).
+
+Suggested minimums to surface during energy audits:
+- **Career:** Recovery rituals, bounded work hours
+- **Health:** Sleep consistency, regular movement
+- **Relationships:** Unscheduled social time, presence
+- **Learning:** Low-stakes reading with no deliverable attached
+- **Creative:** Output with no audience pressure
+
+When any area drops below its floor, flag it: "[Area] is below amenity floor — growth in other areas will cost more energy until this stabilizes."
+
 ## Trend Tracking
 
 When writing session score cards, also check previous sessions in `reflections/` for comparison:
@@ -52,6 +81,8 @@ When writing session score cards, also check previous sessions in `reflections/`
 - Last session: Y/10 (YYYY-MM-DD)
 - 5-session average: Z/10
 - Trend: ↑ improving / → stable / ↓ declining
+- Strongest yield: [dimension]
+- Weakest yield: [dimension]
 ```
 
 ## Using Scores for Evolution
