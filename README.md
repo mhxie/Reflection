@@ -2,22 +2,27 @@
 
 Reflecting on Reflect Notes with Claude Code.
 
-A structured self-reflection system built as a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) project. It connects to your [Reflect.app](https://reflect.app/) notes via MCP — helping you reflect on what you've written, structure your thoughts, track goals, and plan better.
+A structured self-reflection system built as a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) project. It connects to your [Reflect.app](https://reflect.app/) notes via MCP — helping you reflect on what you've written, structure your thoughts, track goals, make decisions, and take action.
 
 ## How It Works
 
 ```
-Reflect.app  <──MCP──>  Claude Code Commands
-(your notes)              /index    — build reflection context
-                          /reflect  — daily reflection session
-                          /review   — goal progress review
-                              │
-                              ▼
-                     index/   — lightweight reflection context
-                     reflections/  — session outputs (local, gitignored)
+Reflect.app  <──MCP──>  Claude Code (Orchestrator)
+(your notes)                    │
+                    ┌───────────┼───────────┐
+                    ▼           ▼           ▼
+              Agent Team    Commands    Frameworks (23)
+              (8 agents)    (7 commands)    │
+                    │           │           ▼
+                    ▼           ▼     Cross-validation
+              Protocols    Output Files    & Pattern Library
+              (15 protocols)    │
+                                ▼
+                          index/         — reflection context
+                          reflections/   — session outputs
 ```
 
-Claude Code reads your notes through the Reflect MCP server, synthesizes an index of your goals and themes, then uses that context to run reflection and review sessions. Insights are written back to your Reflect daily notes.
+The orchestrator coordinates a team of 8 specialized agents, each with defined roles and structured communication contracts. Insights are written back to your Reflect daily notes.
 
 ## Prerequisites
 
@@ -44,7 +49,6 @@ Claude Code reads your notes through the Reflect MCP server, synthesizes an inde
      }
    }
    ```
-   Adjust the URL if your Reflect MCP server runs on a different port.
 
 3. **Build your reflection index:**
    ```bash
@@ -52,51 +56,81 @@ Claude Code reads your notes through the Reflect MCP server, synthesizes an inde
    # then inside Claude Code:
    /project:index
    ```
-   This queries your Reflect notes via MCP and generates:
-   - `index/meta-summary.md` — who you are, major themes, active life areas
-   - `index/goals.md` — extracted goals by category with metrics
 
 4. **Start reflecting:**
    ```
-   /project:reflect    # daily reflection session
-   /project:review     # goal progress review (weekly recommended)
+   /project:reflect    # daily reflection
+   /project:weekly     # weekly review
+   /project:review     # monthly goal review
    ```
 
 ## Commands
 
 | Command | Purpose | Frequency |
 |---------|---------|-----------|
-| `/project:index` | Build or refresh your reflection context from Reflect notes | When notes change significantly |
-| `/project:reflect` | Run a reflection session with questions grounded in your notes | Daily |
-| `/project:review` | Review progress on goals, surface neglected areas, spot emerging interests | Weekly |
+| `/project:index` | Build or refresh reflection context from Reflect notes | Monthly |
+| `/project:reflect` | Daily reflection with grounded questions | Daily / every 2-3 days |
+| `/project:review` | Goal progress review (progressing/neglected/shifted) | Monthly |
+| `/project:weekly` | Weekly review with energy + attention audit | Weekly |
+| `/project:decision` | Structured decision-making with framework cross-validation | As needed |
+| `/project:explore` | Open-ended exploration surfacing forgotten connections | Weekly |
+| `/project:energy-audit` | Four-dimension energy assessment | Monthly |
+
+## Agent Team
+
+| Agent | Role |
+|-------|------|
+| **Researcher** | Gathers raw context from Reflect notes (progressive disclosure search) |
+| **Synthesizer** | Produces structured reflections with pattern recognition taxonomy |
+| **Reviewer** | Quality-checks output with scored rubric (0-10, 5 dimensions) |
+| **Challenger** | Asks probing questions (depth taxonomy + emotional register detection) |
+| **Thinker** | Applies thinking frameworks independently with meta-cognitive checks |
+| **Evolver** | Improves the system using OODA methodology + codex external review |
+| **Curator** | Note operations — compact, merge, replace, create notes in Reflect |
+| **Librarian** | Recommends resources (books, papers, articles, talks, courses) |
+
+During sessions, you can dispatch actions to any agent: "find notes about X", "compact my notes on Y", "recommend reading on Z", "challenge my assumption about W".
 
 ## Architecture
 
-**MCP-first design** — instead of batch-processing thousands of notes locally, the system queries Reflect's MCP server on-the-fly using text and vector search. A lightweight local index (~15K tokens) caches only the reflection context that every session needs.
+**MCP-first design** — queries Reflect's MCP server on-the-fly using text and vector search. A lightweight local index (~15K tokens) caches only the reflection context needed per session.
 
 Key design decisions:
-- **Two-way data flow**: reads notes via MCP, writes reflection summaries back to Reflect daily notes
-- **Self-contamination guard**: AI-written content tagged `#ai-reflection` is excluded from future searches
-- **Bilingual support**: handles English and Chinese notes, matches the user's language
-- **Privacy by default**: all personal data (index, reflections, MCP config) is gitignored
+- **Team-based**: 8 specialized agents with structured handoff contracts and quality gates
+- **Protocol-driven**: 15 protocols governing agent behavior, error handling, and evolution
+- **Framework-rich**: 23 thinking frameworks with cross-validation pairings
+- **Two-way data flow**: reads notes via MCP, writes insights back to Reflect
+- **Self-contamination guard**: AI content tagged `#ai-reflection`, excluded from future searches
+- **Quality gates**: 3-stage gate architecture with scored rubric and revision loops
+- **Session continuity**: file-based memory chain connecting sessions over time
+- **Self-improving**: Evolver agent + codex review loop for continuous system evolution
+- **Bilingual**: handles English and Chinese notes, matches the user's language
+- **Privacy by default**: all personal data gitignored
 
-## Customization
+## Frameworks (23)
 
-The persona and rules live in `CLAUDE.md`. You can customize:
-- **Reflection style** — adjust the persona, question types, or tone
-- **Goal categories** — the default categories are `#capacity`, `#learning`, `#identity`, `#energy`
-- **Index queries** — edit `.claude/commands/index.md` to change which notes are indexed
-- **Write-back behavior** — disable or modify how insights are written back to Reflect
+Organized by question type:
+
+| Question | Frameworks |
+|----------|-----------|
+| Direction | Ikigai, Regret Minimization, First Principles, Jobs to Be Done, Map of Meaning |
+| Constraint | Immunity to Change, Theory of Constraints, Five Whys, Double-Loop Learning |
+| Judgment | Pre-Mortem, Dialectical Thinking, Inversion, Second-Order Thinking |
+| Priority | Eisenhower Matrix, Pareto Principle, Wardley Mapping |
+| Awareness | Johari Window, OODA Loop, Circle of Competence, Cynefin |
+| Resilience | Stoic Reflection, Growth Mindset, Map of Meaning |
 
 ## Project Structure
 
 ```
 Reflection/
-  CLAUDE.md                        # Persona and rules
-  .claude/commands/
-    index.md                       # Index builder command
-    reflect.md                     # Daily reflection command
-    review.md                      # Goal review command
+  CLAUDE.md                        # System persona and orchestrator rules
+  .claude/
+    agents/                        # 8 agent definitions
+    commands/                      # 7 command definitions
+    settings.json                  # Enables experimental agent teams
+  protocols/                       # 15 system protocols
+  frameworks/                      # 23 thinking frameworks
   index/                           # Coaching context (gitignored)
   reflections/                     # Session outputs (gitignored)
   .mcp.json                        # MCP server config (gitignored)
