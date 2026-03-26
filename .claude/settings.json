@@ -1,5 +1,16 @@
 {
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "mcp__reflect__search_notes",
+      "mcp__reflect__get_note",
+      "mcp__reflect__get_daily_note",
+      "mcp__reflect__list_tags",
+      "mcp__reflect__append_to_daily_note",
+      "mcp__reflect__create_note",
+      "mcp__reflect__delete_tag"
+    ]
   }
 }
