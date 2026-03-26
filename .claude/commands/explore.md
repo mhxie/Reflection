@@ -72,6 +72,10 @@ Let the user pick which spark interests them. Then:
 
 ## Notes Referenced
 [All [[Note Title]] links]
+
+## Session Meta
+- User engagement: high / medium / low
+- Surprise factor: yes / no
 ```
 
 ## Write-Back

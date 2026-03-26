@@ -120,6 +120,10 @@ Note: Slugify the topic for the filename — lowercase, replace spaces with hyph
 
 ## Review Date
 [When to revisit this decision — 30/60/90 days]
+
+## Session Meta
+- User engagement: high / medium / low
+- Surprise factor: yes / no
 ```
 
 ## Write-Back

@@ -89,6 +89,10 @@ Present findings as:
 
 ## Notes Referenced
 [All [[Note Title]] links]
+
+## Session Meta
+- User engagement: high / medium / low
+- Surprise factor: yes / no
 ```
 
 ## Write-Back

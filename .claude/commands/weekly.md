@@ -91,6 +91,10 @@ Based on the review:
 
 ## Notes Referenced
 [List of all [[Note Title]] links]
+
+## Session Meta
+- User engagement: high / medium / low
+- Surprise factor: yes / no
 ```
 
 ## Write-Back
