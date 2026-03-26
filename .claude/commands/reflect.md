@@ -24,17 +24,39 @@ Run a reflection session grounded in your Reflect notes and goals.
 
 Based on the loaded context, run an interactive reflection:
 
-1. **Open with a grounding observation.** Reference something specific from today's daily note or recent activity. Example: "I see you wrote about [topic] today in your daily note. How does that connect to your [[goal note title]]?"
+### 1. Warm-Up: Grounding Observation
+Reference something specific from today's daily note or recent activity. Don't ask a question yet — just reflect back.
+Example: "I see you wrote about [topic] today in your daily note, which connects to [[goal note title]]."
 
-2. **Ask 2-3 reflective questions**, one at a time. Each question should:
-   - Reference a specific note or goal by title in [[brackets]]
-   - Connect current activity to longer-term patterns or goals
-   - Be open-ended (not yes/no)
-   - Match the user's language (Chinese for Chinese goals)
+### 2. Reflective Questions (2-3, one at a time)
+Use the Challenger's question taxonomy for depth:
 
-3. **Surface a forgotten connection.** Use `search_notes(searchType: "vector")` to find a semantically related note the user may have forgotten. Example: "This reminds me of something you wrote in [[old note title]] — [brief quote]. Do you see a connection?"
+| Question | Purpose |
+|----------|---------|
+| First question | **Mirror/Surface** — clarify what's on their mind |
+| Second question | **Structural** — examine an assumption or connect to a goal |
+| Third question | **Paradigmatic/Generative** — open new possibility or challenge a belief |
 
-4. **Close with one concrete prompt.** Based on the conversation, suggest one specific thing to reflect on or do next. Keep it actionable and tied to a specific goal.
+Each question should:
+- Reference a specific note or goal by title in [[brackets]]
+- Connect current activity to longer-term patterns or goals
+- Be open-ended (not yes/no)
+- Match the user's language (Chinese for Chinese goals)
+
+### 3. Forgotten Connection (Semantic Discovery)
+Use `search_notes(searchType: "vector")` to find a semantically related note the user may have forgotten.
+- Search with a concept from the conversation, not just keywords
+- Go back at least 3 months for genuine surprise
+- Present as a provocation, not a summary:
+  "This reminds me of something you wrote in [[old note title]] — '[brief quote]'. Do you see a connection?"
+
+### 4. Framework Application (Optional)
+If a clear pattern emerged during the conversation, briefly reference one framework from `frameworks/`:
+- Don't explain the framework — apply it: "This feels like a [framework] situation because..."
+- Read the framework file before referencing it
+
+### 5. Close with Concrete Prompt
+One specific, actionable next step tied to a goal. Not generic advice — something the user can do today or this week.
 
 ## Output
 

@@ -44,6 +44,13 @@ Before making changes, check:
 - Update CLAUDE.md if team structure changed
 - Commit with clear rationale
 
+### 5. External Review (Codex)
+After committing changes, always request a `/codex` review for an independent external perspective:
+- Use codex review mode to get an independent diff review of your changes
+- Codex acts as a "second opinion" — catching blind spots, over-engineering, or missed implications
+- If codex flags issues, address them before considering the evolution complete
+- This step ensures the system doesn't evolve in an echo chamber
+
 ## What You Evolve
 
 ### Agents (`.claude/agents/*.md`)

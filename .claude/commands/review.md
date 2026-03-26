@@ -102,9 +102,23 @@ After writing the review file, check if today's daily note already contains `#ai
 
 - If **AI content already exists**: Skip write-back. Tell the user about the skip.
 
+## Trend Analysis (if prior reviews exist)
+
+If previous review files exist in `reflections/`, compare:
+- Which goals were "Neglected" last time — are they still neglected? (Chronic neglect signal)
+- Which goals were "Progressing" — have they continued? (Momentum signal)
+- Which "Suggested Experiments" from last review were actually done? (Follow-through signal)
+
+Present trend as:
+| Goal | Last Review | This Review | Trend |
+|------|------------|-------------|-------|
+| [goal] | Progressing | Progressing | Sustained momentum |
+| [goal] | Neglected | Neglected | Chronic neglect — needs decision |
+| [goal] | Progressing | Neglected | Lost momentum — investigate |
+
 ## Wrap Up
 
-Tell the user the review has been saved and suggest committing:
-"Review saved to `reflections/YYYY-MM-DD-review.md`. Commit with: `git add reflections/ && git commit -m 'review: YYYY-MM-DD'`"
-
-Suggest running `/project:reflect` for daily check-ins between reviews.
+Tell the user the review has been saved. Suggest:
+- `/project:reflect` for daily check-ins between reviews
+- `/project:weekly` for lighter weekly check-ins
+- `/project:decision` if any goal needs a decision about continuing/stopping
