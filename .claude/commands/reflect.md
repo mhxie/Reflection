@@ -50,15 +50,16 @@ Based on Step 1, use a second `AskUserQuestion`:
 | Option | Label | Description |
 |--------|-------|-------------|
 | 1 | **Compact Notes** | Find and merge redundant or overlapping notes |
-| 2 | **Deep Dive** | Full briefing on a topic — notes + resources + framework, 3 agents in parallel |
+| 2 | **Deep Dive** | Full briefing on a topic — notes + web research + resources + framework, 4 agents in parallel |
 | 3 | **Note Triage** | Scan for compaction candidates across your notes |
 
 - **Compact Notes:** Dispatch to the **Curator** agent. Ask the user what topic or notes to compact. The Curator searches for related notes, proposes a merged version, and waits for approval before writing.
-- **Deep Dive:** Ask the user for a topic, then dispatch **three agents in parallel**:
+- **Deep Dive:** Ask the user for a topic, then dispatch **four agents in parallel**:
   1. **Researcher** — search all notes related to this topic (what you've already thought/written)
-  2. **Librarian** — find external resources to deepen understanding (books, papers, articles)
-  3. **Thinker** — select and apply a relevant framework from `frameworks/`
-  Once all three return, **Synthesizer** combines their outputs into a unified briefing: your existing thinking, external resources, and a framework lens — all in one view. Present in Chinese for reading-intensive output.
+  2. **Scout** — search the web for recent articles, research, and developments on this topic
+  3. **Librarian** — find curated resources to deepen understanding (books, papers, courses)
+  4. **Thinker** — select and apply a relevant framework from `frameworks/`
+  Once all four return, **Synthesizer** combines their outputs into a unified briefing: your existing thinking, external intelligence, curated resources, and a framework lens — all in one view. Present in Chinese for reading-intensive output.
 - **Note Triage:** Ask the user for 3-5 topic areas (or pull from `index/meta-summary.md` themes). Dispatch the **Researcher** to search each topic area in parallel. For each area, identify notes with overlapping content. Present a prioritized compaction plan: which notes to merge, estimated redundancy, and impact. The user picks which to compact, then dispatch to **Curator** for each approved merge.
 
 ### If Learn:

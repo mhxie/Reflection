@@ -105,6 +105,8 @@ The orchestrator should actively look for collaboration opportunities during ses
 | Chain | Trigger | Flow | Value |
 |-------|---------|------|-------|
 | **Research → Synthesize → Review** | Every session | Researcher → Synthesizer → Reviewer | Core quality pipeline |
+| **Scout → Challenger** | Scout finds something that contradicts user's notes | Scout → Challenger surfaces the contradiction | External evidence challenges internal beliefs |
+| **Scout → Librarian** | Scout finds a key resource worth deep reading | Scout flags → Librarian adds to curated list | Scout finds, Librarian curates |
 | **Challenge → Curate** | Challenger surfaces outdated belief or contradiction | Challenger → ask user "want to update that note?" → Curator rewrites | Turns insight into note hygiene |
 | **Review → Librarian** | Reviewer flags weak grounding in a topic area | Reviewer → Librarian recommends resources to fill the gap | Closes knowledge gaps |
 | **Thinker → Challenger** | Thinker applies a framework | Challenger questions whether the framework fits | Prevents lazy framework application |
@@ -116,17 +118,20 @@ The orchestrator should actively look for collaboration opportunities during ses
 
 | Pattern | Agents | When | Value |
 |---------|--------|------|-------|
-| **Gather + Probe** | Researcher + Challenger | Start of daily reflection | Research context while reading mood — saves a round trip |
-| **Research + Frame** | Researcher + Thinker | Start of decision session | Find prior thinking while selecting frameworks |
-| **Deep Dive** | Researcher + Librarian + Thinker | User picks Deep Dive | Full briefing: notes + resources + framework lens, 3x faster |
+| **Gather + Probe** | Researcher + Challenger + 2× Scout | Start of daily reflection | Internal notes + mood + external context from two angles |
+| **Research + Frame** | Researcher + Thinker + 2× Scout | Start of decision session | Internal thinking + frameworks + external evidence from two angles |
+| **Deep Dive** | Researcher + 2-3× Scout + Librarian + Thinker | User picks Deep Dive | Full briefing: notes + multi-angle web intel + resources + framework |
 | **Multi-topic Triage** | Multiple Researcher dispatches | User picks Note Triage | Scan several topic areas simultaneously |
+
+**Scout multi-dispatch rule:** When dispatching Scout agents, always launch at least 2 instances with different direction assignments (e.g., Mainstream + Contrarian, or Adjacent + Frontier). See `.claude/agents/scout.md` for direction types. This prevents tunnel vision and produces more thought-provoking research.
 
 ### Cross-Validation Pairs (two perspectives on the same question)
 
 | Pair | Purpose | When to use |
 |------|---------|-------------|
 | **Thinker + Challenger** | Framework says X, but does it actually fit? | After any framework application |
-| **Researcher + Librarian** | What user already knows vs. what's out there | Deep Dive, or when user asks "what should I learn about X?" |
+| **Researcher + Scout** | Internal notes vs. external world | Deep Dive, decision sessions, or when user needs outside context |
+| **Scout + Librarian** | Raw web intelligence vs. curated recommendations | After Scout gathers findings, Librarian curates the best for deep reading |
 | **Synthesizer + Codex** | Internal synthesis vs. external review | Monthly system review, or when session quality is declining |
 | **Reviewer + Challenger** | Is the output grounded? + Is it asking the right questions? | Quality gate for important sessions |
 
