@@ -24,9 +24,18 @@ Run a reflection session grounded in your Reflect notes and goals.
 
 Based on the loaded context, run an interactive reflection:
 
-### 1. Warm-Up: Grounding Observation
-Reference something specific from today's daily note or recent activity. Don't ask a question yet — just reflect back.
-Example: "I see you wrote about [topic] today in your daily note, which connects to [[goal note title]]."
+### 1. Warm-Up: Adaptive Opening
+Choose opening style based on what you find in the daily note:
+
+| What you find | Opening style |
+|---|---|
+| User wrote something specific today | Reflect it back: "I see you wrote about [X]..." |
+| User had a big day (many entries) | Acknowledge the energy: "Busy day — what stood out most?" |
+| User wrote very little or nothing | Go to yesterday or last session: "Last time we talked about [X]. How has that been sitting?" |
+| A contradiction with a past note | Lead with curiosity: "Something interesting — in [[Old Note]] you said X, but today..." |
+| A neglected goal is relevant | Gentle nudge: "I notice [[Goal]] hasn't come up recently..." |
+
+Don't ask a question yet in the warm-up — just ground the conversation.
 
 ### 2. Reflective Questions (2-3, one at a time)
 Use the Challenger's question taxonomy for depth:
