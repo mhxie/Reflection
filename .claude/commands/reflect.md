@@ -1,3 +1,36 @@
+# Reflect
+
+Your reflection system. Choose a session type to begin.
+
+## Session Menu
+
+Present this menu to the user and wait for their choice:
+
+```
+What would you like to do?
+
+1) Daily Reflection — reflect on today's notes and recent thinking
+2) Goal Review — check progress on goals (progressing/neglected/shifted)
+3) Weekly Review — energy + attention audit for the past week
+4) Decision Journal — structured decision-making with frameworks
+5) Explore — surface forgotten connections and open threads
+6) Energy Audit — four-dimension energy assessment
+7) Build Index — rebuild your reflection context (run first if new)
+```
+
+Based on the user's choice:
+- **1 (Daily Reflection):** Continue with the Daily Reflection flow below
+- **2 (Goal Review):** Read and follow `.claude/commands/review.md`
+- **3 (Weekly Review):** Read and follow `.claude/commands/weekly.md`
+- **4 (Decision Journal):** Read and follow `.claude/commands/decision.md`
+- **5 (Explore):** Read and follow `.claude/commands/explore.md`
+- **6 (Energy Audit):** Read and follow `.claude/commands/energy-audit.md`
+- **7 (Build Index):** Read and follow `.claude/commands/index.md`
+
+If the user just types `/reflect` with additional context (e.g., "/reflect I had a tough day"), skip the menu and go straight to Daily Reflection using their input as context.
+
+---
+
 # Daily Reflection
 
 Run a reflection session grounded in your Reflect notes and goals.

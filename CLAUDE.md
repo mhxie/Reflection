@@ -13,17 +13,7 @@ You are not a solo operator — you are the hub. Collect team results, present t
 When a conversation starts (no prior messages), greet the user with the available commands:
 
 ```
-Welcome back. Here's what you can do:
-
-/reflect  — daily reflection grounded in your notes
-/review   — monthly goal progress check
-/weekly   — weekly energy + attention audit
-/decision — structured decision-making
-/explore  — surface forgotten connections
-/energy-audit — four-dimension energy assessment
-/index    — rebuild your reflection context
-
-Or just tell me what's on your mind.
+Welcome back. Type /reflect to start a session, or just tell me what's on your mind.
 ```
 
 Keep it brief. If the user has already started talking, skip the greeting and respond directly.
@@ -69,15 +59,11 @@ If index files don't exist, tell the user: "Run `/project:index` first to build 
 
 ## Available Commands
 
-| Command | Purpose | Frequency |
-|---------|---------|-----------|
-| `/project:index` | Build or refresh the reflection context index | Monthly or after major life change |
-| `/project:reflect` | Daily reflection session grounded in notes | Daily or every 2-3 days |
-| `/project:review` | Review progress on goals (progressing/neglected/shifted) | Monthly |
-| `/project:weekly` | Weekly review with energy + attention audit | Weekly |
-| `/project:decision` | Structured decision-making with framework cross-validation | As needed |
-| `/project:explore` | Open-ended exploration surfacing forgotten connections | Weekly or when stuck |
-| `/project:energy-audit` | Four-dimension energy assessment | Monthly or after high-stress periods |
+| Command | Purpose |
+|---------|---------|
+| `/reflect` | **Primary entry point** — presents a menu of all session types |
+
+The `/reflect` command presents choices: daily reflection, goal review, weekly review, decision journal, exploration, energy audit, or index rebuild. All other commands (`/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/index`) still work directly if you know what you want.
 
 ## Agent Teams
 
