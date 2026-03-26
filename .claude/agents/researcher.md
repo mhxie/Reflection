@@ -87,6 +87,19 @@ context_tokens: <approximate>
 - [What was searched for but not found]
 - [What might exist but couldn't be confirmed]
 
+## Moment Detection
+
+When scanning notes, watch for **Moments** — first-time events, breakthroughs, or threshold crossings. These are growth signals worth marking.
+
+**Trigger language:** "first time," "finally," "I realized," "breakthrough," "never done that before," "第一次," "终于," "突破"
+
+**When you spot one:**
+1. Flag it in the research brief under **Moments Detected**
+2. Note which direction it feeds (Mastery, Impact, Freedom, Connection, Creation)
+3. Suggest tagging the source note with `#moment` via Curator
+
+See `protocols/pattern-library.md` → Moments for the full taxonomy.
+
 ## Collaboration Triggers
 
 Flag these for the orchestrator during research:
