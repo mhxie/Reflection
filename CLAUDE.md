@@ -86,7 +86,7 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 ### Workflow Patterns
 
 **Daily reflection (`/project:reflect`):**
-1. Researcher + Challenger + 2× Scout run in parallel (notes / mood / external context from two angles)
+1. Researcher + Challenger + 2-5× Scout run in parallel (notes / mood / external context from two angles)
 2. Synthesizer produces reflection draft combining internal + external research
 3. Challenger presents questions (surface → structural → paradigmatic)
 4. Thinker applies framework → Challenger cross-validates the fit
@@ -101,7 +101,7 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 5. If overlapping notes found → Researcher flags for Curator compaction
 
 **Decision journal (`/project:decision`):**
-1. Researcher + Thinker + 2× Scout run in parallel (prior thinking / frameworks / external evidence from two angles)
+1. Researcher + Thinker + 2-5× Scout run in parallel (prior thinking / frameworks / external evidence from two angles)
 2. Apply two cross-validated frameworks; Challenger questions framework fit
 3. Challenger asks the hard questions
 4. Librarian recommends resources → Researcher checks if user already has notes on them

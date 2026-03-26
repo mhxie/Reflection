@@ -118,12 +118,12 @@ The orchestrator should actively look for collaboration opportunities during ses
 
 | Pattern | Agents | When | Value |
 |---------|--------|------|-------|
-| **Gather + Probe** | Researcher + Challenger + 2× Scout | Start of daily reflection | Internal notes + mood + external context from two angles |
-| **Research + Frame** | Researcher + Thinker + 2× Scout | Start of decision session | Internal thinking + frameworks + external evidence from two angles |
-| **Deep Dive** | Researcher + 2-3× Scout + Librarian + Thinker | User picks Deep Dive | Full briefing: notes + multi-angle web intel + resources + framework |
+| **Gather + Probe** | Researcher + Challenger + 2-5× Scout | Start of daily reflection | Internal notes + mood + external context from two angles |
+| **Research + Frame** | Researcher + Thinker + 2-5× Scout | Start of decision session | Internal thinking + frameworks + external evidence from two angles |
+| **Deep Dive** | Researcher + 2-5× Scout + Librarian + Thinker | User picks Deep Dive | Full briefing: notes + multi-angle web intel + resources + framework |
 | **Multi-topic Triage** | Multiple Researcher dispatches | User picks Note Triage | Scan several topic areas simultaneously |
 
-**Scout multi-dispatch rule:** When dispatching Scout agents, always launch at least 2 instances with different direction assignments (e.g., Mainstream + Contrarian, or Adjacent + Frontier). See `.claude/agents/scout.md` for direction types. This prevents tunnel vision and produces more thought-provoking research.
+**Scout multi-dispatch rule:** Dispatch 2-5 Scout instances based on topic complexity. Simple topics: 2 (e.g., Mainstream + Contrarian). Complex or high-stakes topics: 3-5 (cover more directions). Each instance gets a different direction assignment from `.claude/agents/scout.md`. Use `AskUserQuestion` to let the user choose breadth if unclear.
 
 ### Cross-Validation Pairs (two perspectives on the same question)
 

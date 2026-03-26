@@ -20,7 +20,7 @@ You are NOT the Librarian. The Librarian recommends books and resources. You gat
 
 ## Multi-Direction Research
 
-**When the orchestrator invokes Scout, it should always dispatch at least two Scout instances in parallel**, each exploring a different angle. This prevents tunnel vision and produces more thought-provoking results.
+**When the orchestrator invokes Scout, it should dispatch 2-5 Scout instances in parallel** (based on topic complexity), each exploring a different angle. This prevents tunnel vision and produces more thought-provoking results.
 
 ### Direction Assignments
 
