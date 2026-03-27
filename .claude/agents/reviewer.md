@@ -113,6 +113,20 @@ gaps: <issues found>
 **What worked well:**
 - [Positive observation — reinforce good patterns]
 
+## Reading Session Adjustments
+
+When reviewing a reading report (output_type: `reading-report`), adapt the rubric:
+
+| Dimension | Adjustment |
+|-----------|-----------|
+| Citation Accuracy | Verify quotes against the article text, not Reflect notes. Source is the article, not `[[Note]]` links. |
+| Goal Coverage | **Skip this dimension.** Reading sessions are about the text, not goal progress. Reweight to other dimensions. |
+| Honesty | Check: are the Reader's claims about the text actually supported by the text? Is analysis clearly separated from the author's claims? |
+| Staleness | **Skip this dimension.** Not applicable to article reading. |
+| Synthesis Quality | Check: does the report surface convergence/divergence across lenses? Is the discussion richer than any single lens? |
+
+Effective weights for reading reviews: Citation Accuracy 35%, Honesty 35%, Synthesis Quality 30%.
+
 ## Error Handling
 
 - **Cannot verify citation**: Mark as `UNVERIFIED` not `FAIL`. Distinguish "wrong" from "couldn't check".

@@ -4,7 +4,9 @@ Your reflection system. Uses a two-step decision tree with `AskUserQuestion` for
 
 ## Quick Start
 
-If the user types `/reflect` with additional context (e.g., "/reflect I had a tough day"), skip the menu and go straight to Daily Reflection using their input as context.
+If the user types `/reflect` with additional context, detect intent and route:
+- **Reading intent** (mentions an article, URL, [[Note Title]], or "read/discuss"): skip the menu and go to Read & Discuss using their input as the article to read.
+- **Reflection intent** (everything else, e.g., "/reflect I had a tough day"): skip the menu and go straight to Daily Reflection using their input as context.
 
 ## Step 1: Choose Mode
 
@@ -15,7 +17,8 @@ Use `AskUserQuestion` with these options:
 | 1 | **Reflect** | Think about what's happening — daily reflection, weekly review, or explore connections |
 | 2 | **Plan** | Make decisions and set direction — goal review, decision journal, or energy audit |
 | 3 | **Act** | Do something with your notes — compact, deep dive, or triage |
-| 4 | **Learn** | Get recommendations or rebuild your context index |
+| 4 | **Read** | Read and discuss an article or note with structured reading lenses |
+| 5 | **Learn** | Get recommendations or rebuild your context index |
 
 ## Step 2: Choose Action
 
@@ -61,6 +64,49 @@ Based on Step 1, use a second `AskUserQuestion`:
   4. **Thinker** — select and apply a relevant framework from `frameworks/`
   Once all four return, **Synthesizer** combines their outputs into a unified briefing: your existing thinking, external intelligence, curated resources, and a framework lens — all in one view. Present in Chinese for reading-intensive output.
 - **Note Triage:** Ask the user for 3-5 topic areas (or pull from `index/meta-summary.md` themes). Dispatch the **Researcher** to search each topic area in parallel. For each area, identify notes with overlapping content. Present a prioritized compaction plan: which notes to merge, estimated redundancy, and impact. The user picks which to compact, then dispatch to **Curator** for each approved merge.
+
+### If Read:
+
+| Option | Label | Description |
+|--------|-------|-------------|
+| 1 | **Read & Discuss** | Quick read + interactive discussion (default) |
+| 2 | **Focused Read** | Pick 1-2 specific lenses to focus on |
+| 3 | **Multi-Lens Read** | Read with all 4 lenses in parallel — full analysis |
+
+- **Read & Discuss:** Ask for the article/note. Dispatch 1 Reader (Critical lens) + 1 Researcher (find related notes). Present the analysis, then enter interactive discussion mode. This is the lightweight default — most reading sessions start here.
+- **Focused Read:** Ask the user which article/note and which lens(es): Critical, Structural, Practical, or Dialectical. Dispatch 1-2 Reader instances with the chosen lenses. Use when the user knows what angle they want.
+- **Multi-Lens Read:** Ask the user which article or note to read. Then follow the Reading Hub flow below. Use for important articles worth deep multi-angle analysis.
+
+#### Reading Hub Flow (Multi-Lens Read)
+
+1. **Parallel dispatch — Phase 1 (gather + read):**
+   - 2-4x **Reader** instances, each with a different lens. Always include Critical + Structural. Add by content type:
+     - Opinion/journalism/essays → + Dialectical (find the tensions)
+     - How-to/research/strategy → + Practical (extract takeaways)
+     - Philosophy/argument/debate → + Dialectical + Practical
+   - **Researcher** — find user's existing notes related to the topic
+   - **Scout** (1-2 instances) — gather external context on the topic
+   - **Thinker** — select and apply a relevant framework
+
+2. **Convergence — Phase 2 (synthesize):**
+   - **Synthesizer** combines all Reader briefs + Researcher + Scout + Thinker into a unified reading report
+   - Present the report in Chinese (reading-intensive)
+
+3. **Discussion — Phase 3 (interact):**
+   - Enter interactive discussion mode
+   - User and orchestrator discuss the article, guided by the multi-lens analysis
+   - Dispatch additional Reader instances with specific lenses if the user wants to go deeper on an aspect
+
+4. **Quality gate — Phase 4 (review + challenge):**
+   - Before write-back, dispatch **Reviewer** + **Challenger** in parallel:
+     - Reviewer checks: citation accuracy, grounding, honesty
+     - Challenger checks: are we asking the right questions? What did we miss?
+   - Fix any issues they surface before presenting the write-back
+
+5. **Write-back — Phase 5 (with approval):**
+   - Present proposed write-back to user for approval
+   - Include [[backlinks]] to the article note and any related notes discussed
+   - Tag with `#ai-reflection`
 
 ### If Learn:
 

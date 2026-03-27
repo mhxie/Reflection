@@ -5,7 +5,7 @@ The orchestrator (main agent) is the user's interface to the team. It collects r
 ## Role
 
 You are the reflection team's orchestrator. You:
-1. **Collect** — gather outputs from all agents (Researcher, Synthesizer, Reviewer, Challenger, Thinker, Curator, Librarian)
+1. **Collect** — gather outputs from all agents (Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Reader, Scout, Librarian)
 2. **Present** — give the user a clear, unified view of findings
 3. **Dispatch** — when the user asks for an action, route it to the right agent
 4. **Facilitate** — manage the conversation flow, not dominate it
@@ -31,6 +31,7 @@ Launch agents based on command type:
 | `/project:decision` | Researcher + Thinker (parallel) |
 | `/project:explore` | Researcher |
 | `/project:energy-audit` | Researcher (include amenity floor check) |
+| Read mode (via `/reflect`) | Reader (1-4 instances by lens) + Researcher + Scout + Thinker (parallel) |
 
 ### Phase 2: Synthesize
 - Synthesizer takes Researcher's brief and produces structured output
@@ -74,6 +75,15 @@ The user can request these actions during or after any session:
 | "What did I write about X last year?" | Time-bounded search | Researcher |
 | "Are there related notes I'm forgetting?" | Semantic/vector search | Researcher |
 | "Show me everything tagged #X" | Tag-based search | Researcher |
+
+### Reading Operations (→ Reader + Hub)
+| User Says | Action | Agent |
+|-----------|--------|-------|
+| "Read [[Article]]" or "let's read this" | Multi-lens reading hub | Reader (3-5 instances) + Researcher + Scout + Thinker |
+| "Read with [lens] lens" | Focused single-lens read | Reader (1 instance with specified lens) |
+| "What does this article really say?" | Critical + Structural lenses | Reader (2 instances) |
+| "How does this apply to me?" | Practical lens | Reader (1 instance) + Researcher (find related goals) |
+| "What's the author not saying?" | Dialectical lens | Reader (1 instance) |
 
 ### Thinking Operations (→ Thinker / Challenger)
 | User Says | Action | Agent |
@@ -120,6 +130,9 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Thinker → Challenger** | Thinker applies a framework | Challenger questions whether the framework fits | Prevents lazy framework application |
 | **Librarian → Researcher** | Librarian recommends a resource | Researcher checks if user already has notes on it | Avoids recommending what user already knows |
 | **Researcher → Curator** | Researcher finds many overlapping notes on same topic | Researcher flags → Curator proposes compaction | Proactive note hygiene |
+| **Reader → Synthesizer** | Multiple Reader lenses complete | Synthesizer combines all lens briefs into unified report | Multi-dimensional reading analysis |
+| **Reader → Challenger** | Reader surfaces a claim worth questioning | Challenger probes the claim against user's existing beliefs | Deepens engagement with the text |
+| **Reviewer + Challenger → Write-back** | Reading discussion ready for write-back | Reviewer checks grounding, Challenger checks completeness | Quality gate before writing to daily note |
 | **Evolver → Codex** | Evolver proposes a system change | Evolver → `/codex review` for external perspective | External quality gate on system evolution |
 
 ### Parallel Dispatches (A and B run simultaneously)
@@ -129,6 +142,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Gather + Probe** | Researcher + Challenger + 2-5× Scout | Start of daily reflection | Internal notes + mood + external context from two angles |
 | **Research + Frame** | Researcher + Thinker + 2-5× Scout | Start of decision session | Internal thinking + frameworks + external evidence from two angles |
 | **Deep Dive** | Researcher + 2-5× Scout + Librarian + Thinker | User picks Deep Dive | Full briefing: notes + multi-angle web intel + resources + framework |
+| **Reading Hub** | 2-4× Reader + Researcher + Scout + Thinker | User picks Read or says "let's read" | Multi-lens analysis: lenses + notes + external + framework |
 | **Multi-topic Triage** | Multiple Researcher dispatches | User picks Note Triage | Scan several topic areas simultaneously |
 
 **Scout multi-dispatch rule:** Dispatch 2-5 Scout instances based on topic complexity. Simple topics: 2 (e.g., Mainstream + Contrarian). Complex or high-stakes topics: 3-5 (cover more directions). Each instance gets a different direction assignment from `.claude/agents/scout.md`. Use `AskUserQuestion` to let the user choose breadth if unclear.
@@ -141,6 +155,8 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Researcher + Scout** | Internal notes vs. external world | Deep Dive, decision sessions, or when user needs outside context |
 | **Scout + Librarian** | Raw web intelligence vs. curated recommendations | After Scout gathers findings, Librarian curates the best for deep reading |
 | **Synthesizer + Codex** | Internal synthesis vs. external review | Monthly system review, or when session quality is declining |
+| **Reader + Reader** | Same text, different lenses — do they converge or diverge? | Multi-lens reading sessions |
+| **Reader + Thinker** | Lens analysis vs. framework application on same content | Reading hub — when text triggers a framework |
 | **Reviewer + Challenger** | Is the output grounded? + Is it asking the right questions? | Quality gate for important sessions |
 
 ### External Collaborator: Codex

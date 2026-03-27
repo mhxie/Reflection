@@ -68,7 +68,7 @@ If index files don't exist, tell the user: "Run `/project:index` first to build 
 |---------|---------|
 | `/reflect` | **Primary entry point** — presents a menu of all session types |
 
-The `/reflect` command presents choices: daily reflection, goal review, weekly review, decision journal, exploration, energy audit, or index rebuild. All other commands (`/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/index`) still work directly if you know what you want.
+The `/reflect` command presents choices: daily reflection, goal review, weekly review, decision journal, exploration, energy audit, reading hub, or index rebuild. All other commands (`/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/index`) still work directly if you know what you want.
 
 ## Agent Teams
 
@@ -86,6 +86,7 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 | **Evolver** | Opus | Improves the system using OODA methodology + codex review | After sessions — evolves the process |
 | **Curator** | Opus | Note operations: compact, merge, replace, create notes in Reflect | When user wants to act on their notes |
 | **Scout** | Sonnet | Gathers external context from the web — articles, research, recent developments | When the team needs outside-world intelligence |
+| **Reader** | Opus | Reads articles/notes through 4 lenses (Critical, Structural, Practical, Dialectical) | When user wants to deeply read and discuss an article |
 | **Librarian** | Sonnet | Recommends resources (books, papers, articles, talks, courses) in Chinese summaries | When user wants learning recommendations |
 
 ### Workflow Patterns
@@ -110,6 +111,13 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 2. Apply two cross-validated frameworks; Challenger questions framework fit
 3. Challenger asks the hard questions
 4. Librarian recommends resources → Researcher checks if user already has notes on them
+
+**Reading hub (`/reflect` → Read):**
+1. 2-4× Reader (each with a different lens) + Researcher + Scout + Thinker run in parallel
+2. Synthesizer combines all Reader briefs into unified reading report (Chinese)
+3. Interactive discussion between user and orchestrator
+4. Reviewer + Challenger gate the write-back (grounding + completeness)
+5. Write-back with user approval, [[backlinks]] to the article
 
 **System evolution (after any session):**
 1. Evolver observes what worked and what didn't

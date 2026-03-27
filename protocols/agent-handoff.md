@@ -10,7 +10,7 @@ Every agent output that feeds another agent MUST include a metadata block:
 ---handoff---
 from: <agent name>
 to: <agent name>
-type: research-brief | synthesis | review-check | challenge-set | perspective | evolution-report
+type: research-brief | reader-brief | synthesis | review-check | challenge-set | perspective | evolution-report
 confidence: high | medium | low
 gaps: <comma-separated list of what's missing>
 context_tokens: <approximate token count of payload>
@@ -31,12 +31,29 @@ Required fields:
 
 The Synthesizer MUST NOT re-search. If gaps are critical, escalate to orchestrator.
 
+## Contract: Reader → Synthesizer
+
+**Type:** `reader-brief`
+
+Required fields:
+- `lens`: Which reading lens was applied (Critical | Structural | Practical | Dialectical)
+- `source`: Article/note title being analyzed
+- `findings`: Array of `{finding, supporting_quote, commentary}`
+- `cross_signals`: Array of observations for other lenses to investigate
+- `verdict`: One-sentence judgment through this lens
+- `confidence`: How well the lens fit this content
+
+When the Synthesizer receives multiple `reader-brief` handoffs (from parallel Reader instances), it should:
+1. Look for convergence across lenses (multiple lenses reaching the same conclusion)
+2. Surface divergence (lenses disagreeing — this is the most interesting output)
+3. Combine with Researcher/Scout/Thinker outputs into a unified reading report
+
 ## Contract: Synthesizer → Reviewer
 
 **Type:** `synthesis`
 
 Required fields:
-- `output_type`: reflection | review | exploration
+- `output_type`: reflection | review | exploration | reading-report
 - `claims`: Array of `{claim, source_title, source_quote}`
 - `unsourced_claims`: Array of claims made without direct source (should be empty)
 - `goals_referenced`: Which goal categories were covered
