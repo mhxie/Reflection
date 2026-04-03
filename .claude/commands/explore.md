@@ -80,4 +80,4 @@ Let the user pick which spark interests them. Then:
 
 ## Write-Back
 
-Optional — only if a genuine insight emerged. Tag with `#ai-reflection #exploration`.
+Optional — only if a genuine insight emerged. Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy and framing. **Write-backs are always in English.** Tag with `#ai-reflection #exploration`.

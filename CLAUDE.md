@@ -36,6 +36,7 @@ This project connects to a Reflect MCP server for reading and writing notes.
 - Always tag AI-written content with `#ai-reflection` so it can be filtered out of future searches. The `#ai-reflection` tag goes in the heading line, but the heading text itself must be **descriptive of the session's theme** (e.g., `## 间隙周：约束创造意义 #ai-reflection`), never generic like "AI Reflection."
 - When referencing specific notes in write-backs, include [[backlinks]] to those notes so they appear in Reflect's backlink graph.
 - Before writing back, check if today's daily note already contains `#ai-reflection` content to avoid duplicates.
+- **Write-backs are always in English**, even for sessions conducted in Chinese or with Chinese-language notes.
 - Write-back is optional and should never block a session. If it fails, continue.
 - For note operations (create, compact, merge), delegate to the **Curator** agent.
 
@@ -67,6 +68,7 @@ If index files don't exist, tell the user: "Run `/project:index` first to build 
 - **Track eras and directions.** The user's life has chapters (eras) with themes and directions. See `protocols/coaching-progressions.md` for era mechanics and `index/goals.md` for current era state.
 - **Surface Moments.** Flag real-life firsts and breakthroughs as Moments (see `protocols/pattern-library.md`). These accumulate toward era-level momentum assessment.
 - **Respect the amenity floor.** Each life area needs a sustainability minimum. When an area drops below its floor, name it. See `protocols/session-scoring.md`.
+- **Write-backs always in English.** All write-backs to daily notes (via `append_to_daily_note`) must be in English, regardless of session type or language used during the session.
 
 ## Available Commands
 

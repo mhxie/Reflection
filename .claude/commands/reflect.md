@@ -73,8 +73,8 @@ Based on Step 1, use a second `AskUserQuestion`:
 | 2 | **Focused Read** | Pick 1-2 specific lenses to focus on |
 | 3 | **Multi-Lens Read** | Read with all 4 lenses in parallel — full analysis |
 
-- **Read & Discuss:** Ask for the article/note. Dispatch 1 Reader (Critical lens) + 1 Researcher (find related notes). Present the analysis, then enter interactive discussion mode. This is the lightweight default — most reading sessions start here.
-- **Focused Read:** Ask the user which article/note and which lens(es): Critical, Structural, Practical, or Dialectical. Dispatch 1-2 Reader instances with the chosen lenses. Use when the user knows what angle they want.
+- **Read & Discuss:** Ask for the article/note. Dispatch 1 Reader (Critical lens) + 1 Researcher (find related notes). Present the analysis, then enter interactive discussion mode. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). This is the lightweight default — most reading sessions start here.
+- **Focused Read:** Ask the user which article/note and which lens(es): Critical, Structural, Practical, or Dialectical. Dispatch 1-2 Reader instances with the chosen lenses. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). Use when the user knows what angle they want.
 - **Multi-Lens Read:** Ask the user which article or note to read. Then follow the Reading Hub flow below. Use for important articles worth deep multi-angle analysis.
 
 #### Reading Hub Flow (Multi-Lens Read)
@@ -103,10 +103,28 @@ Based on Step 1, use a second `AskUserQuestion`:
      - Challenger checks: are we asking the right questions? What did we miss?
    - Fix any issues they surface before presenting the write-back
 
-5. **Write-back — Phase 5 (with approval):**
+5. **Article note — Phase 5 (create standalone note):**
+   - Before write-back, create a standalone article note in Reflect using `create_note` with:
+     - Title: the article's title
+     - Body: source URL, author, publication date, and key data points / takeaways from the reading analysis
+     - Tags: `#article` and relevant topic tags
+   - This note becomes the canonical reference for this article in the user's knowledge graph.
+
+6. **Write-back — Phase 6 (with approval):**
    - Present proposed write-back to user for approval
-   - Include [[backlinks]] to the article note and any related notes discussed
+   - Include [[backlinks]] to the article note created in Phase 5 and any related notes discussed
    - Tag with `#ai-reflection`
+
+#### Article Note (all reading flows)
+
+For **all** reading session types (Read & Discuss, Focused Read, Multi-Lens Read), create a standalone article note before the write-back:
+
+1. Use `create_note` with the article's title as the note title
+2. Include in the body: source URL, author, publication date, and key data points / takeaways
+3. Tag with `#article` and relevant topic tags (e.g., `#ai`, `#career`, `#systems`)
+4. Backlink to this note from the daily note write-back using [[Article Title]]
+
+This ensures every article read has a permanent, searchable reference in Reflect's knowledge graph.
 
 ### If Learn:
 
@@ -233,7 +251,7 @@ After writing the reflection file, check if today's daily note already contains 
 
 - If **AI content already exists**: Skip write-back. Tell the user: "Already wrote to today's daily note earlier — skipping duplicate write-back."
 
-- If **no existing AI content**: **Ask the user for approval before writing.** Present the proposed write-back and wait for confirmation. Do not auto-write. The write-back should follow this format:
+- If **no existing AI content**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. Then **ask the user for approval before writing.** Present the proposed write-back and wait for confirmation. Do not auto-write. **Write-backs are always in English**, even if the session was conducted in Chinese. The write-back should follow this format:
   ```
   ## [Descriptive Title] #ai-reflection
   [2-3 sentence summary of key insights from today's reflection session]

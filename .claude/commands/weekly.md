@@ -100,7 +100,7 @@ Based on the review:
 ## Write-Back
 
 Check for existing `#ai-reflection` content in today's daily note.
-- If none: append weekly review summary using this format:
+- If none: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Append weekly review summary using this format:
   ```
   ## [Descriptive Title] #ai-reflection
   [2-3 sentence summary of the week's key insights and patterns]

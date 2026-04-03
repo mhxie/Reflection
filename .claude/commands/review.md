@@ -94,7 +94,7 @@ After discussing, write a review file:
 
 After writing the review file, check if today's daily note already contains `#ai-reflection` content.
 
-- If **no existing AI content**: Use `append_to_daily_note` to add:
+- If **no existing AI content**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Use `append_to_daily_note` to add:
   ```
   ## [Descriptive Title] #ai-reflection
   [3-4 sentence summary: what's progressing, what's neglected, top suggested experiment]

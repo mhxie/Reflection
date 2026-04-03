@@ -130,7 +130,7 @@ Note: Slugify the topic for the filename — lowercase, replace spaces with hyph
 
 Check if today's daily note already contains `#ai-reflection` content.
 
-- If **no existing AI content**: Use `append_to_daily_note` to add decision summary using this format:
+- If **no existing AI content**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Use `append_to_daily_note` to add decision summary using this format:
   ```
   ## [Descriptive Title] #ai-reflection #decision
   [2-3 sentence summary of the decision analysis and current status]

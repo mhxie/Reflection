@@ -98,7 +98,7 @@ Present findings as:
 ## Write-Back
 
 Check for existing `#ai-reflection` content in today's daily note.
-- If none: append energy audit summary using this format:
+- If none: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Append energy audit summary using this format:
   ```
   ## [Descriptive Title] #ai-reflection #energy-audit
   [2-3 sentence summary of energy findings and one actionable change]
