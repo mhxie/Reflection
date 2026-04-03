@@ -33,7 +33,7 @@ This project connects to a Reflect MCP server for reading and writing notes.
 **Writing:**
 - **Always ask for user approval before writing.** Never auto-write to daily notes. Present what you plan to write and wait for confirmation.
 - Use `append_to_daily_note` to write reflection insights back to Reflect daily notes. Parameter name is `text` (not `content`).
-- Always tag AI-written content with `#ai-reflection` so it can be filtered out of future searches.
+- Always tag AI-written content with `#ai-reflection` so it can be filtered out of future searches. The `#ai-reflection` tag goes in the heading line, but the heading text itself must be **descriptive of the session's theme** (e.g., `## 间隙周：约束创造意义 #ai-reflection`), never generic like "AI Reflection."
 - When referencing specific notes in write-backs, include [[backlinks]] to those notes so they appear in Reflect's backlink graph.
 - Before writing back, check if today's daily note already contains `#ai-reflection` content to avoid duplicates.
 - Write-back is optional and should never block a session. If it fails, continue.

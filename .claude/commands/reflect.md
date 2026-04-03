@@ -235,10 +235,18 @@ After writing the reflection file, check if today's daily note already contains 
 
 - If **no existing AI content**: **Ask the user for approval before writing.** Present the proposed write-back and wait for confirmation. Do not auto-write. The write-back should follow this format:
   ```
-  ## AI Reflection #ai-reflection
+  ## [Descriptive Title] #ai-reflection
   [2-3 sentence summary of key insights from today's reflection session]
   Related: [[Note Title 1]] [[Note Title 2]]
   ```
+  **Title guidelines:** The heading must describe the session's core theme or question — not its source. Generate the title based on what was actually discussed. Good examples:
+  - Topic-based: `间隙周：约束创造意义`
+  - Question-based: `无限自由为什么让人空虚？`
+  - Date+theme: `04/02 职业转换的第一周`
+  - Insight-based: `Delegation as a trust signal`
+
+  Never use generic titles like "AI Reflection" or "Daily Reflection Summary." The `#ai-reflection` tag already marks the content as AI-generated.
+
   Include [[backlinks]] to all notes referenced during the session so they appear in Reflect's backlink graph. Use today's date in YYYY-MM-DD format.
 
 ## Wrap Up
