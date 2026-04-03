@@ -97,4 +97,18 @@ Present findings as:
 
 ## Write-Back
 
-Append energy audit summary to daily note with `#ai-reflection #energy-audit` tags.
+Check for existing `#ai-reflection` content in today's daily note.
+- If none: append energy audit summary using this format:
+  ```
+  ## [Descriptive Title] #ai-reflection #energy-audit
+  [2-3 sentence summary of energy findings and one actionable change]
+  Related: [[Note Title 1]] [[Note Title 2]]
+  ```
+  **Title guidelines:** The heading must describe the audit's core finding — not just "Energy Audit." Good examples:
+  - `## 精力审计：体力充沛但社交透支 #ai-reflection #energy-audit`
+  - `## Energy dip: mental fatigue from context-switching #ai-reflection #energy-audit`
+  - `## 睡眠不足拖累全局精力 #ai-reflection #energy-audit`
+
+  Never use generic titles like "Energy Audit Summary." The `#ai-reflection` tag already marks the content as AI-generated.
+
+- If exists: skip.

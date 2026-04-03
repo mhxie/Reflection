@@ -100,5 +100,17 @@ Based on the review:
 ## Write-Back
 
 Check for existing `#ai-reflection` content in today's daily note.
-- If none: append weekly review summary with `#ai-reflection` tag.
+- If none: append weekly review summary using this format:
+  ```
+  ## [Descriptive Title] #ai-reflection
+  [2-3 sentence summary of the week's key insights and patterns]
+  Related: [[Note Title 1]] [[Note Title 2]]
+  ```
+  **Title guidelines:** The heading must describe the week's core theme or pattern — not just "Weekly Review." Good examples:
+  - `## 本周：创造多于消费 #ai-reflection`
+  - `## Week of 03/31: Luma onboarding + schedule reset #ai-reflection`
+  - `## 一周回顾：注意力回归深度工作 #ai-reflection`
+
+  Never use generic titles like "Weekly Review Summary." The `#ai-reflection` tag already marks the content as AI-generated.
+
 - If exists: skip.

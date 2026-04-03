@@ -130,5 +130,17 @@ Note: Slugify the topic for the filename — lowercase, replace spaces with hyph
 
 Check if today's daily note already contains `#ai-reflection` content.
 
-- If **no existing AI content**: Use `append_to_daily_note` to add decision summary with `#ai-reflection #decision` tags.
+- If **no existing AI content**: Use `append_to_daily_note` to add decision summary using this format:
+  ```
+  ## [Descriptive Title] #ai-reflection #decision
+  [2-3 sentence summary of the decision analysis and current status]
+  Related: [[Note Title 1]] [[Note Title 2]]
+  ```
+  **Title guidelines:** The heading must describe the decision's core question — not just "Decision Journal." Good examples:
+  - `## 决策：选择Luma而非大厂 #ai-reflection #decision`
+  - `## Decision: stay vs. switch teams #ai-reflection #decision`
+  - `## 是否现在买房？框架分析 #ai-reflection #decision`
+
+  Never use generic titles like "Decision Summary." The `#ai-reflection` tag already marks the content as AI-generated.
+
 - If **AI content already exists**: Skip write-back to avoid duplicates. Tell the user about the skip.
