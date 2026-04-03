@@ -10,6 +10,9 @@ index/
 # Coaching session outputs
 reflections/
 !reflections/.gitkeep
+# Personal reference material (examples, sensitive context)
+personal/
+!personal/.gitkeep
 # Handoff plans with personal note references
 handoffs/
 # Local MCP server URL

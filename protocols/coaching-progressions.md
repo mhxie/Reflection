@@ -9,9 +9,9 @@ Eras are personal milestones — chapters of life defined by the user, not the s
 ### What Defines an Era
 
 An era is a stretch of life with a coherent identity. Examples:
-- **PhD Era** — building research capability, academic identity
-- **Anyscale Era** — first industry role, proving IC competence, financial foundation
-- **Luma Era** — new company, deeper ML infra specialization, family planning
+- **Research Era** — building research capability, academic identity
+- **First Job Era** — first industry role, proving IC competence, financial foundation
+- **Scale-up Era** — new company, deeper specialization, family planning
 
 ### Era State
 
@@ -19,9 +19,9 @@ Track the current era in `index/goals.md` under an `## Era` section:
 
 ```markdown
 ## Era
-- **Current:** Luma Era (started 2026-03-30)
+- **Current:** Scale-up Era (started YYYY-MM-DD)
 - **Theme:** Prove worth at a new company while building toward family life
-- **Prior:** Anyscale Era (2023-08 → 2026-03)
+- **Prior:** First Job Era (YYYY-MM → YYYY-MM)
 ```
 
 ### Era Transitions

@@ -43,13 +43,13 @@ Before making changes, check:
 - Update any protocols affected
 - Update CLAUDE.md if team structure changed
 
-### 5. Commit + Hand Back for Review
-**Commit, then return to the orchestrator for review.** You do NOT run reviewers yourself — the orchestrator dispatches them. This prevents you from skipping review under turn pressure.
+### 5. Hand Back for Review (DO NOT COMMIT)
+**Do NOT commit. Return to the orchestrator with uncommitted changes for review.** The orchestrator dispatches reviewers on the diff. Only after reviewers pass does the orchestrator commit. This prevents shipping unreviewed changes.
 
-1. Commit changes with clear rationale
+1. Stage your changes but **do not commit**
 2. Determine the review tier based on scope (see table below)
-3. **Return your evolution report to the orchestrator** with the `review_tier` field set. The orchestrator is responsible for dispatching the appropriate reviewers.
-4. Do NOT consider the evolution complete until the orchestrator confirms reviewers have passed.
+3. **Return your evolution report to the orchestrator** with the `review_tier` field set. The orchestrator reviews the diff, dispatches reviewers, fixes issues, and commits.
+4. Do NOT consider the evolution complete until the orchestrator confirms reviewers have passed and committed.
 
 | Change scope | Tier | Reviewers (dispatched by orchestrator) |
 |-------------|------|-----------|
@@ -101,6 +101,7 @@ Before making changes, check:
 4. **Compound improvements.** Each change should make the next session slightly better.
 5. **Self-discipline propagation.** When adding a new rule, ensure agents can enforce it — not just know about it.
 6. **User is final judge.** Propose significant changes, don't silently deploy.
+7. **No personal details in tracked files.** Examples in commands, protocols, and agent definitions must be generic — never reference the user's real company names, people, dates, financial figures, or life events. This codebase is version-controlled and potentially public. Use plausible but generic examples. Rich personal examples go in `personal/examples.md` (gitignored).
 
 ## Output Format
 
@@ -119,8 +120,7 @@ Before making changes, check:
 
 **Review Required:**
 - review_tier: [1-4]
-- commit: [commit hash]
-- base: [base commit for diff]
+- status: uncommitted (orchestrator commits after review passes)
 
 **Changes Proposed (needs approval):**
 - [Change]: [rationale]
@@ -149,4 +149,4 @@ The Evolver is the system's meta-agent — it collaborates with everyone:
 | **All agents** | Reads their outputs to diagnose symptoms | During Observe phase |
 | **User** | Reads explicit feedback ("this wasn't helpful") | Real-time signal |
 
-**Review is mandatory for evolution.** The Evolver commits and hands back to the orchestrator with a `review_tier`. The orchestrator dispatches reviewers — the Evolver never skips this by running out of turns or self-reviewing. For changes touching agent definitions, workflows, or contracts, Internal Holistic review (Tier 3+) is required.
+**Review before commit is mandatory.** The Evolver makes changes and hands back to the orchestrator with a `review_tier` — but does NOT commit. The orchestrator dispatches reviewers on the uncommitted diff, fixes any issues, then commits. The Evolver never commits or self-reviews. For changes touching agent definitions, workflows, or contracts, Internal Holistic review (Tier 3+) is required.

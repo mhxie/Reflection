@@ -137,9 +137,9 @@ Check if today's daily note already contains `#ai-reflection` content.
   Related: [[Note Title 1]] [[Note Title 2]]
   ```
   **Title guidelines:** The heading must describe the decision's core question — not just "Decision Journal." Good examples:
-  - `## 决策：选择Luma而非大厂 #ai-reflection #decision`
+  - `## Decision: startup vs. big tech trade-offs #ai-reflection #decision`
   - `## Decision: stay vs. switch teams #ai-reflection #decision`
-  - `## 是否现在买房？框架分析 #ai-reflection #decision`
+  - `## Rent vs. buy: framework analysis #ai-reflection #decision`
 
   Never use generic titles like "Decision Summary." The `#ai-reflection` tag already marks the content as AI-generated.
 

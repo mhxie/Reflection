@@ -257,10 +257,10 @@ After writing the reflection file, check if today's daily note already contains 
   [2-3 sentence summary of key insights from today's reflection session]
   Related: [[Note Title 1]] [[Note Title 2]]
   ```
-  **Title guidelines:** The heading must describe the session's core theme or question — not its source. Generate the title based on what was actually discussed. Good examples:
-  - Topic-based: `间隙周：约束创造意义`
-  - Question-based: `无限自由为什么让人空虚？`
-  - Date+theme: `04/02 职业转换的第一周`
+  **Title guidelines:** The heading must describe the session's core theme or question — not its source. Titles are in English (same as the write-back body). Good examples:
+  - Topic-based: `Constraint creates meaning`
+  - Question-based: `Why does unlimited freedom feel empty?`
+  - Date+theme: `03/15 Energy dip and recovery patterns`
   - Insight-based: `Delegation as a trust signal`
 
   Never use generic titles like "AI Reflection" or "Daily Reflection Summary." The `#ai-reflection` tag already marks the content as AI-generated.

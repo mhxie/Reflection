@@ -99,7 +99,7 @@ After writing the review file, check if today's daily note already contains `#ai
   ## [Descriptive Title] #ai-reflection
   [3-4 sentence summary: what's progressing, what's neglected, top suggested experiment]
   ```
-  The title should describe the review's findings, not the session type. E.g., `学习目标停滞，能量方向转移` or `Q2 goals: shipping beats planning`. Never use generic titles like "Goal Review Summary."
+  The title should describe the review's findings, not the session type. E.g., `Learning goals stalled, energy direction shifted` or `Q2 goals: shipping beats planning`. Never use generic titles like "Goal Review Summary."
 
 - If **AI content already exists**: Skip write-back. Tell the user about the skip.
 

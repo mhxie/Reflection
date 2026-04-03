@@ -144,8 +144,8 @@ Required fields:
 - `review_mode`: holistic | diff | both
 - `change_scope`: description of what changed
 - `files_changed`: Array of file paths
-- `commit`: commit hash for the changes
-- `base`: base commit for diff
+- `status`: uncommitted (Evolver does not commit — orchestrator commits after review)
+- `staged_files`: list of files with staged changes
 
 ## Escalation Protocol
 

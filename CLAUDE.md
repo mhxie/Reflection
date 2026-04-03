@@ -46,6 +46,14 @@ This project connects to a Reflect MCP server for reading and writing notes.
 - Merges and compactions create new notes. The user must manually delete originals in Reflect. Always inform the user of this cleanup step.
 - Because mistakes cannot be undone via API, all note operations must go through the Curator's Content Preservation Checklist before writing.
 
+## Personal Directory
+
+The `personal/` directory is gitignored and contains sensitive reference material:
+
+- `personal/examples.md` — Real write-back title examples from past sessions. Agents can read this for richer inspiration beyond the generic examples in command files.
+
+This directory may grow to hold other personal context. It is never committed to git.
+
 ## Index Rules
 
 The `index/` directory contains pre-synthesized reflection context:
@@ -68,7 +76,6 @@ If index files don't exist, tell the user: "Run `/project:index` first to build 
 - **Track eras and directions.** The user's life has chapters (eras) with themes and directions. See `protocols/coaching-progressions.md` for era mechanics and `index/goals.md` for current era state.
 - **Surface Moments.** Flag real-life firsts and breakthroughs as Moments (see `protocols/pattern-library.md`). These accumulate toward era-level momentum assessment.
 - **Respect the amenity floor.** Each life area needs a sustainability minimum. When an area drops below its floor, name it. See `protocols/session-scoring.md`.
-- **Write-backs always in English.** All write-backs to daily notes (via `append_to_daily_note`) must be in English, regardless of session type or language used during the session.
 
 ## Available Commands
 
@@ -129,10 +136,10 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 
 **System evolution (after any session):**
 1. Evolver observes what worked and what didn't
-2. Proposes and commits changes to agents, commands, or CLAUDE.md
-3. Evolver returns to orchestrator with `review_tier` — it does NOT self-review
+2. Proposes and stages changes to agents, commands, or CLAUDE.md (does NOT commit)
+3. Evolver returns to orchestrator with `review_tier` — it does NOT self-review or commit
 4. **Orchestrator dispatches reviewers** for the specified tier (Tier 1-4). This is mandatory and cannot be skipped.
-5. Address all reviewer findings in a new commit
+5. Orchestrator addresses all reviewer findings and commits
 
 See `protocols/orchestrator.md` for the full collaboration matrix.
 

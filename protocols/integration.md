@@ -62,7 +62,7 @@ Three possible responses and how to handle them:
 ## Rules
 
 1. **One action per session.** Don't overwhelm with multiple commitments.
-2. **Specific beats vague.** "Think about my career" is not actionable. "Write a note about what success looks like at Luma by May 1" is.
+2. **Specific beats vague.** "Think about my career" is not actionable. "Write a note about what success looks like in my new role by May 1" is.
 3. **Small beats ambitious.** A 5-minute action done is worth more than an ambitious action deferred.
 4. **Sitting with it counts.** Not every insight needs an action. "Notice when X happens" is a valid commitment.
 5. **No guilt.** Missed actions are data points, not failures.

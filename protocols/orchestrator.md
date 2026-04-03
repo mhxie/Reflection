@@ -133,7 +133,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Reader → Synthesizer** | Multiple Reader lenses complete | Synthesizer combines all lens briefs into unified report | Multi-dimensional reading analysis |
 | **Reader → Challenger** | Reader surfaces a claim worth questioning | Challenger probes the claim against user's existing beliefs | Deepens engagement with the text |
 | **Reviewer + Challenger → Write-back** | Reading discussion ready for write-back | Reviewer checks grounding, Challenger checks completeness | Quality gate before writing to daily note |
-| **Evolver → Orchestrator → Tiered Review** | Evolver proposes a system change | Evolver commits → returns `review_tier` to orchestrator → orchestrator dispatches reviewers | Quality gate on system evolution (see Review Tiers) |
+| **Evolver → Orchestrator → Review → Commit** | Evolver proposes a system change | Evolver makes changes (no commit) → returns `review_tier` to orchestrator → orchestrator dispatches reviewers → fixes issues → commits | Quality gate on system evolution (see Review Tiers) |
 
 ### Parallel Dispatches (A and B run simultaneously)
 
@@ -238,7 +238,7 @@ During any session, actively look for these signals and chain agents:
 | Energy audit shows a life area below amenity floor | Flag it: "[Area] is below amenity floor." See `protocols/session-scoring.md` |
 | User tries to change focus mid-session | Enforce Focus Lock — redirect to a full `/review` session first |
 | User says "this was great" or "this wasn't helpful" | Route feedback to Evolver |
-| **Evolver returns with `review_tier`** | **Mandatory: dispatch reviewers for that tier. Never skip.** The Evolver commits but does NOT run its own review — the orchestrator owns this gate. See Review Tiers above for which reviewers to dispatch per tier. |
+| **Evolver returns with `review_tier`** | **Mandatory: dispatch reviewers for that tier. Never skip.** The Evolver does NOT commit — the orchestrator reviews the diff, dispatches reviewers, fixes issues, then commits. The orchestrator owns this gate. See Review Tiers above for which reviewers to dispatch per tier. |
 
 ## Orchestrator Rules
 

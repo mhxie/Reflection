@@ -105,9 +105,9 @@ Check for existing `#ai-reflection` content in today's daily note.
   Related: [[Note Title 1]] [[Note Title 2]]
   ```
   **Title guidelines:** The heading must describe the audit's core finding — not just "Energy Audit." Good examples:
-  - `## 精力审计：体力充沛但社交透支 #ai-reflection #energy-audit`
+  - `## Physical strong but socially drained #ai-reflection #energy-audit`
   - `## Energy dip: mental fatigue from context-switching #ai-reflection #energy-audit`
-  - `## 睡眠不足拖累全局精力 #ai-reflection #energy-audit`
+  - `## Sleep deficit dragging overall energy #ai-reflection #energy-audit`
 
   Never use generic titles like "Energy Audit Summary." The `#ai-reflection` tag already marks the content as AI-generated.
 

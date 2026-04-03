@@ -62,7 +62,7 @@ At the start of each quarter (or era), declare a **primary focus** — the direc
 
 ### How Focus Works
 
-1. **Declare at quarterly review or era start:** "This quarter I'm focused on [direction] through [life area]." Example: "Mastery through Career" (proving competence at Luma).
+1. **Declare at quarterly review or era start:** "This quarter I'm focused on [direction] through [life area]." Example: "Mastery through Career" (proving competence at a new role).
 2. **Focus shapes dispatch:** Researcher prioritizes notes related to the focus. Challenger's questions lean toward the focus direction. Scout explores adjacent topics in the focus domain.
 3. **Changing focus requires a full `/review` session.** No switching on a whim during a daily reflection. The friction is the feature — it prevents chasing every new interest.
 4. **Focus doesn't exclude.** Other directions still get attention. Focus just sets the priority queue.
