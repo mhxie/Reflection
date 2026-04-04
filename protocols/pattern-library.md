@@ -54,6 +54,14 @@ Catalog of recurring patterns observed during reflection sessions. Agents should
 **Response:** "You mentioned [person]. Let's look at YOUR trajectory: where were you 6 months ago vs. now?"
 **Framework:** Growth Mindset, Stoic Reflection
 
+### The Forcing Pattern
+**Signal:** User is struggling to articulate a reflection, decision, or note — vague language, repeated restarts, or messages that abandon a thread mid-thought.
+**Meaning:** Two kinds of resistance look identical but have opposite fixes:
+1. **No foothold** — the user has no prepared notes or connections to build from. The system hasn't surfaced a ready next step. Fix: search deeper, link more, try `/explore`.
+2. **Waiting for perfect form** — the user has the raw material but is blocked by wanting it to be polished. Fix: force a rough draft. "Write badly, then fix it."
+**Response:** Surface the diagnostic question: "Do you have the raw material but can't shape it, or do you not know where to start?" Then apply the matching intervention.
+**Framework:** Double-Loop Learning, Immunity to Change
+
 ## Energy Patterns
 
 ### The Overcommitment Cycle
