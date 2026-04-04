@@ -28,14 +28,35 @@ This project connects to a Reflect MCP server for reading and writing notes.
 - Use `get_note` to read a specific note by ID.
 - Use `list_tags` to discover available tags.
 - **NEVER hallucinate note content.** If search returns nothing relevant, say so honestly.
-- When searching for context, **exclude AI-generated content** by avoiding notes tagged `#ai-reflection`.
+- When searching for context, **exclude AI analysis** by skipping notes tagged `#ai-reflection` or `#ai-originated`. Notes tagged with `#ai-generated` (goals, reminders, todos) are user-approved mechanical content and SHOULD appear in search results.
 
 **Writing:**
 - **Always ask for user approval before writing.** Never auto-write to daily notes. Present what you plan to write and wait for confirmation.
 - Use `append_to_daily_note` to write reflection insights back to Reflect daily notes. Parameter name is `text` (not `content`).
-- Always tag AI-written content with `#ai-reflection` so it can be filtered out of future searches. The `#ai-reflection` tag goes in the heading line, but the heading text itself must be **descriptive of the session's theme** (e.g., `## 间隙周：约束创造意义 #ai-reflection`), never generic like "AI Reflection."
+- **AI content provenance tags** — a three-level taxonomy based on how much AI shaped the content:
+
+  | Tag | Level | Meaning | Test | Search? |
+  |-----|-------|---------|------|---------|
+  | `#ai-tool` | Mechanical | AI did formatting, fetching, summarizing, or placing reminders. A script could have done it. | "Could a script have done this?" | Include |
+  | `#ai-assisted` | Collaborative | Human idea, AI helped develop, organize, or challenge it. User can defend it without re-reading AI output. | "Can I defend this without the AI output?" | Include |
+  | `#ai-originated` | AI-surfaced | AI surfaced the idea, frame, or direction; human approved but wouldn't have arrived there alone. | "Would I have arrived here without AI?" | Exclude |
+
+  **Mapping to existing tags (do not rename):**
+  - `#ai-reflection` (daily write-backs) = `#ai-assisted` level. Keep as-is — it has existing content and known semantics. Excluded from search to prevent self-contamination.
+  - `#ai-generated` (todos, reminders, scheduled items) = `#ai-tool` level. Keep as-is — included in search.
+  - `#ai-originated` is new. Use it when a Thinker/Challenger surfaces a frame or direction the user adopts but wouldn't have found independently (e.g., career reframes, novel goal framings). Excluded from search like `#ai-reflection`.
+
+  **Classification guidance:**
+  - Todos/reminders placed by AI at user request → `#ai-generated` (tool-level)
+  - Goals co-drafted in session → `#ai-reflection` (assisted-level)
+  - Article/paper notes from reading sessions → `#ai-reflection` (AI gathered, user judged)
+  - Career reframes or novel directions proposed by agents → `#ai-originated`
+  - When in doubt, use `#ai-reflection` (safer to over-exclude than to contaminate search).
+
+  **Tags are guidance, not gates.** The taxonomy helps the user track provenance over time. Don't ask "which tag?" during sessions — classify naturally based on the test questions above.
 - When referencing specific notes in write-backs, include [[backlinks]] to those notes so they appear in Reflect's backlink graph.
 - Before writing back, check if today's daily note already contains `#ai-reflection` content to avoid duplicates.
+- When appending reminders or todos to future daily notes, tag with `#ai-generated` (tool-level, not reflection analysis).
 - **Write-backs are always in English**, even for sessions conducted in Chinese or with Chinese-language notes.
 - Write-back is optional and should never block a session. If it fails, continue.
 - For note operations (create, compact, merge), delegate to the **Curator** agent.
@@ -181,6 +202,7 @@ The `protocols/` directory defines system behavior:
 | `integration.md` | Insight-to-action pipeline |
 | `coaching-progressions.md` | Life eras, directions, maturity adaptation, golden/dark ages |
 | `contradiction-detection.md` | 4 strategies for surfacing contradictions in notes |
+| `epistemic-hygiene.md` | AI content provenance, write-first habit, AI-free zones, calibration |
 
 ## Frameworks
 

@@ -181,7 +181,7 @@ Four reviewer types, scaled by change complexity. The orchestrator selects the r
 |---|----------|--------------|-----------------|------------|
 | 1 | **Internal Holistic** | Full file state (not the diff) | Global inconsistency, local optimum traps, architectural drift | Reviewer agent reading all changed files end-to-end |
 | 2 | **Internal Diff** | Incremental changes only | Broken contracts, missing wiring, introduced bugs | Reviewer agent reading the diff |
-| 3 | **External Diff (Codex)** | `git diff` | Blind spots from a different model's perspective | `codex review --base <base>` |
+| 3 | **External Diff (Codex)** | `git diff` | Blind spots from a different model's perspective | `/codex review` |
 | 4 | **External Diff (Gemini)** | `git diff` | Second external perspective, different biases | `git diff <base>..HEAD \| gemini -p "Review this diff..." -y` |
 
 **Why both internal review types matter:** The diff reviewer catches what you just broke. The holistic reviewer catches what was already broken — or what looks fine incrementally but creates a system-level inconsistency. Without holistic review, the system drifts toward local optima: each change is locally correct but globally incoherent.
@@ -216,8 +216,8 @@ Always use the strongest available model for review depth.
 
 | Reviewer | Command | Model |
 |----------|---------|-------|
-| **Codex** | `codex exec review` or `codex exec "prompt"` | Best available (gpt-5.4) |
-| **Codex** (adversarial) | `codex exec "adversarial prompt"` | Best available |
+| **Codex** | `/codex review` | Best available |
+| **Codex** (adversarial) | `/codex challenge` | Best available |
 | **Gemini** | `git diff <base>..HEAD \| gemini -m gemini-3.1-pro-preview -p "Review this diff for a reflection system. Check for: consistency, missing integration, overclaims, design issues. Be direct." -y` | Gemini 3.1 Pro |
 
 #### Graceful Degradation
