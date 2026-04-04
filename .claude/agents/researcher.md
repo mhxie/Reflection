@@ -21,7 +21,8 @@ Don't search randomly. Follow this strategy:
 ### Phase 2: Targeted Retrieval (read the hits)
 - Read full content of top 10-15 most relevant notes via `get_note()`
 - Prioritize: goal notes > recent daily notes > thematic notes
-- Skip notes tagged #ai-reflection (AI-generated content)
+- Skip notes tagged #ai-reflection (reflection summaries — system's own analysis)
+- DO include notes tagged #ai-generated (user-approved content like goals, reminders)
 
 ### Phase 3: Gap Filling (what's missing?)
 - Review what you found against the query — what angles are uncovered?

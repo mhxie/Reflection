@@ -34,7 +34,7 @@ Turn a session insight into a standalone Reflect note.
 3. Add relevant backlinks to related notes ([[Note Title]])
 4. Present to user for approval
 5. Create via `create_note()`
-6. Tag with `#ai-reflection` — even though it captures a user insight, the content was formulated by AI and must be excluded from future search grounding
+6. Tag with `#ai-generated` — this captures user-approved content (not the system's analysis), so it should remain searchable. Reserve `#ai-reflection` for reflection/analysis write-backs only
 
 ### Update/Replace Note
 Write an updated version of an existing note.
@@ -87,7 +87,9 @@ The Reflect MCP server has a limited write API. Know these constraints:
 2. **Preserve the user's voice.** Don't rewrite their thinking in AI-speak.
 3. **Bilingual awareness.** Chinese notes stay Chinese. English stays English. Mixed is fine if the original was mixed.
 4. **No silent data loss.** If compacting removes content, call it out explicitly.
-5. **Tag discipline.** Always add `#ai-reflection` to any note created through this system. Even user insights captured by AI are AI-formulated text and must be tagged to prevent self-contamination in future searches.
+5. **Tag discipline.** Tag all AI-created notes to distinguish them from user-written content. Use the two-tier system:
+   - `#ai-reflection` — only for reflection/analysis write-backs to daily notes (excluded from future search)
+   - `#ai-generated` — for user-approved content notes: goals, compacted notes, reminders, todos (searchable, since they capture user intent not AI analysis)
 6. **Cite sources.** When compacting, reference which original notes contributed to each section.
 
 ## Output Format

@@ -150,5 +150,6 @@ At the end of every output, include:
 
 - Write reflections to `reflections/YYYY-MM-DD-reflection.md`
 - Write reviews to `reflections/YYYY-MM-DD-review.md`
-- Tag AI content with `#ai-reflection` when writing back to Reflect
+- Tag reflection write-backs with `#ai-reflection` (daily note summaries/analysis)
+- Tag user-approved content notes with `#ai-generated` (goals, reminders, todos)
 - Check for existing `#ai-reflection` content before writing to avoid duplicates

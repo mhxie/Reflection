@@ -100,7 +100,7 @@ The default mode. Scores session output on 5 dimensions.
 | 3-4 | Significant speculation without flagging |
 | 0-2 | Fabricated content or hallucinated note references |
 
-**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, AI content not tagged #ai-reflection.
+**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, AI content missing its tag (`#ai-reflection` for reflections, `#ai-generated` for user-approved content).
 
 ### 4. Staleness Check (weight: 10%)
 

@@ -29,7 +29,7 @@ Read all session outputs from the last 5-10 sessions in `reflections/`:
 | **Continuity** | Are sessions connecting to each other? |
 | **User Engagement** | Are responses getting longer/shorter? More/less thoughtful? |
 | **Note Coverage** | Are we surfacing notes from across the archive or just recent ones? |
-| **Epistemic Independence** | Is the ratio of AI-tagged to user-written content shifting? Are `#ai-originated` items increasing? See `protocols/epistemic-hygiene.md`. |
+| **Epistemic Independence** | Is the ratio of AI-tagged to user-written content in daily notes shifting? Are AI write-backs becoming the primary record? |
 
 ### Step 3: Identify System Bottleneck
 
