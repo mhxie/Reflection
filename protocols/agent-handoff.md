@@ -10,7 +10,7 @@ Every agent output that feeds another agent MUST include a metadata block:
 ---handoff---
 from: <agent name>
 to: <agent name>
-type: research-brief | reader-brief | scout-brief | synthesis | review-check | system-review-request | challenge-set | perspective | recommendation | note-operation | evolution-report
+type: research-brief | reader-brief | scout-brief | synthesis | review-check | system-review-request | challenge-set | perspective | recommendation | note-operation | meeting-notes | evolution-report
 confidence: high | medium | low
 gaps: <comma-separated list of what's missing>
 context_tokens: <approximate token count of payload>
@@ -132,6 +132,20 @@ Required fields:
 - `notes_affected`: Array of note titles involved
 - `proposed_content`: The new/merged content (for user approval)
 - `rationale`: Why this operation was recommended
+
+## Contract: Meeting → Orchestrator
+
+**Type:** `meeting-notes`
+
+Required fields:
+- `mode`: Executive
+- `source`: Description of the meeting (name, date, participants if known)
+- `structured_notes`: The formatted output (markdown)
+- `action_items`: Array of `{owner, task, deadline}`
+- `unclear_items`: Array of items flagged as ambiguous from the transcript
+- `confidence`: How clean/complete the transcript was
+
+The orchestrator presents the structured notes to the user and asks whether to create a Reflect note via Curator.
 
 ## Contract: Evolver → Orchestrator (System Review Request)
 

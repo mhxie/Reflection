@@ -104,7 +104,8 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 | **Evolver** | Opus | Improves the system using OODA methodology + tiered review | After sessions — evolves the process |
 | **Curator** | Opus | Note operations: compact, merge, replace, create notes in Reflect | When user wants to act on their notes |
 | **Scout** | Sonnet | Gathers external context from the web — articles, research, recent developments | When the team needs outside-world intelligence |
-| **Reader** | Opus | Reads articles/notes through 4 lenses (Critical, Structural, Practical, Dialectical) | When user wants to deeply read and discuss an article |
+| **Reader** | Opus | Reads articles/notes through 4 lenses (Critical, Structural, Practical, Dialectical) with transcript format support | When user wants to deeply read and discuss an article, video/podcast, or research talk |
+| **Meeting** | Sonnet | Processes work meeting transcripts into structured notes with action items and decisions | When user has a work meeting transcript to process |
 | **Librarian** | Sonnet | Recommends resources (books, papers, articles, talks, courses) in Chinese summaries | When user wants learning recommendations |
 
 ### Workflow Patterns

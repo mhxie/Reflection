@@ -8,7 +8,7 @@ Built on [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + [Reflec
 
 **Reflect** — Daily check-ins grounded in what you actually wrote. Surfaces forgotten connections, challenges assumptions, tracks your goals across life chapters.
 
-**Read** — Deep-reads articles and saved notes through multiple lenses (critical, structural, practical, dialectical). Multiple readers analyze in parallel, then you discuss what they found.
+**Read** — Deep-reads articles, saved notes, and transcripts through multiple lenses (critical, structural, practical, dialectical). Multiple readers analyze in parallel, then you discuss what they found.
 
 **Plan** — Goal reviews, decision journals, and energy audits. Tracks what's progressing, what's neglected, and what's emerging. Uses 23 thinking frameworks with cross-validation.
 
@@ -74,12 +74,13 @@ Type `/reflect` to get a menu of everything you can do:
 | **Read & Discuss** | Multi-lens reading of an article or note, then interactive discussion |
 | **Deep Dive** | Full briefing on a topic — your notes + web research + resources + framework |
 | **Compact Notes** | Find and merge redundant notes |
+| **Process Meeting** | Turn a work meeting transcript into structured notes with action items |
 
 You can also go direct: `/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/index`.
 
 ## The Team
 
-Ten agents work together during sessions. You don't need to manage them — the orchestrator dispatches automatically. But you can talk to any of them directly:
+Eleven agents work together during sessions. You don't need to manage them — the orchestrator dispatches automatically. But you can talk to any of them directly:
 
 - *"find notes about X"* — sends Researcher to search your notes
 - *"read [[Article]] with critical lens"* — sends Reader to analyze
@@ -96,7 +97,7 @@ Reflect.app  <──MCP──>  Claude Code (Orchestrator)
                     +-----------+-----------+
                     v           v           v
               Agent Team    Sessions    Frameworks
-              (10 agents)   (9 types)   (22 frameworks)
+              (11 agents)  (10 types)   (22 frameworks)
                     |           |           |
                     v           v           v
               Protocols    reflections/  Cross-validation

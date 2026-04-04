@@ -7,6 +7,8 @@ Your reflection system. Uses a two-step decision tree with `AskUserQuestion` for
 If the user types `/reflect` with additional context, detect intent and route:
 - **Paper review intent** (mentions "paper", "arXiv", "review paper", or links to arxiv.org/openreview.net): skip the menu and go to Paper Review using their input as the paper to review.
 - **Reading intent** (mentions an article, URL, [[Note Title]], or "read/discuss"): skip the menu and go to Read & Discuss using their input as the article to read.
+- **Meeting intent** (mentions "meeting", "standup", "1:1", or "meeting notes"): skip the menu and dispatch the **Meeting** agent directly.
+- **Talk/transcript intent** (mentions "seminar", "talk", "transcript", "podcast", "video" or pastes a large block of transcript text): skip the menu and go to Read & Discuss, with Reader preprocessing the transcript format.
 - **Reflection intent** (everything else, e.g., "/reflect I had a tough day"): skip the menu and go straight to Daily Reflection using their input as context.
 
 ## Step 1: Choose Mode
@@ -56,6 +58,7 @@ Based on Step 1, use a second `AskUserQuestion`:
 | 1 | **Compact Notes** | Find and merge redundant or overlapping notes |
 | 2 | **Deep Dive** | Full briefing on a topic — notes + web research + resources + framework, 4 agents in parallel |
 | 3 | **Note Triage** | Scan for compaction candidates across your notes |
+| 4 | **Process Meeting** | Turn a work meeting transcript into structured notes with action items |
 
 - **Compact Notes:** Dispatch to the **Curator** agent. Ask the user what topic or notes to compact. The Curator searches for related notes, proposes a merged version, and waits for approval before writing.
 - **Deep Dive:** Ask the user for a topic, then dispatch **four agents in parallel**:
@@ -65,6 +68,7 @@ Based on Step 1, use a second `AskUserQuestion`:
   4. **Thinker** — select and apply a relevant framework from `frameworks/`
   Once all four return, **Synthesizer** combines their outputs into a unified briefing: your existing thinking, external intelligence, curated resources, and a framework lens — all in one view. Present in Chinese for reading-intensive output.
 - **Note Triage:** Ask the user for 3-5 topic areas (or pull from `index/meta-summary.md` themes). Dispatch the **Researcher** to search each topic area in parallel. For each area, identify notes with overlapping content. Present a prioritized compaction plan: which notes to merge, estimated redundancy, and impact. The user picks which to compact, then dispatch to **Curator** for each approved merge.
+- **Process Meeting:** Ask the user to paste or provide the meeting transcript. Dispatch the **Meeting** agent (Executive mode — action items, decisions, next steps). Present the structured output. Ask the user if they want to save as a Reflect note — if yes, dispatch **Curator** to create it. For research talks or presentations, use Read instead — Reader handles transcript format with real analytical lenses.
 
 ### If Read:
 
@@ -76,7 +80,7 @@ Based on Step 1, use a second `AskUserQuestion`:
 | 4 | **Paper Review** | Human-steered, AI-accelerated paper review — you lead, AI does the legwork |
 
 - **Read & Discuss:** Ask for the article/note. Dispatch 1 Reader (Critical lens) + 1 Researcher (find related notes). Present the analysis, then enter interactive discussion mode. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). This is the lightweight default — most reading sessions start here.
-- **Focused Read:** Ask the user which article/note and which lens(es): Critical, Structural, Practical, or Dialectical. Dispatch 1-2 Reader instances with the chosen lenses. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). Use when the user knows what angle they want.
+- **Focused Read:** Ask the user which article/note and which lens(es): Critical, Structural, Practical, or Dialectical. Dispatch 1-2 Reader instances with the chosen lenses. Reader automatically handles transcript format (video/podcast) with preprocessing before applying the lens. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). Use when the user knows what angle they want.
 - **Multi-Lens Read:** Ask the user which article or note to read. Then follow the Reading Hub flow below. Use for important articles worth deep multi-angle analysis.
 - **Paper Review:** Ask the user which paper to review (URL, title, or [[Note]]). Then follow the Paper Review flow below. Designed for non-peer-reviewed papers (arXiv, blog posts with claims, technical reports) where the user acts as reviewer.
 
@@ -272,6 +276,7 @@ Over time, the `#paper-review` tag becomes the user's personal review index, sea
      - Opinion/journalism/essays → + Dialectical (find the tensions)
      - How-to/research/strategy → + Practical (extract takeaways)
      - Philosophy/argument/debate → + Dialectical + Practical
+     - Video/podcast transcripts → Critical + Practical (Reader auto-preprocesses transcript format)
    - **Researcher** — find user's existing notes related to the topic
    - **Scout** (1-2 instances) — gather external context on the topic
    - **Thinker** — select and apply a relevant framework
