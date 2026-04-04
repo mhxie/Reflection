@@ -32,6 +32,7 @@ Launch agents based on command type:
 | `/project:explore` | Researcher |
 | `/project:energy-audit` | Researcher (include amenity floor check) |
 | Read mode (via `/reflect`) | Reader (1-4 instances by lens) + Researcher + Scout + Thinker (parallel) |
+| Paper Review (via `/reflect`) | Reader (Critical) + Researcher (expertise + past reviews) + 2-3× Scout (related work, author context, reception) (parallel) |
 
 ### Phase 2: Synthesize
 - Synthesizer takes Researcher's brief and produces structured output
@@ -84,6 +85,7 @@ The user can request these actions during or after any session:
 | "What does this article really say?" | Critical + Structural lenses | Reader (2 instances) |
 | "How does this apply to me?" | Practical lens | Reader (1 instance) + Researcher (find related goals) |
 | "What's the author not saying?" | Dialectical lens | Reader (1 instance) |
+| "Review this paper" / arXiv link | Paper review with figure validation | Reader (Critical) + Researcher + 2-3× Scout |
 
 ### Thinking Operations (→ Thinker / Challenger)
 | User Says | Action | Agent |
@@ -143,6 +145,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Research + Frame** | Researcher + Thinker + 2-5× Scout | Start of decision session | Internal thinking + frameworks + external evidence from two angles |
 | **Deep Dive** | Researcher + 2-5× Scout + Librarian + Thinker | User picks Deep Dive | Full briefing: notes + multi-angle web intel + resources + framework |
 | **Reading Hub** | 2-4× Reader + Researcher + Scout + Thinker | User picks Read or says "let's read" | Multi-lens analysis: lenses + notes + external + framework |
+| **Paper Review** | Reader (Critical) + Researcher + 2-3× Scout | User picks Paper Review or shares arXiv link | Expertise-aware review: critical read + prior work + external intelligence → figure checkpoint → discussion → standalone review note |
 | **Multi-topic Triage** | Multiple Researcher dispatches | User picks Note Triage | Scan several topic areas simultaneously |
 
 **Scout multi-dispatch rule:** Dispatch 2-5 Scout instances based on topic complexity. Simple topics: 2 (e.g., Mainstream + Contrarian). Complex or high-stakes topics: 3-5 (cover more directions). Each instance gets a different direction assignment from `.claude/agents/scout.md`. Use `AskUserQuestion` to let the user choose breadth if unclear.
@@ -204,8 +207,8 @@ Always use the strongest available model for review depth.
 
 | Reviewer | Command | Model |
 |----------|---------|-------|
-| **Codex** | `codex review --base <base> -c 'model_reasoning_effort="xhigh"'` | Best available with max reasoning |
-| **Codex** (adversarial) | `codex challenge` | Best available |
+| **Codex** | `codex exec review` or `codex exec "prompt"` | Best available (gpt-5.4) |
+| **Codex** (adversarial) | `codex exec "adversarial prompt"` | Best available |
 | **Gemini** | `git diff <base>..HEAD \| gemini -m gemini-3.1-pro-preview -p "Review this diff for a reflection system. Check for: consistency, missing integration, overclaims, design issues. Be direct." -y` | Gemini 3.1 Pro |
 
 #### Graceful Degradation

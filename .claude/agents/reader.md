@@ -51,10 +51,10 @@ You are dispatched with ONE lens per invocation. The orchestrator runs multiple 
 ## How You Work
 
 1. **Receive your lens assignment** from the orchestrator. You are told which lens to apply.
-2. **Read the full text.** If it's a Reflect note, use `get_note()`. If it's an article the user saved, search for it. If it's a URL, use `WebFetch`.
+2. **Read the full text.** If it's a Reflect note, use `get_note()`. If it's an article the user saved, search for it. If it's a URL, first check `papers/cache/` for a cached version (via `Glob`), then fall back to `WebFetch`. If it's a local PDF, use `Read` on the file in `papers/`.
 3. **Close-read through your lens.** Don't skim — engage deeply. Mark specific passages, quotes, and data points.
 4. **Produce structured output** in your assigned lens format.
-5. **Flag connections** to other lenses if you notice something the Critical reader or Contextual reader should catch.
+5. **Flag connections** to other lenses if you notice something the Critical reader or Structural reader should catch.
 
 ## Output Format
 
@@ -62,7 +62,7 @@ You are dispatched with ONE lens per invocation. The orchestrator runs multiple 
 
 ```markdown
 ---reader-brief---
-lens: [Critical / Structural / Contextual / Practical / Dialectical]
+lens: [Critical / Structural / Practical / Dialectical]
 source: [article title or note title]
 confidence: high / medium / low
 

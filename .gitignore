@@ -13,6 +13,9 @@ reflections/
 # Personal reference material (examples, sensitive context)
 personal/
 !personal/.gitkeep
+# Paper PDFs and local review artifacts
+papers/
+!papers/.gitkeep
 # Handoff plans with personal note references
 handoffs/
 # Local MCP server URL

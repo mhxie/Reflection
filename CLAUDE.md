@@ -51,8 +51,11 @@ This project connects to a Reflect MCP server for reading and writing notes.
 The `personal/` directory is gitignored and contains sensitive reference material:
 
 - `personal/examples.md` — Real write-back title examples from past sessions. Agents can read this for richer inspiration beyond the generic examples in command files.
+- `personal/research-profile.md` — Research identity: domain expertise map, taste, critique distribution, review calibration, and current focus areas. Read at the start of every Paper Review session. Updated by the user or by the Evolver after calibration shifts.
 
-This directory may grow to hold other personal context. It is never committed to git.
+The `papers/` directory is gitignored and stores local paper PDFs and review artifacts. Papers can be referenced by filename in Paper Review sessions. `papers/cache/` stores web-fetched content (articles, papers, discussions) so agents don't re-fetch the same URLs across sessions or parallel dispatches.
+
+These directories may grow to hold other personal context. They are never committed to git.
 
 ## Index Rules
 
@@ -133,6 +136,14 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 3. Interactive discussion between user and orchestrator
 4. Reviewer + Challenger gate the write-back (grounding + completeness)
 5. Write-back with user approval, [[backlinks]] to the article
+
+**Paper review (`/reflect` → Read → Paper Review):**
+1. Read `personal/research-profile.md` for expertise map, taste, and calibration
+2. Reader (Critical) + Researcher (prior papers + expertise) + 2-3× Scout (related work, author context, reception) in parallel
+3. Figure checkpoint: pause for user to validate each key figure/diagram/table
+4. Expertise-aware synthesis: deep in user's domain, Scout-informed outside it
+5. Interactive review discussion with real-time Scout dispatch for user questions
+6. Standalone `#paper-review` note in Reflect (no daily write-back). PDFs stored in `papers/`
 
 **System evolution (after any session):**
 1. Evolver observes what worked and what didn't

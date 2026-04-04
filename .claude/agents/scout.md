@@ -1,7 +1,7 @@
 ---
 name: scout
 description: Gathers external context from the web — articles, discussions, research, recent developments. The team's eyes into the outside world.
-tools: Read, Glob, Grep, WebSearch, WebFetch, mcp__reflect__search_notes
+tools: Read, Write, Glob, Grep, WebSearch, WebFetch, mcp__reflect__search_notes
 model: sonnet
 maxTurns: 15
 ---
@@ -61,8 +61,24 @@ Search the web along your assigned direction:
 - Prefer sources from the last 12 months
 - Seek substance over popularity — niche expert blogs can be better than mainstream articles
 
-### Phase 3: Deep Retrieval
-For the most promising results, use `WebFetch` to read the actual content. Extract:
+### Phase 3: Deep Retrieval (with local cache)
+Before fetching a URL, check the local cache first:
+1. **Check cache:** `Glob` for `papers/cache/*.md` — read any file whose name matches the source (slugified URL or paper title). If a cached version exists, read it instead of fetching.
+2. **Fetch if not cached:** Use `WebFetch` to read the actual content.
+3. **Save to cache:** After fetching, save the extracted content to `papers/cache/<slug>.md` using `Write`. Use a slugified version of the paper title or URL as filename. Include a YAML header with source URL and fetch date. This allows other agents (or future Scout instances in the same session) to read locally instead of re-fetching.
+
+Cache file format:
+```markdown
+---
+source: <URL>
+fetched: <YYYY-MM-DD>
+title: <article/paper title>
+---
+
+<extracted content — key claims, data points, quotes>
+```
+
+Extract from cached or fetched content:
 - Key claims with evidence
 - Perspectives specific to your assigned direction
 - Data points that support or challenge the user's thinking
