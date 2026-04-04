@@ -110,6 +110,7 @@ The confidence level calibrates **everything**: comment count, specificity, lang
 - Questions: 2-4 bullets max.
 - Total items (strengths + weaknesses + questions): capped by confidence level above.
 - Summary: 2-3 sentences. Verdict-oriented, not a paragraph.
+- **Citations:** When referencing other papers, use numbered references inline (e.g., "MapReduce [1]") with a References section at the end in APA format. This applies to weaknesses, comments, and any claim that invokes prior work. Scouts should gather full citation metadata (authors, year, venue) during Phase 1.
 - **Apply these limits from the start.** Do not produce a long draft and then ask the user to cut — start concise.
 
 ##### Phase 1: Gather (parallel)
@@ -248,6 +249,10 @@ Create the note using `create_note`:
 
 ## Scout Intelligence
 - [Key external findings — community reception, author context, related work gaps]
+
+## References
+[1] Author, A., Author, B., & Author, C. (Year). Title. In *Venue* (pp. X-Y).
+[2] ...
 ```
 
 **No daily write-back.** The paper review note is the sole output. Ask user to confirm the verdict before creating the note.
