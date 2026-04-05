@@ -130,7 +130,10 @@ Required fields:
 Required fields:
 - `operation`: compact | merge | create | replace
 - `notes_affected`: Array of note titles involved
+- `media_inventory`: (required for compact/merge, omit for create/replace) `{images: count, tables: count, structured_blocks: count, embeds: count}` — counts from source notes. The orchestrator verifies these counts match the output.
+- `external_content_flagged`: (required for compact/merge, omit for create/replace) boolean — true if any source notes contain content from external sources (forum quotes, others' experiences). If true, those sections must be clearly attributed in `proposed_content`.
 - `proposed_content`: The new/merged content (for user approval)
+- `content_integrity`: (required for compact/merge, omit for create/replace) `{verbatim_preserved: boolean, structures_preserved: boolean, images_preserved: boolean, checklist_passed: boolean}` — self-assessment that the Content Preservation Checklist was run
 - `rationale`: Why this operation was recommended
 
 ## Contract: Meeting → Orchestrator
