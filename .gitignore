@@ -18,6 +18,8 @@ papers/
 !papers/.gitkeep
 # Handoff plans with personal note references
 handoffs/
+# Draft note content for Reflect compaction (temporary working files)
+drafts/
 # Local MCP server URL
 .mcp.json
 # Codex session state

@@ -46,6 +46,11 @@ This project connects to a Reflect MCP server for reading and writing notes.
 **MCP Write Limitations:**
 - The API only supports `create_note` and `append_to_daily_note`. There is **no update, edit, or delete** operation.
 - `create_note()` with an existing title returns the existing note — it does NOT overwrite it.
+- **Creation order matters.** When creating cross-referenced notes, create leaf notes first, then the hub note that links to them. If the hub is created first, its `[[backlinks]]` auto-create empty stub notes in Reflect, and subsequent `create_note()` calls for the leaves return those empty stubs (no overwrite). Leaf-first avoids this collision.
+- **No markdown tables in `create_note`.** Reflect's API does not render markdown tables — they collapse into flat text. Always use bullet lists instead of tables when creating notes.
+- **Size limit ~20KB per `create_note` call.** Notes larger than ~20KB may timeout. Split large notes into multiple parts (e.g., "Topic (Part 1)", "Topic (Part 2)") and cross-link them.
+- **Date backlink format.** Reflect daily notes use `[[Day, Month DDth, YYYY]]` (e.g., `[[Fri, August 2nd, 2024]]`), not `[[M/D/YYYY]]` or `[[YYYY-MM-DD]]`. The wrong format creates new empty notes instead of linking to the daily note.
+- **Subagents cannot use the Write tool.** Curator and other subagents are denied file-write permissions by Claude Code. When a subagent needs to save a draft file, the orchestrator must handle the file write itself after receiving the content from the subagent.
 - Merges and compactions create new notes. The user must manually delete originals in Reflect. Always inform the user of this cleanup step.
 - Because mistakes cannot be undone via API, all note operations must go through the Curator's Content Preservation Checklist before writing.
 

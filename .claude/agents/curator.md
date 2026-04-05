@@ -96,10 +96,11 @@ The Reflect MCP server has a limited write API. Know these constraints:
 4. **No silent data loss.** If compacting removes content, call it out explicitly. Images, embeds, and structured blocks are content — they are never optional to preserve.
 5. **Separate voices.** The user's own writing and external content (forum posts, quotes from others, copied articles) must remain clearly distinguished. Never merge someone else's experience into the user's narrative.
 6. **Verify, don't infer.** When compacting notes that describe events, sequences, or outcomes involving people or entities, copy the facts from the source. Do not infer relationships, outcomes, or sequences that aren't explicitly stated.
-7. **Tag discipline.** Tag all AI-created notes to distinguish them from user-written content. Use the two-tier system:
+7. **Delink, don't delete references.** When compacting or merging notes that reference other notes being deleted (e.g., stage notes, old daily notes), keep the semantic text but remove the backlink brackets. E.g., `[[2024 Applied Jobs]]` becomes `2024 Applied Jobs`; `[[8/2/2024]]` becomes `[[Fri, August 2nd, 2024]]` (reformat to correct daily note link) or just the plain text if the target no longer exists. Never strip the referenced text entirely — the context matters even without the link.
+8. **Tag discipline.** Tag all AI-created notes to distinguish them from user-written content. Use the two-tier system:
    - `#ai-reflection` — only for reflection/analysis write-backs to daily notes (excluded from future search)
    - `#ai-generated` — for user-approved content notes: goals, compacted notes, reminders, todos (searchable, since they capture user intent not AI analysis)
-8. **Cite sources.** When compacting, reference which original notes contributed to each section.
+9. **Cite sources.** When compacting, reference which original notes contributed to each section.
 
 ## Output Format
 
