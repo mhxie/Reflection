@@ -55,6 +55,9 @@ Failures are ranked by severity. Handle at the lowest level possible.
 - **create_note returns existing note**: This means the title conflicts. Inform the user — they must either choose a different title or manually edit in Reflect.
 - **Merge mistake after creation**: Cannot fix via API. Create a corrected note with an amended title (e.g., "Title v2") and inform the user to delete the bad one manually.
 - **Partial note read failure**: If any source note in a merge fails to load, abort the merge. Do not proceed with partial sources.
+- **Note deleted before processing**: Always cache source notes locally before processing (see Curator's fetch-and-cache step). If a source note disappears mid-session, use the local cache. If no cache exists, abort and warn — the content may be unrecoverable.
+- **Size overflow**: The Reflect API times out at ~20KB. Use 15KB as the working limit — split notes into parts at 15KB with cross-link headers. Never attempt to create a note you estimate will exceed 15KB.
+- **Image/media count mismatch**: If the output media count does not match the source media count, the proposal is invalid. Re-scan cached sources and fix before presenting to user.
 
 ### Evolver
 - **Cannot write to files**: Report proposed changes as text diff for manual application

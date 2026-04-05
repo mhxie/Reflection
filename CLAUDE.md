@@ -29,6 +29,8 @@ This project connects to a Reflect MCP server for reading and writing notes.
 - Use `list_tags` to discover available tags.
 - **NEVER hallucinate note content.** If search returns nothing relevant, say so honestly.
 - When searching for context, **exclude AI-generated analysis** by avoiding notes tagged `#ai-reflection`. Notes tagged `#ai-generated` (goals, reminders, todos) are user-approved content and SHOULD appear in search results.
+- **Search snippets are lossy.** `search_notes` results strip images and some markdown. Always follow up with `get_note()` for any note where full content matters (media, structured data, exact quotes).
+- **Cache before processing.** When working with 5+ notes (compaction, batch operations), cache each note to `papers/cache/` immediately after fetching. This protects against note deletion and avoids redundant re-fetches across agent dispatches.
 
 **Writing:**
 - **Always ask for user approval before writing.** Never auto-write to daily notes. Present what you plan to write and wait for confirmation.
@@ -61,7 +63,7 @@ The `personal/` directory is gitignored and contains sensitive reference materia
 - `personal/examples.md` — Real write-back title examples from past sessions. Agents can read this for richer inspiration beyond the generic examples in command files.
 - `personal/research-profile.md` — Research identity: domain expertise map, taste, critique distribution, review calibration, and current focus areas. Read at the start of every Paper Review session. Updated by the user or by the Evolver after calibration shifts.
 
-The `papers/` directory is gitignored and stores local paper PDFs and review artifacts. Papers can be referenced by filename in Paper Review sessions. `papers/cache/` stores web-fetched content (articles, papers, discussions) so agents don't re-fetch the same URLs across sessions or parallel dispatches.
+The `papers/` directory is gitignored and stores local paper PDFs and review artifacts. Papers can be referenced by filename in Paper Review sessions. `papers/cache/` stores web-fetched content (articles, papers, discussions) and cached Reflect note snapshots during compaction — so agents don't re-fetch the same URLs across sessions or parallel dispatches, and note content is recoverable if accidentally deleted.
 
 These directories may grow to hold other personal context. They are never committed to git.
 
@@ -158,6 +160,16 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 5. Interactive review discussion with real-time Scout dispatch for user questions
 6. Standalone `#paper-review` note in Reflect (no daily write-back). PDFs stored in `papers/`
 
+**Note compaction (`compact my notes on X`):**
+1. Researcher identifies all related notes (search + user guidance)
+2. Orchestrator fetches all notes and caches locally to `papers/cache/`
+3. Curator (Sonnet) receives cached file paths + compaction instructions
+4. Curator drafts compacted note(s), runs Content Preservation Checklist
+5. Orchestrator verifies Gate 4 (media count, size, verbatim preservation)
+6. User approves each output note individually
+7. Curator creates notes via `create_note()` — one at a time, in order
+8. For batch (10+ notes): plan-then-execute workflow with master inventory upfront
+
 **System evolution (after any session):**
 1. Evolver observes what worked and what didn't
 2. Proposes and stages changes to agents, commands, or CLAUDE.md (does NOT commit)
@@ -179,7 +191,7 @@ The `protocols/` directory defines system behavior:
 |----------|---------|
 | `agent-handoff.md` | Structured contracts for agent-to-agent communication |
 | `error-handling.md` | Graceful degradation when things fail |
-| `quality-gates.md` | 3-stage checkpoint architecture |
+| `quality-gates.md` | 4-stage checkpoint architecture (Research, Synthesis, Review, Note Operations) |
 | `session-scoring.md` | 5-dimension quality scoring with yield tracking and amenity floors |
 | `escalation.md` | When and how to escalate issues |
 | `feedback-loops.md` | 3 loops: within-session, between-session, cross-session |

@@ -64,7 +64,7 @@ The user can request these actions during or after any session:
 ### Note Operations (→ Curator)
 | User Says | Action | Agent |
 |-----------|--------|-------|
-| "Compact my notes on X" | Read related notes, produce a single synthesized note | Curator |
+| "Compact my notes on X" | Researcher finds notes → orchestrator caches locally → Curator compacts from cache | Researcher → Curator |
 | "Merge these notes" | Combine specified notes into one, archive originals | Curator |
 | "Summarize [[Note]]" | Produce a concise summary | Synthesizer |
 | "Write this insight as a new note" | Create a new Reflect note from session insight | Curator |
@@ -145,6 +145,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Reader → Challenger** | Reader surfaces a claim worth questioning | Challenger probes the claim against user's existing beliefs | Deepens engagement with the text |
 | **Reviewer + Challenger → Write-back** | Reading discussion ready for write-back | Reviewer checks grounding, Challenger checks completeness | Quality gate before writing to daily note |
 | **Evolver → Orchestrator → Review → Commit** | Evolver proposes a system change | Evolver makes changes (no commit) → returns `review_tier` to orchestrator → orchestrator dispatches reviewers → fixes issues → commits | Quality gate on system evolution (see Review Tiers) |
+| **Batch Compaction** | User asks to compact a topic area | Researcher finds all notes → Orchestrator caches locally → Curator compacts from cached files (one output note at a time) | Sequential: cache must complete before Curator starts |
 
 ### Parallel Dispatches (A and B run simultaneously)
 
@@ -250,6 +251,7 @@ During any session, actively look for these signals and chain agents:
 | Energy audit shows a life area below amenity floor | Flag it: "[Area] is below amenity floor." See `protocols/session-scoring.md` |
 | User tries to change focus mid-session | Enforce Focus Lock — redirect to a full `/review` session first |
 | User says "this was great" or "this wasn't helpful" | Route feedback to Evolver |
+| Curator proposes a note (compact/merge) | **Verify Gate 4**: check media count match, size < 15KB, verbatim preservation. Block if any check fails. |
 | **Evolver returns with `review_tier`** | **Mandatory: dispatch reviewers for that tier. Never skip.** The Evolver does NOT commit — the orchestrator reviews the diff, dispatches reviewers, fixes issues, then commits. The orchestrator owns this gate. See Review Tiers above for which reviewers to dispatch per tier. |
 
 ## Orchestrator Rules

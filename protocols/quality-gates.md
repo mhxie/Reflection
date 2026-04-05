@@ -8,6 +8,8 @@ Defines checkpoints that must pass before output reaches the user. Each gate has
 [Research] → Gate 1 → [Synthesis] → Gate 2 → [Review] → Gate 3 → [User]
                                        ↑                    |
                                        └── Revision Loop ←──┘
+
+[Curator Proposal] → Gate 4 → [User Approval] → [create_note]
 ```
 
 ## Gate 1: Research Completeness
@@ -53,6 +55,23 @@ Defines checkpoints that must pass before output reaches the user. Each gate has
 
 **Gate keeper:** Reviewer
 **Max revision rounds:** 2 (after 2 failed revisions, deliver with all caveats noted)
+
+## Gate 4: Note Operations (Compact/Merge)
+
+**When:** After Curator produces a proposal, before presenting to user.
+
+| Check | Pass Criteria | Fail Action |
+|-------|--------------|-------------|
+| Source caching | All source notes cached locally in `papers/cache/` | Abort — do not draft from uncached sources |
+| Media count match | Output image count = source image count | Block — re-scan sources, restore missing media |
+| Size limit | Each output note < 15KB | Split into numbered parts before presenting |
+| Verbatim preservation | Chinese text, interview memos, raw observations preserved word-for-word | Block — diff against cached sources to find paraphrased content |
+| Voice separation | External quotes (forum posts, others' experiences) clearly attributed | Block — add attribution markers |
+| Factual accuracy | No conflation of different people's experiences or event sequences | Block — cross-check against cached sources |
+| Structured data | Pipelines, timelines, tracking tables preserved exactly | Block — copy from cached source |
+
+**Gate keeper:** Orchestrator (verifies Curator's self-assessment in `content_integrity` field)
+**Max retries:** 1 (if still failing, present to user with explicit warnings about what's missing)
 
 ## Bypass Conditions
 

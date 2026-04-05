@@ -123,6 +123,17 @@ Required fields:
 - `already_read`: Resources the user already has notes on (excluded from recommendations)
 - `contrarian_pick`: At least one recommendation that challenges current thinking
 
+## Contract: Orchestrator → Curator (Compact/Merge Dispatch)
+
+When dispatching the Curator for compact or merge operations, the orchestrator MUST:
+
+1. **Fetch all source notes** via `get_note()` before dispatching
+2. **Cache each note** to `papers/cache/<operation>-<note-id>.md` (e.g., `compact-abc123.md`, `merge-def456.md`)
+3. **Pass cache file paths** to the Curator in the dispatch prompt
+4. The Curator works exclusively from cached files — it never fetches from MCP itself
+
+This ensures content is recoverable if the user deletes source notes mid-session.
+
 ## Contract: Curator → Orchestrator
 
 **Type:** `note-operation`
@@ -130,9 +141,12 @@ Required fields:
 Required fields:
 - `operation`: compact | merge | create | replace
 - `notes_affected`: Array of note titles involved
+- `cached_sources`: (required for compact/merge) Array of local cache file paths used as source. Orchestrator verifies these exist before accepting the proposal.
 - `media_inventory`: (required for compact/merge, omit for create/replace) `{images: count, tables: count, structured_blocks: count, embeds: count}` — counts from source notes. The orchestrator verifies these counts match the output.
+- `media_output_count`: (required for compact/merge) `{images: count, tables: count, structured_blocks: count, embeds: count}` — counts in the proposed output. Must match `media_inventory` or differences must be listed in `changes_summary`.
 - `external_content_flagged`: (required for compact/merge, omit for create/replace) boolean — true if any source notes contain content from external sources (forum quotes, others' experiences). If true, those sections must be clearly attributed in `proposed_content`.
 - `proposed_content`: The new/merged content (for user approval)
+- `estimated_size`: Approximate byte size of `proposed_content`. If >15KB, must include a split plan.
 - `content_integrity`: (required for compact/merge, omit for create/replace) `{verbatim_preserved: boolean, structures_preserved: boolean, images_preserved: boolean, checklist_passed: boolean}` — self-assessment that the Content Preservation Checklist was run
 - `rationale`: Why this operation was recommended
 
