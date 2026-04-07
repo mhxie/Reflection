@@ -34,6 +34,10 @@ One-way sync from the local wiki layer to Reflect. Wiki entries live under `zk/w
    - **changed** — slug in manifest, hash differs
    - **unchanged** — slug in manifest, hash matches → skip
 5. Run `Bash: scripts/trust.py --json` and filter entries where `integrity_ok: false` (or with non-empty `parse_errors`). Do not sync failing entries; warn the user.
+6. Run `Bash: scripts/lint.py --json` as a corpus-level preflight. Parse the JSON and split ERROR findings by code:
+   - **`parse-error`** — ignore here; step 5 already handles per-note parse failures by skipping the broken note and syncing the rest. Blocking the whole sync on one bad note would regress that behavior.
+   - **`duplicate-title`, `manifest-unreadable`, `manifest-malformed`** (and any other ERROR code that is not `parse-error`) — **stop the sync** and surface them verbatim. These are corpus-level failures that silently corrupt the manifest or the trust graph if pushed.
+   - **WARN and INFO findings** — advisory only. Show a one-line summary and continue. For a full breakdown and remediation, tell the user to run `/lint` directly.
 
 ### Phase 2: Obtain the stripped body (deterministic)
 

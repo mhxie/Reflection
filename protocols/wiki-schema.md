@@ -52,9 +52,11 @@ Body.
 
 ## Revision Log
 
-- 2026-04-06: Initial draft. Claims [C1], [C2] anchored from scout brief sources.
 - 2026-04-12: [C2] anchor `arxiv:2501.13956` invalidated — paper retracted. See @cite [[Graphiti retraction note]].
+- 2026-04-06: Initial draft. Claims [C1], [C2] anchored from scout brief sources.
 ```
+
+**Revision log ordering: latest entry first.** New rows go at the top of the list, not the bottom. The most recent change is almost always the one the reader needs; paging to the bottom of a long log to find it wastes attention. This is a human convention, not a parser-enforced rule — `scripts/trust.py` ignores the Revision Log entirely.
 
 The `# Title`, `## Summary`, `## Claims`, and `## Revision Log` headings are required. Topic tags (regular Obsidian-style hashtags) are allowed but not required and play no role in the trust engine.
 
