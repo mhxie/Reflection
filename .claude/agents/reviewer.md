@@ -100,7 +100,7 @@ The default mode. Scores session output on 5 dimensions.
 | 3-4 | Significant speculation without flagging |
 | 0-2 | Fabricated content or hallucinated note references |
 
-**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, AI content missing its tag (`#ai-reflection` for reflections, `#ai-generated` for user-approved content).
+**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, a Reflect write-back claiming wiki-entry-grade certainty (claim sections, `@anchor` / `@cite` markers) without the corresponding file living under `zk/wiki/` and passing structural integrity, a note that copies wiki schema shape into a Reflect-only note. Note: the absence of a `#ai-reflection` or `#ai-generated` tag is NOT a red flag — those tags are retired by the validation-depth taxonomy in `protocols/epistemic-hygiene.md` and new alloy content carries no provenance tag.
 
 ### 4. Staleness Check (weight: 10%)
 

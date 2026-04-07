@@ -73,7 +73,7 @@ The system also adapts depth based on how experienced the user is with structure
 ### Maturity Signals
 
 Assess from:
-- Session count (check `reflections/` file count)
+- Session count (check `zk/reflections/` file count)
 - Response depth (long, reflective answers = higher maturity)
 - User-initiated direction changes (asking for frameworks, pushing back)
 - Self-awareness signals ("I notice I tend to..." = high maturity)

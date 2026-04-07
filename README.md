@@ -100,7 +100,7 @@ Reflect.app  <──MCP──>  Claude Code (Orchestrator)
               (11 agents)  (10 types)   (22 frameworks)
                     |           |           |
                     v           v           v
-              Protocols    reflections/  Cross-validation
+              Protocols    zk/reflections/  Cross-validation
               (16 rules)   (outputs)     & Pattern Library
 ```
 

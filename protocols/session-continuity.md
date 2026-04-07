@@ -9,7 +9,7 @@ Each session should feel like a chapter in an ongoing conversation, not a standa
 ### Reading the Thread
 
 At the start of every session, load:
-1. **Last 3 reflection/review files** from `reflections/`
+1. **Last 3 reflection/review files** from `zk/reflections/`
 2. **Profile files** (identity.md, directions.md)
 3. **Today's daily note** (current context)
 
@@ -35,12 +35,12 @@ Sessions leave artifacts that future sessions can read:
 
 | File | Purpose | Read By |
 |------|---------|---------|
-| `reflections/YYYY-MM-DD-reflection.md` | Daily insights | Next reflect session |
-| `reflections/YYYY-MM-DD-review.md` | Goal progress | Next review session |
-| `reflections/YYYY-MM-DD-weekly.md` | Weekly patterns | Next weekly session |
-| `reflections/YYYY-MM-DD-decision-*.md` | Decision records | Future decision/review sessions |
-| `reflections/YYYY-MM-DD-exploration.md` | Open threads | Next explore session |
-| `reflections/YYYY-MM-DD-energy-audit.md` | Energy patterns | Next energy audit |
+| `zk/reflections/YYYY-MM-DD-reflection.md` | Daily insights | Next reflect session |
+| `zk/reflections/YYYY-MM-DD-review.md` | Goal progress | Next review session |
+| `zk/reflections/YYYY-MM-DD-weekly.md` | Weekly patterns | Next weekly session |
+| `zk/reflections/YYYY-MM-DD-decision-*.md` | Decision records | Future decision/review sessions |
+| `zk/reflections/YYYY-MM-DD-exploration.md` | Open threads | Next explore session |
+| `zk/reflections/YYYY-MM-DD-energy-audit.md` | Energy patterns | Next energy audit |
 | `profile/identity.md` | User profile | Every session |
 | `profile/directions.md` | Goals | Every goal-related session |
 

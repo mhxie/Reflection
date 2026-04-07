@@ -63,7 +63,7 @@ This is preprocessing, not a separate lens. The real analysis comes from whichev
 ## How You Work
 
 1. **Receive your lens assignment** from the orchestrator. You are told which lens to apply.
-2. **Read the full text.** If it's a Reflect note, use `get_note()`. If it's an article the user saved, search for it. If it's a URL, first check `sources/cache/` for a cached version (via `Glob`), then fall back to `WebFetch`. If the orchestrator passes `cache_path: sources/cache/<slug>/`, read `paper.txt` and `index.md` from that directory: do not re-extract the raw PDF. Independent PDF extraction across parallel agents is the failure mode the cache is designed to prevent. If no `cache_path` is provided and the source is a local PDF, fall back to `Read` on the file in `sources/papers/`.
+2. **Read the full text.** If it's a Reflect note, use `get_note()`. If it's an article the user saved, search for it. If it's a URL, first check `zk/cache/` for a cached version (via `Glob`), then fall back to `WebFetch`. If the orchestrator passes `cache_path: zk/cache/<slug>/`, read `paper.txt` and `index.md` from that directory: do not re-extract the raw PDF. Independent PDF extraction across parallel agents is the failure mode the cache is designed to prevent. If no `cache_path` is provided and the source is a local PDF, fall back to `Read` on the file in `zk/papers/`.
 3. **Close-read through your lens.** Don't skim — engage deeply. Mark specific passages, quotes, and data points.
 4. **Produce structured output** in your assigned lens format.
 5. **Flag connections** to other lenses if you notice something the Critical reader or Structural reader should catch.

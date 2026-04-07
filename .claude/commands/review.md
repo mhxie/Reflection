@@ -13,7 +13,7 @@ Review progress on near/mid/long-term goals. Surface what's progressing, what's 
    - `profile/identity.md` — reflection context
    - `profile/directions.md` — goals with categories and metrics
 
-2. **Read all reflections from the last 30 days** from the `reflections/` directory. If none exist, note this is the first review.
+2. **Read all reflections from the last 30 days** from the `zk/reflections/` directory. If none exist, note this is the first review.
 
 3. **Query MCP for goal-related updates:**
    - `search_notes(query: "目标", editedAfter: "<30 days ago>", limit: 15)` — recently edited Chinese goal notes
@@ -51,7 +51,7 @@ Present the review interactively, category by category. For each finding, cite t
 
 After discussing, write a review file:
 
-**File:** `reflections/YYYY-MM-DD-review.md`
+**File:** `zk/reflections/YYYY-MM-DD-review.md`
 ```markdown
 # Goal Review — YYYY-MM-DD
 
@@ -92,20 +92,20 @@ After discussing, write a review file:
 
 ## Write-Back to Reflect
 
-After writing the review file, check if today's daily note already contains `#ai-reflection` content.
+After writing the review file, check if today's daily note already contains a write-back from today's session. Detect by descriptive heading. As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier content was written with the old convention.
 
-- If **no existing AI content**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Use `append_to_daily_note` to add:
+- If **no write-back exists yet**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Use `append_to_daily_note` to add:
   ```
-  ## [Descriptive Title] #ai-reflection
+  ## [Descriptive Title]
   [3-4 sentence summary: what's progressing, what's neglected, top suggested experiment]
   ```
-  The title should describe the review's findings, not the session type. E.g., `Learning goals stalled, energy direction shifted` or `Q2 goals: shipping beats planning`. Never use generic titles like "Goal Review Summary."
+  The title should describe the review's findings, not the session type. E.g., `Learning goals stalled, energy direction shifted` or `Q2 goals: shipping beats planning`. Never use generic titles like "Goal Review Summary." **No provenance tag.** Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`); the descriptive heading is the duplicate-detection signal.
 
-- If **AI content already exists**: Skip write-back. Tell the user about the skip.
+- If **a write-back already exists**: Skip. Tell the user about the skip.
 
 ## Trend Analysis (if prior reviews exist)
 
-If previous review files exist in `reflections/`, compare:
+If previous review files exist in `zk/reflections/`, compare:
 - Which goals were "Neglected" last time — are they still neglected? (Chronic neglect signal)
 - Which goals were "Progressing" — have they continued? (Momentum signal)
 - Which "Suggested Experiments" from last review were actually done? (Follow-through signal)

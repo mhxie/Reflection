@@ -128,7 +128,7 @@ Required fields:
 When dispatching the Curator for compact or merge operations, the orchestrator MUST:
 
 1. **Fetch all source notes** via `get_note()` before dispatching
-2. **Cache each note** to `sources/cache/<operation>-<note-id>.md` (e.g., `compact-abc123.md`, `merge-def456.md`)
+2. **Cache each note** to `zk/cache/<operation>-<note-id>.md` (e.g., `compact-abc123.md`, `merge-def456.md`)
 3. **Pass cache file paths** to the Curator in the dispatch prompt
 4. The Curator works exclusively from cached files — it never fetches from MCP itself
 

@@ -21,9 +21,9 @@ Don't search randomly. Follow this strategy:
 ### Phase 2: Targeted Retrieval (read the hits)
 - Read full content of top 10-15 most relevant notes via `get_note()`
 - Prioritize: goal notes > recent daily notes > thematic notes
-- Skip notes tagged #ai-reflection (reflection summaries — system's own analysis)
-- DO include notes tagged #ai-generated (user-approved content like goals, reminders)
-- **Batch efficiency:** When fetching many notes (e.g., for compaction research), collect all note IDs first, then fetch in parallel where possible. When working with 5+ notes, return the full note content in the handoff brief so the orchestrator can cache locally — the Researcher cannot write files, so caching is the orchestrator's responsibility.
+- **Do not filter by provenance tag.** The criterion for a hit's relevance is validation depth and topic match, not origin. Notes tagged `#ai-reflection` or `#ai-generated` are historical alloy markers from an earlier taxonomy; treat them exactly like any other alloy note and include them in results. Do not exclude. (See `protocols/epistemic-hygiene.md` for the validation-depth taxonomy.)
+- **Tier awareness (Phase A).** Today, Researcher's sole retrieval path is Reflect MCP (L1 capture). Local L4 wiki entries under `zk/wiki/` are not yet auto-queried; that is Phase C. If the user explicitly asks about the wiki layer, fall back to `Grep` over `zk/wiki/*.md` and cite matches by file path.
+- **Batch efficiency:** When fetching many notes (e.g., for compaction research), collect all note IDs first, then fetch in parallel where possible. When working with 5+ notes, return the full note content in the handoff brief so the orchestrator can cache locally. The Researcher cannot write files, so caching is the orchestrator's responsibility.
 - **Search snippets are lossy:** `search_notes` strips images and some markdown from results. Always `get_note()` for the full content of any note you need to reference precisely. Never assume a search snippet contains all media.
 
 ### Phase 3: Gap Filling (what's missing?)

@@ -28,7 +28,7 @@ You are triaging a content inbox against the user's active goals and directions.
    - **deep-read** — directly relevant to an active goal or learning direction, worth a full reflectl reading session
    - **digest** — interesting context, include in weekly summary, but not worth dedicated time
    - **archive** — low relevance or already absorbed from the summary
-4. Write the ranked list to `sources/cache/triage-YYYY-MM-DD.md` with format:
+4. Write the ranked list to `zk/cache/triage-YYYY-MM-DD.md` with format:
 
    ```markdown
    # Triage — YYYY-MM-DD

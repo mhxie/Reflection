@@ -33,7 +33,7 @@ Failures are ranked by severity. Handle at the lowest level possible.
 ### Synthesizer
 - **No research brief received**: Read index files directly (bypass normal contract). Note: `[DEGRADED: No research brief, synthesizing from index only]`
 - **Research brief has critical gaps**: Acknowledge gaps explicitly in output rather than filling with speculation
-- **Write failure**: Save to `reflections/` locally, skip Reflect write-back
+- **Write failure**: Save to `zk/reflections/` locally, skip Reflect write-back
 
 ### Reviewer
 - **Cannot verify citation**: Mark as `UNVERIFIED` rather than `FAIL`. Distinguish "wrong" from "couldn't check"
@@ -68,8 +68,8 @@ Failures are ranked by severity. Handle at the lowest level possible.
 ## Session Continuity
 
 If a session is interrupted:
-1. Check `reflections/` for partial output from today
-2. Check daily note for `#ai-reflection` content already written
+1. Check `zk/reflections/` for partial output from today
+2. Check daily note for a session write-back already written. Detect by descriptive heading that matches today's session topic. As a best-effort fallback, also scan for a legacy `#ai-reflection` section (pre-Phase-A content). The new alloy default carries no provenance tag, so the heading is the primary signal; the tag scan is historical-only.
 3. Resume from the last completed step rather than restarting
 4. If unclear what was done, ask the user
 

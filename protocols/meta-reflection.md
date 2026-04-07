@@ -12,7 +12,7 @@ Reflect on the reflection process itself. This is how the system becomes self-aw
 ## The Meta-Reflection Process
 
 ### Step 1: Gather Session Data
-Read all session outputs from the last 5-10 sessions in `reflections/`:
+Read all session outputs from the last 5-10 sessions in `zk/reflections/`:
 - Score cards (overall scores, per-dimension scores)
 - Session meta (engagement levels, questions that landed)
 - Patterns identified

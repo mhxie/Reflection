@@ -5,7 +5,7 @@ Free-form exploration session for when the user doesn't have a specific question
 ## Prerequisites
 
 1. Read `profile/identity.md` for context.
-2. Read the most recent reflection file from `reflections/`.
+2. Read the most recent reflection file from `zk/reflections/`.
 
 ## The Exploration Process
 
@@ -51,7 +51,7 @@ Let the user pick which spark interests them. Then:
 
 ## Output
 
-**File:** `reflections/YYYY-MM-DD-exploration.md`
+**File:** `zk/reflections/YYYY-MM-DD-exploration.md`
 
 ```markdown
 # Exploration — YYYY-MM-DD
@@ -80,4 +80,4 @@ Let the user pick which spark interests them. Then:
 
 ## Write-Back
 
-Optional — only if a genuine insight emerged. Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy and framing. **Write-backs are always in English.** Tag with `#ai-reflection #exploration`.
+Optional: only if a genuine insight emerged. Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy and framing. **Write-backs are always in English.** Use a descriptive heading and the `#exploration` topic tag. **No provenance tag** (`#ai-reflection` is retired). Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`); the descriptive heading is the duplicate-detection signal.

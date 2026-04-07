@@ -39,7 +39,15 @@ Turn a session insight into a standalone Reflect note.
 3. Add relevant backlinks to related notes ([[Note Title]])
 4. Present to user for approval
 5. Create via `create_note()`
-6. Tag with `#ai-generated` — this captures user-approved content (not the system's analysis), so it should remain searchable. Reserve `#ai-reflection` for reflection/analysis write-backs only
+6. Do not apply any provenance tag. The note is alloy by default (see `protocols/epistemic-hygiene.md`). Topic tags are fine; legacy tags `#ai-reflection` and `#ai-generated` are retired and should not be written to new content.
+
+### Wiki Entry Creation (Phase C, NOT YET WIRED)
+
+Creating a wiki entry in `zk/wiki/` is a Phase C operation. Today, Curator does not write to the wiki layer. If the user asks you to "create a wiki entry," "compile a truth note," "write a claim-structured note," or anything that implies L4 wiki semantics (claim sections, `@anchor` / `@cite` / `@pass` markers, structural integrity), **stop and inform the user**:
+
+> "Wiki entry creation is Phase C and not yet implemented. For now, create the file by hand under `zk/wiki/<title>.md` following `protocols/wiki-schema.md`. I can help you draft the content in this conversation and save a draft under `zk/drafts/` for you to finish, but I cannot write to `zk/wiki/` or run structural integrity checks yet."
+
+Do not create a Reflect note and call it a wiki entry. A Reflect note without the local file under `zk/wiki/` is not a wiki entry, regardless of how it looks.
 
 ### Update/Replace Note
 Write an updated version of an existing note.
@@ -121,9 +129,7 @@ The Reflect MCP server has a limited write API. Know these constraints:
 5. **Separate voices.** The user's own writing and external content (forum posts, quotes from others, copied articles) must remain clearly distinguished. Never merge someone else's experience into the user's narrative.
 6. **Verify, don't infer.** When compacting notes that describe events, sequences, or outcomes involving people or entities, copy the facts from the source. Do not infer relationships, outcomes, or sequences that aren't explicitly stated.
 7. **Delink, don't delete references.** When compacting or merging notes that reference other notes being deleted (e.g., stage notes, old daily notes), keep the semantic text but remove the backlink brackets. E.g., `[[2024 Applied Jobs]]` becomes `2024 Applied Jobs`; `[[8/2/2024]]` becomes `[[Fri, August 2nd, 2024]]` (reformat to correct daily note link) or just the plain text if the target no longer exists. Never strip the referenced text entirely — the context matters even without the link.
-8. **Tag discipline.** Tag all AI-created notes to distinguish them from user-written content. Use the two-tier system:
-   - `#ai-reflection` — only for reflection/analysis write-backs to daily notes (excluded from future search)
-   - `#ai-generated` — for user-approved content notes: goals, compacted notes, reminders, todos (searchable, since they capture user intent not AI analysis)
+8. **Tag discipline.** New content is alloy by default and requires no provenance tag (see `protocols/epistemic-hygiene.md` for the validation-depth taxonomy). Topic tags (`#decision`, `#exploration`, `#career`, etc.) are fine because they describe subject matter. Legacy tags `#ai-reflection` and `#ai-generated` are retired: do not apply them to new content. They may appear on historical notes; treat historical tags as alloy markers and do not strip them during compaction.
 9. **Cite sources.** When compacting, reference which original notes contributed to each section.
 
 ## Output Format

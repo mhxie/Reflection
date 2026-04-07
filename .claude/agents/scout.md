@@ -63,9 +63,9 @@ Search the web along your assigned direction:
 
 ### Phase 3: Deep Retrieval (with local cache)
 Before fetching a URL, check the local cache first:
-1. **Check cache:** `Glob` for `sources/cache/*.md` — read any file whose name matches the source (slugified URL or paper title). If a cached version exists, read it instead of fetching.
+1. **Check cache:** `Glob` for `zk/cache/*.md` — read any file whose name matches the source (slugified URL or paper title). If a cached version exists, read it instead of fetching.
 2. **Fetch if not cached:** Use `WebFetch` to read the actual content.
-3. **Save to cache:** After fetching, save the extracted content to `sources/cache/<slug>.md` using `Write`. Use a slugified version of the paper title or URL as filename. Include a YAML header with source URL and fetch date. This allows other agents (or future Scout instances in the same session) to read locally instead of re-fetching.
+3. **Save to cache:** After fetching, save the extracted content to `zk/cache/<slug>.md` using `Write`. Use a slugified version of the paper title or URL as filename. Include a YAML header with source URL and fetch date. This allows other agents (or future Scout instances in the same session) to read locally instead of re-fetching.
 
 Cache file format:
 ```markdown

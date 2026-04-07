@@ -81,7 +81,7 @@ Don't push for a decision. If the user is ready, capture it. If not, capture the
 
 ## Output
 
-**File:** `reflections/YYYY-MM-DD-decision-<slugified-topic>.md`
+**File:** `zk/reflections/YYYY-MM-DD-decision-<slugified-topic>.md`
 
 Note: Slugify the topic for the filename — lowercase, replace spaces with hyphens, remove special characters (e.g., "SF vs NYC job" → `sf-vs-nyc-job`). Keep the original topic text in the file content.
 
@@ -128,19 +128,19 @@ Note: Slugify the topic for the filename — lowercase, replace spaces with hyph
 
 ## Write-Back
 
-Check if today's daily note already contains `#ai-reflection` content.
+Check if today's daily note already contains a write-back from today's session. Detect by descriptive heading. As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier content was written with the old convention.
 
-- If **no existing AI content**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Use `append_to_daily_note` to add decision summary using this format:
+- If **no write-back exists yet**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Use `append_to_daily_note` to add decision summary using this format:
   ```
-  ## [Descriptive Title] #ai-reflection #decision
+  ## [Descriptive Title] #decision
   [2-3 sentence summary of the decision analysis and current status]
   Related: [[Note Title 1]] [[Note Title 2]]
   ```
-  **Title guidelines:** The heading must describe the decision's core question — not just "Decision Journal." Good examples:
-  - `## Decision: startup vs. big tech trade-offs #ai-reflection #decision`
-  - `## Decision: stay vs. switch teams #ai-reflection #decision`
-  - `## Rent vs. buy: framework analysis #ai-reflection #decision`
+  **Title guidelines:** The heading must describe the decision's core question, not just "Decision Journal." Good examples:
+  - `## Decision: startup vs. big tech trade-offs #decision`
+  - `## Decision: stay vs. switch teams #decision`
+  - `## Rent vs. buy: framework analysis #decision`
 
-  Never use generic titles like "Decision Summary." The `#ai-reflection` tag already marks the content as AI-generated.
+  Never use generic titles like "Decision Summary." The descriptive heading is the duplicate-detection signal. The `#decision` topic tag is allowed because it marks subject matter, not provenance. **No provenance tag** (`#ai-reflection` is retired). Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`).
 
-- If **AI content already exists**: Skip write-back to avoid duplicates. Tell the user about the skip.
+- If **a write-back already exists**: Skip to avoid duplicates. Tell the user about the skip.

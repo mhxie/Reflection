@@ -120,7 +120,7 @@ Based on Step 1, use a second `AskUserQuestion`:
 6. **Write-back — Phase 6 (with approval):**
    - Present proposed write-back to user for approval
    - Include [[backlinks]] to the article note created in Phase 5 and any related notes discussed
-   - Tag with `#ai-reflection`
+   - No provenance tag. Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`). Topic tags are fine. The descriptive heading is the duplicate-detection signal, not a tag.
 
 #### Article Note (all reading flows)
 
@@ -162,7 +162,7 @@ Run a reflection session grounded in your Reflect notes and goals.
    - `profile/identity.md` — your self-model and intellectual taste
    - `profile/directions.md` — your goals and directions
 
-2. **Read recent reflections** (last 3 files from `reflections/` directory, sorted by date). If none exist, this is the first session — note that.
+2. **Read recent reflections** (last 3 files from `zk/reflections/` directory, sorted by date). If none exist, this is the first session — note that.
 
 3. **Query MCP for fresh context:**
    - `get_daily_note(date: "<today>")` — what you've done today
@@ -174,7 +174,7 @@ Run a reflection session grounded in your Reflect notes and goals.
 Based on the loaded context, run an interactive reflection:
 
 ### 0. Continuity Check (if not the first session)
-If a previous reflection exists in `reflections/`, read the most recent one. Follow `protocols/session-continuity.md` — one brief callback, then move forward:
+If a previous reflection exists in `zk/reflections/`, read the most recent one. Follow `protocols/session-continuity.md` — one brief callback, then move forward:
 - If the previous session has a "Next Action" and it was from a **different day**: check in gently per `protocols/integration.md`.
 - If the previous session was **today**: skip the check-in (don't nag on multiple sessions per day).
 - If there was no prior action: skip this step entirely.
@@ -227,7 +227,7 @@ One specific, actionable next step tied to a goal. Not generic advice — someth
 
 After the interactive session, write a reflection file:
 
-**File:** `reflections/YYYY-MM-DD-reflection.md`
+**File:** `zk/reflections/YYYY-MM-DD-reflection.md`
 ```markdown
 # Reflection — YYYY-MM-DD
 
@@ -254,23 +254,23 @@ After the interactive session, write a reflection file:
 
 ## Write-Back to Reflect
 
-After writing the reflection file, check if today's daily note already contains content tagged `#ai-reflection`.
+After writing the reflection file, check if today's daily note already contains a write-back from today's session. Detect by descriptive heading (the heading is the signal, not a tag). As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier in the day something pre-Phase-A wrote using the old convention.
 
-- If **AI content already exists**: Skip write-back. Tell the user: "Already wrote to today's daily note earlier — skipping duplicate write-back."
+- If **a write-back already exists**: Skip. Tell the user: "Already wrote to today's daily note earlier. Skipping duplicate write-back."
 
-- If **no existing AI content**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. Then **ask the user for approval before writing.** Present the proposed write-back and wait for confirmation. Do not auto-write. **Write-backs are always in English**, even if the session was conducted in Chinese. The write-back should follow this format:
+- If **no write-back exists yet**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. Then **ask the user for approval before writing.** Present the proposed write-back and wait for confirmation. Do not auto-write. **Write-backs are always in English**, even if the session was conducted in Chinese. The write-back should follow this format:
   ```
-  ## [Descriptive Title] #ai-reflection
+  ## [Descriptive Title]
   [2-3 sentence summary of key insights from today's reflection session]
   Related: [[Note Title 1]] [[Note Title 2]]
   ```
-  **Title guidelines:** The heading must describe the session's core theme or question — not its source. Titles are in English (same as the write-back body). Good examples:
+  **Title guidelines:** The heading must describe the session's core theme or question, not its source. Titles are in English (same as the write-back body). Good examples:
   - Topic-based: `Constraint creates meaning`
   - Question-based: `Why does unlimited freedom feel empty?`
   - Date+theme: `03/15 Energy dip and recovery patterns`
   - Insight-based: `Delegation as a trust signal`
 
-  Never use generic titles like "AI Reflection" or "Daily Reflection Summary." The `#ai-reflection` tag already marks the content as AI-generated.
+  Never use generic titles like "AI Reflection" or "Daily Reflection Summary." The descriptive heading is load-bearing: it is the duplicate-detection signal and the only visible marker of a session write-back in the daily note. **No provenance tag.** Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`). Topic tags are fine when they describe subject matter.
 
   Include [[backlinks]] to all notes referenced during the session so they appear in Reflect's backlink graph. Use today's date in YYYY-MM-DD format.
 

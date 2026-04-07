@@ -18,9 +18,27 @@ Welcome back. Type /reflect to start a session, or just tell me what's on your m
 
 Keep it brief. If the user has already started talking, skip the greeting and respond directly.
 
-## MCP Rules — Reflect Integration
+## Knowledge Layers
 
-This project connects to a Reflect MCP server for reading and writing notes.
+reflectl operates on a **five-tier model** organized by depth of crystallization. **Higher number = higher trust.** Reflect is demoted to one capture source among many (alongside Readwise); the authoritative knowledge layer is `zk/wiki/`, scored by the trust engine. **Directory is the tier:** location inside `zk/` carries the certification level — no tags required. Pre-2026 topic directories are parked in `zk/archive/` until individual notes are surfaced upward.
+
+| Tier | Lives in | Meaning | Mutability |
+|---|---|---|---|
+| **L5: Foundation** | (reserved — no folder yet) | Universally certified knowledge (textbook-level) | — |
+| **L4: Locally certified** | `zk/wiki/*.md` | Authoritative knowledge layer — schema-structured, anchored, TrustRank-scored | Append-only markers, additive invalidation, revision-log tracked |
+| **L3: Externally certified** | `zk/papers/` + Readwise | Peer-reviewed papers, high-citation work, curated reading corpus | Append-only via scout fetches and Readwise saves |
+| **L2: Working / half-baked** | `zk/daily-notes/`, `zk/reflections/`, `zk/preprints/`, `zk/agent-findings/`, `zk/drafts/`, `zk/gtd/` | Alloy: daily free-writes, session reflections, arxiv preprints + paper reviews, agent synthesis briefs, working drafts | Append-mostly, edited freely |
+| **L1: Raw capture** | Reflect UI, Readwise inbox, `zk/cache/`, `zk/readwise/` | Voice transcripts, mobile quick-notes, ephemeral web fetches, inbox items | Fast, sloppy, no guarantees |
+
+`zk/` is the data layer (the user's Obsidian vault, mounted into the repo as a subdirectory). The rest of `reflectl/` is the execution layer. All paths in protocols, agents, scripts, and wiki entries are project-relative — no env-var prefixes.
+
+See `protocols/local-first-architecture.md` for the five-tier model in detail, `protocols/wiki-schema.md` for the L4 wiki entry format, and `protocols/epistemic-hygiene.md` for the validation-depth taxonomy that replaces the old human/AI tag binary.
+
+Sync direction is **one-way local → Reflect display.** Wiki entries are written locally first, then optionally pushed to Reflect for mobile reading via `/sync` (Phase C). Edits in the Reflect UI are not pulled back.
+
+## MCP Rules — L1 Capture (Reflect)
+
+The rules below apply to L1 (capture) operations via the Reflect MCP server. L4 wiki entries are written to local files under `zk/wiki/` first; the MCP write path is used only for the optional display sync.
 
 **Reading:**
 - Use `search_notes` for any knowledge retrieval. Supports text search (`searchType: "text"`) and semantic search (`searchType: "vector"`).
@@ -28,20 +46,21 @@ This project connects to a Reflect MCP server for reading and writing notes.
 - Use `get_note` to read a specific note by ID.
 - Use `list_tags` to discover available tags.
 - **NEVER hallucinate note content.** If search returns nothing relevant, say so honestly.
-- When searching for context, **exclude AI-generated analysis** by avoiding notes tagged `#ai-reflection`. Notes tagged `#ai-generated` (goals, reminders, todos) are user-approved content and SHOULD appear in search results.
+- **Search filters by validation depth, not origin.** Do NOT exclude `#ai-reflection` notes from search; that was a bug rooted in the old human/AI binary. The criterion for prioritizing a result is its validation depth (alloy → wiki entry under `zk/wiki/` → `#solo-flight`) and trust score (when available from the trust engine in Phase B), not who or what produced it. See `protocols/epistemic-hygiene.md` for the taxonomy. Legacy `#ai-reflection` and `#ai-generated` tags on existing notes are historical alloy markers and remain searchable.
 - **Search snippets are lossy.** `search_notes` results strip images and some markdown. Always follow up with `get_note()` for any note where full content matters (media, structured data, exact quotes).
-- **Cache before processing.** When working with 5+ notes (compaction, batch operations), cache each note to `sources/cache/` immediately after fetching. This protects against note deletion and avoids redundant re-fetches across agent dispatches.
+- **Cache before processing.** When working with 5+ notes (compaction, batch operations), cache each note to `zk/cache/` immediately after fetching. This protects against note deletion and avoids redundant re-fetches across agent dispatches.
 
 **Writing:**
 - **Always ask for user approval before writing.** Never auto-write to daily notes. Present what you plan to write and wait for confirmation.
 - Use `append_to_daily_note` to write reflection insights back to Reflect daily notes. Parameter name is `text` (not `content`).
 - Use `create_note` to create standalone notes. Parameter name is `contentMarkdown` (not `content`). Title parameter is `subject`. **Using the wrong parameter name silently succeeds but creates an empty note.**
-- **Two AI content tags:**
-  - `#ai-reflection` — reflection analysis and session write-backs to daily notes. Excluded from search to prevent self-contamination. The tag goes in the heading line, but the heading text must be **descriptive of the session's theme** (e.g., `## Constraint creates meaning #ai-reflection`), never generic like "AI Reflection."
-  - `#ai-generated` — user-approved mechanical content: goals, reminders, todos, compacted notes. Included in search (captures user intent, not AI analysis).
+- **Validation-depth taxonomy** (replaces the old `#ai-reflection`/`#ai-generated` binary; full spec in `protocols/epistemic-hygiene.md`):
+  - **Alloy (default, no tag).** Most session write-backs, daily notes, and routine notes. Mixed authorship, mixed validation, fully searchable, citable but not certified. Reflection write-backs default to alloy. The heading text must be **descriptive of the session's theme** (e.g., `## Constraint creates meaning`), never generic like "AI Reflection."
+  - **Wiki entry (location-based, no tag).** A note that lives under `zk/wiki/` and follows the wiki schema (`protocols/wiki-schema.md`). Location is the certification — there is no `#compiled-truth` or `#wiki` tag; the trust engine walks the directory. Wiki entries are the only notes that participate in TrustRank propagation. Never write a Reflect-only note as if it were a wiki entry; wiki entries require the local file plus structural-integrity verification.
+  - **`#solo-flight`** — rare, location-independent. The user's deliberate AI-free calibration unit (monthly or quarterly free-write). Used to detect drift between AI-assisted and unassisted thinking.
+  - **Legacy `#ai-reflection` and `#ai-generated`** — historical alloy markers; treat as alloy, do not exclude from search, do not apply to new content.
 - When referencing specific notes in write-backs, include [[backlinks]] to those notes so they appear in Reflect's backlink graph.
-- Before writing back, check if today's daily note already contains `#ai-reflection` content to avoid duplicates.
-- When appending reminders or todos to future daily notes, tag with `#ai-generated`.
+- Before writing back, check if today's daily note already contains an AI-generated section under any of the legacy tags to avoid duplicates.
 - **Write-backs are always in English**, even for sessions conducted in Chinese or with Chinese-language notes.
 - Write-back is optional and should never block a session. If it fails, continue.
 - For note operations (create, compact, merge), delegate to the **Curator** agent.
@@ -64,15 +83,27 @@ The `personal/` directory is gitignored and contains sensitive reference materia
 
 - `personal/examples.md` — Real write-back title examples from past sessions. Agents can read this for richer inspiration beyond the generic examples in command files.
 
-The `sources/` directory contains content source teaching docs (committed) and gitignored data subdirectories:
+The `sources/` directory is the **execution layer** for source-handling — committed teaching docs and helper scripts that agents use to query external corpora. Data lives in `zk/` (the data layer); `sources/` only contains infrastructure.
 
 - `sources/readwise.md` — Teaching doc: how to query the user's Readwise Reader library via CLI
 - `sources/scholar.md` — Teaching doc: academic citation lookup via Semantic Scholar API + APA formatter (`sources/cite.py`)
 - `sources/local-papers.md` — Teaching doc: local PDF papers and review artifacts
-- `sources/papers/` — (gitignored) Local paper PDFs and reading artifacts. Papers can be referenced by filename in reading sessions.
-- `sources/cache/` — (gitignored) Web-fetched content (articles, papers, discussions) and cached Reflect note snapshots during compaction — so agents don't re-fetch the same URLs across sessions or parallel dispatches.
+- `sources/cite.py` — Academic citation helper (callable from agents and scripts)
+- `scripts/` — Python tooling. `trust.py` (Phase B) runs the deterministic TrustRank pass over `zk/wiki/`. `lint.py` (Phase D) runs structural-integrity checks.
 
-The data subdirectories (`sources/papers/`, `sources/cache/`, `personal/`) are never committed to git. The teaching docs (`sources/readwise.md`, `sources/local-papers.md`) are committed.
+The corresponding **data** lives under `zk/` (gitignored, the data layer), flat by tier:
+
+- `zk/wiki/` — **L4** locally certified wiki entries (authoritative knowledge layer).
+- `zk/papers/` — **L3** externally certified papers (peer-reviewed or high-citation). Papers can be referenced by filename in reading sessions.
+- `zk/readwise/` — **L1→L3** Readwise mirror; inbox items are L1 raw, curated saves become L3 receipts when anchored.
+- `zk/daily-notes/` — **L2** daily free-writes synced from Reflect (the capture stream).
+- `zk/reflections/` — **L2** session reflection files written by `/reflect` and related commands.
+- `zk/preprints/` — **L2** arxiv and other non-peer-reviewed papers awaiting L3 promotion, plus reading artifacts and paper review notes.
+- `zk/agent-findings/` — **L2** promoted scout briefs and other agent synthesis outputs that informed wiki entries (renamed from `research-briefs`).
+- `zk/drafts/` — **L2** working drafts of long notes before they land in their final location.
+- `zk/gtd/` — **L2** active planning notes (year goals, project trackers).
+- `zk/cache/` — **L1** ephemeral local cache: Reflect note snapshots during compaction, raw web fetches not promoted to findings, and triage outputs (`zk/cache/triage-*.md`). Agents read and write here freely; nothing persists across sessions intentionally.
+- `zk/archive/` — pre-2026 topic directories (career, research, people, etc.) parked here until individual notes are gradually surfaced upward to L2/L4.
 
 ## Profile Rules
 
@@ -99,10 +130,10 @@ If profile files don't exist, tell the user: "Run `/introspect` first to build y
 - **Track eras and directions.** The user's life has chapters (eras) with themes and directions. See `protocols/coaching-progressions.md` for era mechanics and `profile/directions.md` for current era state.
 - **Surface Moments.** Flag real-life firsts and breakthroughs as Moments (see `protocols/pattern-library.md`). These accumulate toward era-level momentum assessment.
 - **Respect the amenity floor.** Each life area needs a sustainability minimum. When an area drops below its floor, name it. See `protocols/session-scoring.md`.
-- **Epistemic hygiene.** AI-assisted reflection carries a risk of confirmation loops and idea colonization. Three habits to counteract:
+- **Epistemic hygiene.** AI-assisted reflection carries a risk of confirmation loops and idea colonization. The criterion for trusting a thought is **validation depth, not origin**: assume alloy unless the note lives under `zk/wiki/` (schema-validated, anchored, scored) or carries `#solo-flight` (rare, AI-free calibration). See `protocols/epistemic-hygiene.md` for the full taxonomy and `protocols/wiki-schema.md` for what earns wiki-entry status. Three habits counteract drift at the human level:
   1. *Write-first:* If the user hasn't written anything in today's daily note, gently invite them to jot their position before the AI digs in. A nudge, not a gate.
   2. *AI-free zones:* When the user declares a topic they want to think through independently, respect it — provide evidence but withhold frameworks and reframes.
-  3. *Solo flight:* Periodically (monthly or quarterly), the user reflects without AI agents, then compares against AI-assisted sessions to check for drift.
+  3. *Solo flight:* Periodically (monthly or quarterly), the user reflects without AI agents, then compares against AI-assisted sessions to check for drift. May be tagged `#solo-flight` as a calibration unit.
 - **No em dashes.** Never use em dashes (---) in written output (reviews, notes, write-backs, any prose). Use colons, semicolons, parentheses, or restructure the sentence instead.
 
 ## Available Commands
@@ -167,7 +198,7 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 
 **Note compaction (`compact my notes on X`):**
 1. Researcher identifies all related notes (search + user guidance)
-2. Orchestrator fetches all notes and caches locally to `sources/cache/`
+2. Orchestrator fetches all notes and caches locally to `zk/cache/`
 3. Curator (Sonnet) receives cached file paths + compaction instructions
 4. Curator drafts compacted note(s), runs Content Preservation Checklist
 5. Orchestrator verifies Gate 4 (media count, size, verbatim preservation)
@@ -210,6 +241,9 @@ The `protocols/` directory defines system behavior:
 | `integration.md` | Insight-to-action pipeline |
 | `coaching-progressions.md` | Life eras, directions, maturity adaptation, golden/dark ages |
 | `contradiction-detection.md` | 4 strategies for surfacing contradictions in notes |
+| `epistemic-hygiene.md` | Validation-depth taxonomy (alloy → wiki entry under `zk/wiki/` → `#solo-flight`); failure modes the design is bounded by; the three habits |
+| `wiki-schema.md` | L4 wiki entry format for files under `zk/wiki/`: `## Claims`, `[Cn]` markers, `@anchor`/`@cite`/`@pass` structured markers, bi-temporal anchors, claim-level floor trust, structural-integrity rules |
+| `local-first-architecture.md` | Five-tier model (L1–L5), project layout, sync direction, migration strategy |
 
 ## Frameworks
 
@@ -228,4 +262,4 @@ Cross-validation guide: `frameworks/cross-validation.md`
 
 ## External Reviewers
 
-Use `/codex` (OpenAI) and/or `gemini -p` (Google) for external review of system evolution changes. For high-stakes changes, run both in parallel for independent perspectives from different models. See `protocols/orchestrator.md` → Review Tiers.
+For system-evolution review (protocols, agents, commands, CLAUDE.md, handoff docs), run **`bash scripts/review.sh`** from the repo root. The script invokes codex + gemini in parallel against the uncommitted diff with pre-baked prompts and writes reports to `zk/cache/review-<timestamp>-{codex,gemini}.md`. Use `bash scripts/review.sh codex` or `bash scripts/review.sh gemini` for a single external reviewer. Do **not** route through the gstack `/codex` skill for evolution reviews — too heavy, too variable for prose changes. See `.claude/commands/system-review.md` for the full flow (preflight, internal reviewer dispatch, synthesis) and `protocols/orchestrator.md` → Review Tiers for tier selection.

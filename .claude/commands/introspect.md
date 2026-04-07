@@ -58,7 +58,7 @@ This step goes beyond mechanical extraction. Look for:
 
 **Intellectual taste** (what you engage deeply with vs. skim):
 - Topics that recur across daily notes without being declared goals
-- Articles/papers you chose to deep-read vs. archive (check triage files in `sources/cache/triage-*.md`)
+- Articles/papers you chose to deep-read vs. archive (check triage files in `zk/cache/triage-*.md`)
 - Discussion tangents that repeatedly surface in reflection sessions
 - Aesthetic preferences in how you evaluate ideas (from research-profile patterns)
 

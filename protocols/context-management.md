@@ -62,7 +62,7 @@ When loading context, prioritize in this order:
 
 Agents don't share context windows. All inter-agent communication happens through:
 1. **Handoff blocks** (structured output passed via orchestrator)
-2. **Files** (reflections/ directory, profile files)
+2. **Files** (zk/reflections/ directory, profile files)
 3. **MCP** (each agent can independently query Reflect)
 
 **Rule:** Never assume another agent has context you didn't explicitly pass in the handoff.

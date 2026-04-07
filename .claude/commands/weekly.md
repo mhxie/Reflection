@@ -11,7 +11,7 @@ Run a structured weekly review covering the past 7 days. Deeper than daily refle
 
 1. **Read profile files:** `profile/identity.md` + `profile/directions.md`
 
-2. **Read all reflections from the past 7 days** from `reflections/` directory.
+2. **Read all reflections from the past 7 days** from `zk/reflections/` directory.
 
 3. **Read past 7 daily notes via MCP:**
    - `get_daily_note(date: "<today>")` through `get_daily_note(date: "<7 days ago>")`
@@ -54,7 +54,7 @@ Based on the review:
 
 ## Output
 
-**File:** `reflections/YYYY-MM-DD-weekly.md`
+**File:** `zk/reflections/YYYY-MM-DD-weekly.md`
 
 ```markdown
 # Weekly Review — YYYY-MM-DD (Week of MM/DD - MM/DD)
@@ -99,18 +99,19 @@ Based on the review:
 
 ## Write-Back
 
-Check for existing `#ai-reflection` content in today's daily note.
+Check if today's daily note already contains a write-back from today's session. Detect by descriptive heading. As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier content was written with the old convention.
+
 - If none: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Append weekly review summary using this format:
   ```
-  ## [Descriptive Title] #ai-reflection
+  ## [Descriptive Title]
   [2-3 sentence summary of the week's key insights and patterns]
   Related: [[Note Title 1]] [[Note Title 2]]
   ```
-  **Title guidelines:** The heading must describe the week's core theme or pattern — not just "Weekly Review." Good examples:
-  - `## This week: creation over consumption #ai-reflection`
-  - `## Week of 03/15: deep work recovery + energy rebalance #ai-reflection`
-  - `## Attention patterns shifted toward reading #ai-reflection`
+  **Title guidelines:** The heading must describe the week's core theme or pattern, not just "Weekly Review." Good examples:
+  - `## This week: creation over consumption`
+  - `## Week of 03/15: deep work recovery + energy rebalance`
+  - `## Attention patterns shifted toward reading`
 
-  Never use generic titles like "Weekly Review Summary." The `#ai-reflection` tag already marks the content as AI-generated.
+  Never use generic titles like "Weekly Review Summary." The descriptive heading is the duplicate-detection signal. **No provenance tag.** Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`).
 
 - If exists: skip.

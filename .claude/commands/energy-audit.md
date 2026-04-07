@@ -63,7 +63,7 @@ Present findings as:
 
 ## Output
 
-**File:** `reflections/YYYY-MM-DD-energy-audit.md`
+**File:** `zk/reflections/YYYY-MM-DD-energy-audit.md`
 
 ```markdown
 # Energy Audit — YYYY-MM-DD
@@ -97,18 +97,19 @@ Present findings as:
 
 ## Write-Back
 
-Check for existing `#ai-reflection` content in today's daily note.
+Check if today's daily note already contains a write-back from today's session. Detect by descriptive heading. As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier content was written with the old convention.
+
 - If none: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Append energy audit summary using this format:
   ```
-  ## [Descriptive Title] #ai-reflection #energy-audit
+  ## [Descriptive Title] #energy-audit
   [2-3 sentence summary of energy findings and one actionable change]
   Related: [[Note Title 1]] [[Note Title 2]]
   ```
-  **Title guidelines:** The heading must describe the audit's core finding — not just "Energy Audit." Good examples:
-  - `## Physical strong but socially drained #ai-reflection #energy-audit`
-  - `## Energy dip: mental fatigue from context-switching #ai-reflection #energy-audit`
-  - `## Sleep deficit dragging overall energy #ai-reflection #energy-audit`
+  **Title guidelines:** The heading must describe the audit's core finding, not just "Energy Audit." Good examples:
+  - `## Physical strong but socially drained #energy-audit`
+  - `## Energy dip: mental fatigue from context-switching #energy-audit`
+  - `## Sleep deficit dragging overall energy #energy-audit`
 
-  Never use generic titles like "Energy Audit Summary." The `#ai-reflection` tag already marks the content as AI-generated.
+  Never use generic titles like "Energy Audit Summary." The descriptive heading is the duplicate-detection signal. The `#energy-audit` topic tag is allowed because it marks subject matter, not provenance. **No provenance tag** (`#ai-reflection` is retired). Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`).
 
 - If exists: skip.

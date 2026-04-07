@@ -62,7 +62,7 @@ Defines checkpoints that must pass before output reaches the user. Each gate has
 
 | Check | Pass Criteria | Fail Action |
 |-------|--------------|-------------|
-| Source caching | All source notes cached locally in `sources/cache/` | Abort — do not draft from uncached sources |
+| Source caching | All source notes cached locally in `zk/cache/` | Abort — do not draft from uncached sources |
 | Media count match | Output image count = source image count | Block — re-scan sources, restore missing media |
 | Size limit | Each output note < 15KB | Split into numbered parts before presenting |
 | Verbatim preservation | Chinese text, interview memos, raw observations preserved word-for-word | Block — diff against cached sources to find paraphrased content |
