@@ -17,9 +17,9 @@ Real mode activates when `zk/.semantic/index.sqlite` exists (sentinel). No calle
 ## CLI
 
 ```
-python scripts/semantic.py query "<text>" [OPTIONS]
-python scripts/semantic.py index [--rebuild]
-python scripts/semantic.py --help
+scripts/semantic.py query "<text>" [OPTIONS]
+scripts/semantic.py index [--rebuild]
+scripts/semantic.py --help
 ```
 
 ### `query` options
@@ -84,12 +84,12 @@ When stub limitations hurt a specific session, the documented escape hatch is Re
 
 Basic query:
 ```
-python scripts/semantic.py query "curiosity vectors"
+scripts/semantic.py query "curiosity vectors"
 ```
 
 Restricted to reflections in the last 30 days, JSON output:
 ```
-python scripts/semantic.py query "energy drain" \
+scripts/semantic.py query "energy drain" \
     --path zk/reflections \
     --after 2026-03-07 \
     --format json
@@ -97,7 +97,7 @@ python scripts/semantic.py query "energy drain" \
 
 Multiple paths, top 20 hits:
 ```
-python scripts/semantic.py query "研究 方向" \
+scripts/semantic.py query "研究 方向" \
     --path zk/daily-notes \
     --path zk/reflections \
     --top 20
@@ -105,7 +105,7 @@ python scripts/semantic.py query "研究 方向" \
 
 Piping into `Read` (for an agent workflow):
 ```
-python scripts/semantic.py query "contradiction" --top 5 | \
+scripts/semantic.py query "contradiction" --top 5 | \
     cut -f1 | \
     while read path; do echo "--- $path ---"; cat "$path"; done
 ```

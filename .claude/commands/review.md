@@ -15,13 +15,11 @@ Review progress on near/mid/long-term goals. Surface what's progressing, what's 
 
 2. **Read all reflections from the last 30 days** from the `zk/reflections/` directory. If none exist, note this is the first review.
 
-3. **Query MCP for goal-related updates:**
-   - `search_notes(query: "目标", editedAfter: "<30 days ago>", limit: 15)` — recently edited Chinese goal notes
-   - `search_notes(query: "goal", editedAfter: "<30 days ago>", limit: 15)` — recently edited English goal notes
-   - `search_notes(query: "progress", editedAfter: "<30 days ago>", limit: 10)` — progress-related notes
-   - `get_daily_note(date: "<today>")` — today's context
+3. **Pull goal-related updates from the local mirror, bounded to the last 30 days.** Do NOT issue an unbounded `Grep(path: "zk/")` — the old `editedAfter`-bounded MCP query was recency-scoped on purpose, and an unbounded grep will pull stale historical matches that skew the review. Use `find -print0 | xargs -0 grep` so recency actually binds:
+   - `Bash: find zk/daily-notes zk/reflections zk/gtd zk/wiki -type f -name "*.md" -mtime -30 -print0 2>/dev/null | xargs -0 grep -HnE "目标|goal|progress|进展|milestone" 2>/dev/null` — recency-bounded goal and progress mentions across both languages in one pass. Safe with an empty working set (xargs does nothing if stdin is empty).
+   - `Read zk/daily-notes/<today>.md` for today's context (fall through to `get_daily_note(date: "<today>")` only if today's file hasn't synced yet).
 
-4. **Read key goal notes** via `get_note()` for the most relevant results to get full current content.
+4. **Read key goal notes in full** by `Read`-ing the matching files directly. The files are already on disk — no `get_note()` needed except for notes genuinely missing from the local mirror.
 
 ## Analysis
 

@@ -33,7 +33,7 @@ Promotion is **opportunistic and upward:** L1 capture crystallizes into an L2 dr
 
 The fast, sloppy, mobile-friendly layer. Reflect's strengths (voice transcription, daily notes, mobile capture, decent search) anchor one side of this layer; Readwise's inbox and `zk/cache/`'s ephemeral fetches anchor the other. No guarantees about structure or durability. Reflect is **demoted to one capture source among many** — equal to Readwise, not privileged.
 
-The orchestrator, Researcher, and most session commands continue to read from Reflect via the MCP for capture-layer queries. Daily-note write-backs continue via `append_to_daily_note`. What changes is the framing: Reflect is no longer "the knowledge store"; it is one inbox feeding several local destinations.
+Reflect's corpus is continuously mirrored to `zk/daily-notes/` (YYYY-MM-DD.md files) by the user's existing sync, so the **default read path for read-capable agents (Researcher, orchestrator, Reader, and any agent whose frontmatter includes `Grep` / `Read`) is `Grep` + `Read` over `zk/`, not the Reflect MCP.** MCP reads are the fallback for today's fresh capture (when the sync lags), for semantic-only queries, and for notes genuinely missing from the local mirror. MCP writes (`append_to_daily_note`, `create_note`) stay in use for the capture-layer write path until a local-first write tool replaces them.
 
 ### L2 — Working / half-baked
 
@@ -135,16 +135,16 @@ There is no migration of existing Reflect notes into the wiki layer. The user's 
 
 The expected steady-state ratio is roughly: hundreds of L1/L2 notes for every L4 wiki entry. L4 is the slow, careful, anchored kernel. L1 and L2 are the fast surface.
 
-## What Changes for Each Agent (Phase C)
+## What Changes for Each Agent
 
-Phase A does not touch agent definitions. The changes below are scheduled for Phase C and are documented here for forward visibility.
+Phase A wires the read path now. Phase C wires the wiki write path and the `/sync` display push.
 
-| Agent | L1 capture (Reflect / cache) | L4 wiki (`zk/wiki/`) | L3 receipts |
+| Agent | L1 capture | L4 wiki (`zk/wiki/`) | L3 receipts |
 |---|---|---|---|
-| **Researcher** | Continues to search via MCP for capture-layer queries. | New: routes wiki-layer queries to local file search first (`scripts/zk_search.py` (Phase C) or grep over `zk/wiki/`). | Continues reading Readwise / `zk/papers/` as today. |
-| **Curator** | Continues to write to daily notes via `append_to_daily_note`. | New: writes wiki entries to `zk/wiki/` first; only pushes to Reflect via `/sync` after structural integrity passes. | Unchanged. |
+| **Researcher** | **Phase A: reads local mirror first.** `Grep` + `Read` over `zk/daily-notes/`, `zk/reflections/`, etc. MCP (`search_notes`, `get_note`, `get_daily_note`) is fallback for today's fresh capture, semantic queries, and genuinely missing notes. | Phase A: reads `zk/wiki/` with grep directly — no `Phase C` gate, the files are already on disk. | Reads `zk/readwise/`, `zk/papers/` directly. |
+| **Curator** | Continues to write to daily notes via `append_to_daily_note`. | Phase C: writes wiki entries to `zk/wiki/` first; only pushes to Reflect via `/sync` after structural integrity passes. | Unchanged. |
 | **Synthesizer** | Reads capture-layer briefs from Researcher; writes session reflections to `zk/reflections/`. | Reads wiki trust scores when available to weight evidence. | Unchanged. |
-| **Reviewer** | Continues to gate capture-layer write-backs. | New: gates wiki writes as well. A `@pass: reviewer | status: verified` marker is added to a claim only after Reviewer signs off. | Unchanged. |
+| **Reviewer** | Continues to gate capture-layer write-backs. | Phase C: gates wiki writes as well. A `@pass: reviewer | status: verified` marker is added to a claim only after Reviewer signs off. | Unchanged. |
 | **Scout** | Unchanged. | Unchanged. | Writes promoted briefs to `zk/agent-findings/` (not the ephemeral `zk/cache/`). |
 
 ## Cross-References

@@ -125,14 +125,18 @@ Required fields:
 
 ## Contract: Orchestrator → Curator (Compact/Merge Dispatch)
 
-When dispatching the Curator for compact or merge operations, the orchestrator MUST:
+When dispatching the Curator for compact or merge operations, the orchestrator MUST take a **snapshot of each source note at dispatch time** under `zk/cache/<operation>-<slug>.md`. The snapshot protects against mid-session mutation: the user may edit a daily note in Obsidian, or a Reflect note may be deleted, while the Curator is drafting. The Curator then works exclusively from those snapshots.
 
-1. **Fetch all source notes** via `get_note()` before dispatching
-2. **Cache each note** to `zk/cache/<operation>-<note-id>.md` (e.g., `compact-abc123.md`, `merge-def456.md`)
-3. **Pass cache file paths** to the Curator in the dispatch prompt
-4. The Curator works exclusively from cached files — it never fetches from MCP itself
+Snapshot sources (pick per note):
 
-This ensures content is recoverable if the user deletes source notes mid-session.
+1. **Local file present** (the default — Reflect daily notes sync to `zk/daily-notes/`, wiki entries live in `zk/wiki/`, etc.): copy the local file to `zk/cache/<operation>-<slug>.md`. Use the relative path slug (e.g., `compact-daily-notes-2026-04-05.md`) so the origin is obvious.
+2. **Local mirror missing or stale** (rare — Reflect note not yet synced, archival note outside `zk/`): fetch via `get_note(id)` and write the returned body to `zk/cache/<operation>-<slug>.md`. Note this in the dispatch prompt so Curator knows the snapshot came from MCP.
+
+Dispatch prompt MUST include:
+- `snapshot_paths`: array of `zk/cache/<operation>-<slug>.md` paths the orchestrator just created
+- `source_origins`: for each snapshot, whether it came from local file copy or MCP fallback
+
+The Curator works exclusively from `snapshot_paths` — it never re-reads the originals, never fetches from MCP itself. This preserves the "content recoverable even if the user deletes mid-session" property that makes the cache step load-bearing.
 
 ## Contract: Curator → Orchestrator
 
@@ -141,7 +145,7 @@ This ensures content is recoverable if the user deletes source notes mid-session
 Required fields:
 - `operation`: compact | merge | create | replace
 - `notes_affected`: Array of note titles involved
-- `cached_sources`: (required for compact/merge) Array of local cache file paths used as source. Orchestrator verifies these exist before accepting the proposal.
+- `snapshot_paths`: (required for compact/merge) Array of `zk/cache/<operation>-<slug>.md` snapshot file paths used as source. Orchestrator verifies these exist before accepting the proposal. (Formerly `cached_sources`; renamed to reflect that they are dispatch-time snapshots, not an MCP size-limit workaround.)
 - `media_inventory`: (required for compact/merge, omit for create/replace) `{images: count, tables: count, structured_blocks: count, embeds: count}` — counts from source notes. The orchestrator verifies these counts match the output.
 - `media_output_count`: (required for compact/merge) `{images: count, tables: count, structured_blocks: count, embeds: count}` — counts in the proposed output. Must match `media_inventory` or differences must be listed in `changes_summary`.
 - `external_content_flagged`: (required for compact/merge, omit for create/replace) boolean — true if any source notes contain content from external sources (forum quotes, others' experiences). If true, those sections must be clearly attributed in `proposed_content`.

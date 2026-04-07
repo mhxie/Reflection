@@ -164,10 +164,10 @@ Run a reflection session grounded in your Reflect notes and goals.
 
 2. **Read recent reflections** (last 3 files from `zk/reflections/` directory, sorted by date). If none exist, this is the first session — note that.
 
-3. **Query MCP for fresh context:**
-   - `get_daily_note(date: "<today>")` — what you've done today
-   - `get_daily_note(date: "<yesterday>")` — what you did yesterday
-   - `search_notes(query: "<a theme from meta-summary>", searchType: "vector", limit: 5, editedAfter: "<7 days ago>")` — recent activity related to your themes
+3. **Pull fresh context from the local mirror:**
+   - `Read zk/daily-notes/<today>.md` — what you've done today. If the file is missing or visibly truncated (today's capture hasn't synced yet), fall through to `get_daily_note(date: "<today>")` via MCP.
+   - `Read zk/daily-notes/<yesterday>.md` — what you did yesterday. Local only; no MCP fallback needed for a sync-complete day.
+   - For recent activity related to your themes, list files modified in the last 7 days with `Bash: find zk/daily-notes zk/reflections -type f -name "*.md" -mtime -7 2>/dev/null | sort`, then `Grep` the theme keyword across those paths. If the theme is conceptual rather than lexical (a mood, a shift, a pattern you can't enumerate), run `Bash: scripts/semantic.py query "<theme>" --after "<7 days ago, YYYY-MM-DD>" --top 5`. In stub mode this lexical-falls-through with a stderr warning; escalate to `search_notes(query: "<theme>", searchType: "vector", limit: 5, editedAfter: "<7 days ago>")` only when the stub misses a genuinely conceptual query.
 
 ## Coaching Session
 
@@ -208,7 +208,7 @@ Each question should:
 - Match the user's language (Chinese for Chinese goals)
 
 ### 3. Forgotten Connection (Semantic Discovery)
-Use `search_notes(searchType: "vector")` to find a semantically related note the user may have forgotten.
+Use `Bash: scripts/semantic.py query "<concept>" --before "<3 months ago, YYYY-MM-DD>" --top 10` to find a semantically related note the user may have forgotten. In stub mode the script lexical-falls-through with a stderr warning; if the stub misses the concept, escalate to `search_notes(query: "<concept>", searchType: "vector")` as the documented escape hatch.
 - Search with a concept from the conversation, not just keywords
 - Go back at least 3 months for genuine surprise
 - Present as a provocation, not a summary:

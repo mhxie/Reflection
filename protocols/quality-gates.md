@@ -62,13 +62,13 @@ Defines checkpoints that must pass before output reaches the user. Each gate has
 
 | Check | Pass Criteria | Fail Action |
 |-------|--------------|-------------|
-| Source caching | All source notes cached locally in `zk/cache/` | Abort — do not draft from uncached sources |
-| Media count match | Output image count = source image count | Block — re-scan sources, restore missing media |
+| Source snapshots | All source notes snapshotted to `zk/cache/<operation>-<slug>.md` at dispatch time (local copy for notes in `zk/`, MCP `get_note` fallback for missing ones) | Abort — do not draft from un-snapshotted sources |
+| Media count match | Output image count = snapshot media count | Block — re-scan snapshot files, restore missing media |
 | Size limit | Each output note < 15KB | Split into numbered parts before presenting |
-| Verbatim preservation | Chinese text, interview memos, raw observations preserved word-for-word | Block — diff against cached sources to find paraphrased content |
+| Verbatim preservation | Chinese text, interview memos, raw observations preserved word-for-word | Block — diff against snapshot files to find paraphrased content |
 | Voice separation | External quotes (forum posts, others' experiences) clearly attributed | Block — add attribution markers |
-| Factual accuracy | No conflation of different people's experiences or event sequences | Block — cross-check against cached sources |
-| Structured data | Pipelines, timelines, tracking tables preserved exactly | Block — copy from cached source |
+| Factual accuracy | No conflation of different people's experiences or event sequences | Block — cross-check against snapshot files |
+| Structured data | Pipelines, timelines, tracking tables preserved exactly | Block — copy from snapshot file |
 
 **Gate keeper:** Orchestrator (verifies Curator's self-assessment in `content_integrity` field)
 **Max retries:** 1 (if still failing, present to user with explicit warnings about what's missing)

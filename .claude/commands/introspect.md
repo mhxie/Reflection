@@ -6,7 +6,7 @@ Unlike `/index` (mechanical extraction), `/introspect` discovers patterns: what 
 
 ## Prerequisites
 
-Verify the Reflect MCP server is accessible by calling `list_tags`. If it fails with a connection error, tell the user: "Cannot reach Reflect MCP server. Make sure Reflect is running and the MCP server is enabled."
+Verify the local `zk/` mirror is present and non-empty: `Bash: test -d zk/daily-notes && ls zk/daily-notes | head -1`. If the directory is missing or empty, tell the user: "Local `zk/` mirror is missing. Check your Google Drive sync." The Reflect MCP is used only for semantic search fallbacks in this command and is not required to start.
 
 ## Output Files
 
@@ -23,31 +23,31 @@ profile/
 
 ### Step 1: Gather Raw Material
 
-Run these searches in parallel:
+Run these searches in parallel over the local `zk/` mirror. Local grep is instant, deterministic, and returns full paths you can then `Read` without any MCP round-trip.
 
 **Goals & Directions:**
-1. `search_notes(query: "目标", limit: 20)` — Chinese goal notes
-2. `search_notes(query: "goal", limit: 20)` — English goal notes
-3. `search_notes(query: "小目标", limit: 20)` — Annual goal notes
-4. `search_notes(query: "objective", limit: 10)` — Additional goal notes
+1. `Grep(pattern: "目标", path: "zk/")` — Chinese goal mentions
+2. `Grep(pattern: "goal", path: "zk/", -i: true)` — English goal mentions
+3. `Grep(pattern: "小目标", path: "zk/")` — Annual goal notes
+4. `Grep(pattern: "objective", path: "zk/", -i: true)` — Additional goal mentions
 
 **Identity & Themes:**
-5. `list_tags()` — categorization system
-6. `search_notes(query: "career", limit: 10)` — Career trajectory
-7. `search_notes(query: "职业", limit: 10)` — Chinese career notes
-8. `search_notes(query: "learning", limit: 10)` — Learning interests
-9. `search_notes(query: "学习", limit: 10)` — Chinese learning notes
+5. Discover tags: `Bash: grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' zk/ | sort -u` (local tag inventory)
+6. `Grep(pattern: "career", path: "zk/", -i: true)` — Career trajectory
+7. `Grep(pattern: "职业", path: "zk/")` — Chinese career notes
+8. `Grep(pattern: "learning", path: "zk/", -i: true)` — Learning interests
+9. `Grep(pattern: "学习", path: "zk/")` — Chinese learning notes
 
 **Recent Context:**
-10. `get_daily_note(date: "<today>")` — today
-11. `get_daily_note(date: "<yesterday>")` — yesterday
-12. `search_notes(query: "plan", editedAfter: "<30 days ago>", limit: 10)` — recent planning
+10. `Read zk/daily-notes/<today>.md` — today (fall through to `get_daily_note` only if the file hasn't synced)
+11. `Read zk/daily-notes/<yesterday>.md` — yesterday
+12. Recent planning: `Bash: find zk/daily-notes zk/reflections zk/gtd -type f -name "*.md" -mtime -30 | xargs grep -l -i "plan" 2>/dev/null`
 
-Deduplicate results by note ID. Prioritize recent notes.
+Deduplicate results by file path. Prioritize files with recent mtimes. **Semantic fallback:** if the above grep passes miss a conceptual angle (e.g., "curiosity vectors I can't phrase as a keyword"), run `Bash: scripts/semantic.py query "<concept>" --top 10`. In stub mode this lexical-falls-through with a stderr warning; escalate to `search_notes(query: "<concept>", searchType: "vector", limit: 10)` only when the stub misses and the target is genuinely conceptual.
 
 ### Step 2: Read Full Content
 
-For the top ~30-40 most relevant notes, read full content using `get_note(noteId: "<id>")`. Focus on:
+For the top ~30-40 most relevant notes, `Read` the file paths returned by Step 1 directly. The files are already on disk — no MCP round-trip. Focus on:
 - All goal notes (critical for directions.md)
 - Recent daily notes (critical for identity.md — taste and curiosity signals)
 - Top career/learning notes
@@ -132,7 +132,7 @@ Last built: YYYY-MM-DD
 
 Before writing profile files, dispatch **Reviewer** + **Challenger** in parallel:
 
-- **Reviewer** spot-checks 3-5 claims in the draft profile against source notes via `get_note()`:
+- **Reviewer** spot-checks 3-5 claims in the draft profile against source notes by `Read`-ing the local file paths:
   - Are cited [[Note Titles]] real and accurately represented?
   - Do "Intellectual Taste" claims have evidence in the notes, or are they fabricated?
   - Are goal statuses (progressing/stale) consistent with note edit dates?

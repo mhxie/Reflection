@@ -64,7 +64,7 @@ The user can request these actions during or after any session:
 ### Note Operations (→ Curator)
 | User Says | Action | Agent |
 |-----------|--------|-------|
-| "Compact my notes on X" | Researcher finds notes → orchestrator caches locally → Curator compacts from cache | Researcher → Curator |
+| "Compact my notes on X" | Researcher finds notes in `zk/` → orchestrator snapshots each source to `zk/cache/compact-<slug>.md` at dispatch time (local `cp` for notes under `zk/`, MCP `get_note` fallback only for any note genuinely missing from the local mirror) → Curator compacts from snapshot paths | Researcher → Curator |
 | "Merge these notes" | Combine specified notes into one, archive originals | Curator |
 | "Summarize [[Note]]" | Produce a concise summary | Synthesizer |
 | "Write this insight as a new note" | Create a new Reflect note from session insight | Curator |
@@ -73,10 +73,10 @@ The user can request these actions during or after any session:
 ### Research Operations (→ Researcher)
 | User Says | Action | Agent |
 |-----------|--------|-------|
-| "Find notes about X" | Search MCP broadly | Researcher |
-| "What did I write about X last year?" | Time-bounded search | Researcher |
-| "Are there related notes I'm forgetting?" | Semantic/vector search | Researcher |
-| "Show me everything tagged #X" | Tag-based search | Researcher |
+| "Find notes about X" | `Grep` over `zk/`; MCP `search_notes` fallback only if local misses and target is plausibly newer than the sync | Researcher |
+| "What did I write about X last year?" | Filename-date filter on `zk/daily-notes/` + `Grep`; fall through to MCP with `editedBefore`/`editedAfter` if the local path comes back empty | Researcher |
+| "Are there related notes I'm forgetting?" | `Bash: scripts/semantic.py query "<concept>" --top 10` — semantic search is the documented exception where the script leads (stub lexical-falls-through today, embedding-backed once the real-mode sentinel lands). Escalate to `search_notes(searchType: "vector")` only if the stub misses. | Researcher |
+| "Show me everything tagged #X" | `Grep "#X"` over `zk/` (primary); `list_tags` / `search_notes` as cross-check | Researcher |
 
 ### Meeting Operations (→ Meeting)
 | User Says | Action | Agent |
@@ -144,7 +144,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Reader → Challenger** | Reader surfaces a claim worth questioning | Challenger probes the claim against user's existing beliefs | Deepens engagement with the text |
 | **Reviewer + Challenger → Write-back** | Reading discussion ready for write-back | Reviewer checks grounding, Challenger checks completeness | Quality gate before writing to daily note |
 | **Evolver → Orchestrator → Review → Commit** | Evolver proposes a system change | Evolver makes changes (no commit) → returns `review_tier` to orchestrator → orchestrator dispatches reviewers → fixes issues → commits | Quality gate on system evolution (see Review Tiers) |
-| **Batch Compaction** | User asks to compact a topic area | Researcher finds all notes → Orchestrator caches locally → Curator compacts from cached files (one output note at a time) | Sequential: cache must complete before Curator starts |
+| **Batch Compaction** | User asks to compact a topic area | Researcher finds all notes in `zk/` → Orchestrator snapshots each source to `zk/cache/compact-<slug>.md` at dispatch time → Curator compacts from snapshot paths (one output note at a time) | Sequential: all snapshots must exist on disk before Curator starts |
 
 ### Parallel Dispatches (A and B run simultaneously)
 

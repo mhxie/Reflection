@@ -13,13 +13,13 @@ Run a structured weekly review covering the past 7 days. Deeper than daily refle
 
 2. **Read all reflections from the past 7 days** from `zk/reflections/` directory.
 
-3. **Read past 7 daily notes via MCP:**
-   - `get_daily_note(date: "<today>")` through `get_daily_note(date: "<7 days ago>")`
-   - Focus on themes, moods, accomplishments, and struggles
+3. **Read the past 7 daily notes from the local mirror:**
+   - `Read zk/daily-notes/<today>.md` through `Read zk/daily-notes/<7-days-ago>.md` (7 local reads). For today's file, fall through to `get_daily_note(date: "<today>")` only if the sync hasn't pulled the fresh capture yet.
+   - Focus on themes, moods, accomplishments, and struggles.
 
-4. **Search for recent activity:**
-   - `search_notes(query: "progress", editedAfter: "<7 days ago>", limit: 10)`
-   - `search_notes(query: "进展", editedAfter: "<7 days ago>", limit: 10)`
+4. **Search for recent activity in the local mirror:**
+   - Build the recency window: `Bash: find zk/daily-notes zk/reflections zk/gtd -type f -name "*.md" -mtime -7 2>/dev/null | sort`
+   - Grep the recency window for progress markers: `Bash: find zk/daily-notes zk/reflections zk/gtd -type f -name "*.md" -mtime -7 -print0 | xargs -0 grep -HnE "progress|进展" 2>/dev/null`. Using `find -print0 | xargs -0` is safe when `find` returns nothing (xargs with no input simply exits); never use `grep $(find ...)`, which silently scans the current directory on empty input. Local grep is instant; no MCP needed.
 
 ## The Weekly Review Framework
 

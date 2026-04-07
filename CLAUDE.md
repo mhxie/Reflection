@@ -36,21 +36,31 @@ See `protocols/local-first-architecture.md` for the five-tier model in detail, `
 
 Sync direction is **one-way local → Reflect display.** Wiki entries are written locally first, then optionally pushed to Reflect for mobile reading via `/sync` (Phase C). Edits in the Reflect UI are not pulled back.
 
-## MCP Rules — L1 Capture (Reflect)
+## Reading Rules — Local-First, MCP as Fallback
 
-The rules below apply to L1 (capture) operations via the Reflect MCP server. L4 wiki entries are written to local files under `zk/wiki/` first; the MCP write path is used only for the optional display sync.
+The authoritative read path is **`Grep` and `Read` over `zk/`**, not Reflect MCP. The user's full Reflect corpus is synced to `zk/daily-notes/` (YYYY-MM-DD.md), plus `zk/reflections/`, `zk/wiki/`, `zk/readwise/`, `zk/papers/`, `zk/preprints/`, `zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, and `zk/archive/`. Local reads are faster, deterministic, return full content (no lossy snippets), and do not hallucinate.
 
-**Reading:**
-- Use `search_notes` for any knowledge retrieval. Supports text search (`searchType: "text"`) and semantic search (`searchType: "vector"`).
-- Use `get_daily_note` to read daily notes by date (format: YYYY-MM-DD).
-- Use `get_note` to read a specific note by ID.
-- Use `list_tags` to discover available tags.
+| Intent | Default (local) | MCP fallback (and when) |
+|---|---|---|
+| Text search across all notes | `Grep` over `zk/` | `search_notes(searchType: "text")` if grep misses and target is likely newer than the sync |
+| Read a daily note by date | `Read zk/daily-notes/YYYY-MM-DD.md` | `get_daily_note(date)` **only** for today's note when the local mirror is stale (check mtime) |
+| Read a specific note by title | `Grep` for title → `Read` the file | `get_note(id)` only if the note isn't in the local mirror |
+| Discover tags | `grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' zk/ \| sort -u` | `list_tags()` as a cross-check |
+| Semantic / conceptual search | `Bash: scripts/semantic.py query "<concept>" --top N` (stub lexical-falls-through today, embedding-backed once the `zk/.semantic/index.sqlite` sentinel lands — see `sources/semantic.md`) | `search_notes(searchType: "vector")` only when the stub misses a genuinely conceptual query |
+
+**When to use MCP for reads:** (a) today's fresh capture before the sync has pulled it, (b) a conceptual query the `scripts/semantic.py` stub demonstrably cannot phrase, (c) local mirror is clearly incomplete or out of date. Always note in the handoff *why* you left the local path.
+
+**Reading principles (apply to both paths):**
 - **NEVER hallucinate note content.** If search returns nothing relevant, say so honestly.
-- **Search filters by validation depth, not origin.** Do NOT exclude `#ai-reflection` notes from search; that was a bug rooted in the old human/AI binary. The criterion for prioritizing a result is its validation depth (alloy → wiki entry under `zk/wiki/` → `#solo-flight`) and trust score (when available from the trust engine in Phase B), not who or what produced it. See `protocols/epistemic-hygiene.md` for the taxonomy. Legacy `#ai-reflection` and `#ai-generated` tags on existing notes are historical alloy markers and remain searchable.
-- **Search snippets are lossy.** `search_notes` results strip images and some markdown. Always follow up with `get_note()` for any note where full content matters (media, structured data, exact quotes).
-- **Cache before processing.** When working with 5+ notes (compaction, batch operations), cache each note to `zk/cache/` immediately after fetching. This protects against note deletion and avoids redundant re-fetches across agent dispatches.
+- **Prioritize by validation depth, not origin.** Do NOT exclude `#ai-reflection` notes from search; that was a bug rooted in the old human/AI binary. The criterion is validation depth (alloy → wiki entry under `zk/wiki/` → `#solo-flight`) and trust score (when available from the trust engine in Phase B), not who or what produced it. See `protocols/epistemic-hygiene.md`. Legacy `#ai-reflection` / `#ai-generated` tags are historical alloy markers and remain searchable.
+- **`search_notes` snippets are lossy.** If you must use MCP, always follow up with `get_note()` for full content when media, structured data, or exact quotes matter. Local `Read` has no such concern.
+- **Local `Read` has no 20KB limit.** The old "cache large notes to `zk/cache/`" rule was a workaround for MCP's size limit; on the local path you only cache *synthesized* findings (comparison tables, compaction drafts), not raw note content.
 
-**Writing:**
+## Writing Rules — MCP for Capture Layer, Local Files for Wiki
+
+Writes split by destination. L4 wiki entries are written to local files under `zk/wiki/` first (Curator, Phase C — not yet wired). Daily-note write-backs and standalone Reflect notes go through the MCP, unchanged.
+
+**Writing to Reflect (L1 capture layer):**
 - **Always ask for user approval before writing.** Never auto-write to daily notes. Present what you plan to write and wait for confirmation.
 - Use `append_to_daily_note` to write reflection insights back to Reflect daily notes. Parameter name is `text` (not `content`).
 - Use `create_note` to create standalone notes. Parameter name is `contentMarkdown` (not `content`). Title parameter is `subject`. **Using the wrong parameter name silently succeeds but creates an empty note.**
@@ -146,6 +156,8 @@ If profile files don't exist, tell the user: "Run `/introspect` first to build y
 
 The `/reflect` command presents choices: daily reflection, goal review, weekly review, decision journal, exploration, energy audit, reading hub, content curation, or introspection. All other commands (`/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/curate`, `/introspect`) still work directly if you know what you want.
 
+**Reading path — scope and migration status.** The rewire is partial, not complete. Local-first is the rule for **command files under `.claude/commands/`** (reflect, weekly, review, decision, explore, introspect, energy-audit) and for the **Researcher agent**: `Grep` + `Read` over `zk/` as the default, `scripts/semantic.py query` for conceptual search (stub lexical-falls-through today, embedding-backed when the real-mode sentinel lands), and MCP (`get_daily_note`, `get_note`, `search_notes searchType: "vector"`) only as a documented escape hatch for today's fresh capture, notes missing from the mirror, or concepts the stub can't phrase. Any residual `search_notes(...)` or `get_daily_note(...)` in those files is a bug — flag it. **Not yet rewired (Phase C):** `.claude/agents/reader.md`, `.claude/agents/scout.md`, `.claude/agents/librarian.md`, and `protocols/contradiction-detection.md` still call MCP directly for their normal reads. Treat their MCP usage as current-state, not as a bug.
+
 ## Agent Teams
 
 This project uses Claude Code's experimental agent teams for parallel execution. Teams are enabled via `.claude/settings.json`. Agent definitions live in `.claude/agents/`.
@@ -154,7 +166,7 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 
 | Agent | Model | Role | When to use |
 |-------|-------|------|-------------|
-| **Researcher** | Opus | Gathers raw context from Reflect notes via MCP | First — always start by gathering evidence |
+| **Researcher** | Opus | Gathers raw context from the local `zk/` vault (Grep + Read), MCP fallback | First — always start by gathering evidence |
 | **Synthesizer** | Opus | Produces structured reflections from gathered context | After Researcher delivers a brief |
 | **Reviewer** | Sonnet | Quality-checks citations, goal coverage, honesty (scored rubric 0-10) | After Synthesizer produces output |
 | **Challenger** | Opus | Asks probing questions with depth taxonomy and emotional register detection | During reflection — deepens the conversation |
@@ -197,9 +209,9 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 5. Write-back with user approval, [[backlinks]] to the article
 
 **Note compaction (`compact my notes on X`):**
-1. Researcher identifies all related notes (search + user guidance)
-2. Orchestrator fetches all notes and caches locally to `zk/cache/`
-3. Curator (Sonnet) receives cached file paths + compaction instructions
+1. Researcher identifies all related notes in `zk/` (Grep first; MCP fallback only for notes genuinely missing from the local mirror)
+2. Orchestrator snapshots each source to `zk/cache/compact-<slug>.md` at dispatch time — local `cp` for notes under `zk/`, MCP `get_note()` fallback only for notes missing from the mirror. Snapshots freeze content against mid-session mutation.
+3. Curator (Sonnet) receives snapshot file paths and works exclusively from them
 4. Curator drafts compacted note(s), runs Content Preservation Checklist
 5. Orchestrator verifies Gate 4 (media count, size, verbatim preservation)
 6. User approves each output note individually

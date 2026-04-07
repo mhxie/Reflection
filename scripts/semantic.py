@@ -19,9 +19,9 @@ See also:
     handoffs/2026-04-06-phase-bcd-trust-engine.md  (Addendum: Phase B.5)
 
 Usage:
-    python scripts/semantic.py query "<text>" [OPTIONS]
-    python scripts/semantic.py index [--rebuild]
-    python scripts/semantic.py --help
+    scripts/semantic.py query "<text>" [OPTIONS]
+    scripts/semantic.py index [--rebuild]
+    scripts/semantic.py --help
 
 Stdlib only. No third-party dependencies in stub mode.
 """
