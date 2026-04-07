@@ -45,10 +45,13 @@ Bash: scripts/sync_export.py body zk/wiki/<slug>.md --synced-at <today>
 
 `sync_export.py` does the following deterministically, and the LLM never re-derives it:
 
-1. Keeps: H1 title, intro prose, `## Claims` heading, each `### [Cn]` heading and its prose body, `## Revision Log`.
-2. For each claim, collects its `@anchor`, `@cite`, and `@pass` lines from the fenced `anchors` block and renders them under the claim as a human-readable `**Sources:**` bullet list.
-3. Drops the fenced ` ```anchors ` blocks entirely.
-4. Appends a top-level "Synced from ... Local is authoritative" footer.
+1. **Strips the leading H1.** Reflect auto-prepends the note subject as an H1 on ingestion, so leaving our own produces a duplicate title. The script drops the first `# ` line (and any blank lines immediately after it).
+2. Keeps: intro prose, `## Claims` heading, each `### [Cn]` heading and its prose body, `## Revision Log`, `## Notes for ...` sections.
+3. For each claim, collects its `@anchor`, `@cite`, and `@pass` lines from the fenced `anchors` block (using the same positional scoping as `scripts/trust.py` — each fenced block belongs to the most recent `### [Cn]` heading) and renders them under the claim as a human-readable `**Sources:**` bullet list. The raw marker format `@anchor: arxiv:2501.13956 | valid_at: 2026-04-06` is prettified to `arxiv:2501.13956 (valid from 2026-04-06)`; bi-temporal markers with both `valid_at` and `invalid_at` render as `(valid YYYY-MM-DD — YYYY-MM-DD)`.
+4. Drops the fenced ` ```anchors ` blocks entirely.
+5. Appends a top-level "Synced from ... Local is authoritative" footer.
+
+**Known Reflect ingestion mutations** (cosmetic, do not affect trust or searchability): Reflect wraps bare URLs in `<...>` angle brackets, normalizes `---` horizontal rules to `***`, and auto-prepends the subject as an H1 (the reason step 1 exists). These are why the new-entry verify step checks `body non-empty`, not byte-exact match — byte-exact comparison would always fail.
 
 The output of `sync_export.py body` is the exact byte stream whose sha256 was computed in Phase 1 and is what you pass to `create_note` in Phase 3. Capture it to a temporary file under `zk/cache/sync-<slug>.md` so the LLM can feed it into the MCP call without re-encoding.
 
@@ -61,14 +64,14 @@ For each **new** entry:
 
 For each **changed** entry:
 
-Reflect MCP has no update API. The user is expected to have deleted the old Reflect note by hand before re-running `/sync`. We attempt `create_note` and verify whether we got a fresh copy or hit the stale stub:
+Reflect MCP has no update API. The user is expected to have deleted the old Reflect note by hand before re-running `/sync`. `create_note` with an existing title returns the existing note unchanged (same ID); with no existing title it creates a fresh note (new ID). The **returned note ID** is the recovery signal — not the body (Reflect mutates bodies on ingestion: auto-prepends an H1, wraps URLs in `<...>`, normalizes `---` to `***`, etc., so byte-exact body comparison would always fail).
 
 1. Call `create_note(subject: "<H1 title>", contentMarkdown: "<stripped body>")`.
-2. **Verify:** immediately `get_note(id)` on the returned ID.
-   - **Empty body:** the parameter name was wrong — stop and report (same silent-empty-note check as the new-entry path).
-   - **Body matches the stripped body we just sent:** the user successfully deleted the old note; `create_note` created a fresh one. **Update the manifest** (`reflect_note_id`, `synced_at`, `content_sha256`) and treat as success.
-   - **Body does not match (stale stub):** the user forgot to delete the old Reflect note, so `create_note` returned the existing one unchanged. Skip this entry, do **not** update the manifest hash, and report:
-     > "<slug> has local edits but the old Reflect note is still present. Delete it by hand in Reflect and re-run `/sync`."
+2. Compare the returned `id` with `entries[slug].reflect_note_id` in the manifest:
+   - **New ID (different from manifest):** the user successfully deleted the old note; `create_note` created a fresh one. Run the empty-body check via `get_note(new_id)` (silent-empty-note guard) and if the body is non-empty, **update the manifest** with the new `reflect_note_id`, `synced_at`, and `content_sha256`. Treat as success.
+   - **Same ID as manifest (stale stub):** the user forgot to delete the old Reflect note, so `create_note` returned the existing stub unchanged. Skip this entry, do **not** update the manifest hash, and report:
+     > "<slug> has local edits but the old Reflect note (`<id>`) is still present. Delete it by hand in Reflect and re-run `/sync`."
+   - **Empty body on the new-ID path:** the parameter name was wrong — stop and report (same silent-empty-note check as the new-entry path).
 
 ### Phase 4: Report
 
@@ -86,7 +89,7 @@ Present a summary:
 
 - **Reflect MCP down:** exit cleanly in Phase 1. No partial writes, no manifest mutation.
 - **`create_note` empty-body detected:** stop the loop, do not update the manifest, report the slug that failed.
-- **Title collision (existing Reflect note with same title but no manifest entry):** `create_note` returns the existing note. Verify the returned body matches the stripped body we just computed. If they match, record it in the manifest and treat as idempotent success. If they don't match, skip it and report: manual resolution needed.
+- **Title collision (existing Reflect note with same title but no manifest entry):** `create_note` returns the existing note. You cannot tell from the body alone whether it's a benign prior sync (idempotent re-adoption) or a conflicting note the user wrote by hand, because Reflect mutates bodies on ingestion. Record the returned ID in the manifest alongside the current stripped-body hash and warn the user: "<slug> collided with an existing Reflect note (`<id>`); adopted it into the manifest. If this is not the copy you expected, delete it by hand in Reflect and re-run `/sync`."
 - **Structural-integrity failure:** already filtered in Phase 1. Print the file path and parse errors so the user can fix the source.
 - **`scripts/trust.py` missing or errors:** skip the trust filter but still perform the sync. Warn: "Trust engine unavailable — syncing without parse verification."
 

@@ -25,77 +25,129 @@ import sys
 from datetime import date
 from pathlib import Path
 
-ANCHORS_FENCE = re.compile(r"^```anchors\s*\n.*?^```\s*\n", re.MULTILINE | re.DOTALL)
-CLAIM_HEADING = re.compile(r"^###\s+\[C(\d+)\]", re.MULTILINE)
+CLAIM_HEADING_RE = re.compile(r"^###\s+\[C(\d+)\]")
+FENCE_OPEN_RE = re.compile(r"^```anchors\s*$")
+FENCE_CLOSE_RE = re.compile(r"^```\s*$")
 
 
-def parse_anchors_blocks(text: str) -> dict[str, list[str]]:
-    """Return {claim_id: [marker_line, ...]} from all fenced anchors blocks."""
-    blocks: dict[str, list[str]] = {}
-    for match in re.finditer(
-        r"^```anchors\s*\n(?P<body>.*?)^```\s*\n",
-        text,
-        re.MULTILINE | re.DOTALL,
-    ):
-        body = match.group("body")
-        current: str | None = None
-        for raw in body.splitlines():
-            line = raw.rstrip()
-            if not line:
-                continue
-            claim_match = re.match(r"\[C(\d+)\]\s*$", line.strip())
-            if claim_match:
-                current = f"C{claim_match.group(1)}"
-                blocks.setdefault(current, [])
-                continue
-            if current is None:
-                continue
-            blocks.setdefault(current, []).append(line.strip())
-    return blocks
+MARKER_PREFIX_RE = re.compile(r"^@(anchor|cite|pass):\s*")
 
 
-def render_sources_footer(markers: list[str]) -> str:
+def prettify_marker(raw: str) -> str:
+    """Turn `@anchor: arxiv:2501.13956 | valid_at: 2026-04-06` into
+    `arxiv:2501.13956 (valid from 2026-04-06)`. Unknown forms pass through
+    with the leading `@kind:` prefix stripped."""
+    line = MARKER_PREFIX_RE.sub("", raw).strip()
+    parts = [p.strip() for p in line.split("|")]
+    head = parts[0]
+    meta = {}
+    for p in parts[1:]:
+        if ":" in p:
+            k, _, v = p.partition(":")
+            meta[k.strip()] = v.strip()
+    suffix_bits = []
+    if "valid_at" in meta and "invalid_at" in meta:
+        suffix_bits.append(f"valid {meta['valid_at']} — {meta['invalid_at']}")
+    elif "valid_at" in meta:
+        suffix_bits.append(f"valid from {meta['valid_at']}")
+    elif "invalid_at" in meta:
+        suffix_bits.append(f"invalidated {meta['invalid_at']}")
+    for k in ("status", "at", "by"):
+        if k in meta:
+            suffix_bits.append(f"{k}: {meta[k]}")
+    if suffix_bits:
+        return f"{head} ({'; '.join(suffix_bits)})"
+    return head
+
+
+def render_sources_footer(markers: list[str]) -> list[str]:
     if not markers:
-        return ""
-    bullets = "\n".join(f"- {m}" for m in markers)
-    return f"\n**Sources:**\n{bullets}\n"
+        return []
+    out = ["", "**Sources:**"]
+    out.extend(f"- {prettify_marker(m)}" for m in markers)
+    return out
 
 
 def strip_body(path: Path, synced_at: str) -> str:
-    text = path.read_text(encoding="utf-8")
-    anchors = parse_anchors_blocks(text)
-    # Drop all fenced anchors blocks.
-    stripped = ANCHORS_FENCE.sub("", text)
+    """Single streaming pass mirroring scripts/trust.py positional scoping.
 
-    # Insert Sources footer under each claim heading if we have markers for it.
-    def insert_after_claim(match: re.Match[str]) -> str:
-        return match.group(0)
+    Anchor markers live inside fenced ```anchors blocks; each block is
+    positionally scoped to the most recent `### [Cn]` heading. We drop the
+    fenced blocks from the output and render their markers as a human-readable
+    `**Sources:**` footer under the corresponding claim (before the next
+    heading).
+    """
+    raw_lines = path.read_text(encoding="utf-8").splitlines()
 
-    # Simple pass: append markers at the end of each claim's prose by inserting
-    # immediately before the next `### [C` heading or `## ` heading.
-    if anchors:
-        out_lines: list[str] = []
-        current_claim: str | None = None
-        pending_markers: list[str] = []
-        for line in stripped.splitlines(keepends=False):
-            heading_match = CLAIM_HEADING.match(line)
-            if heading_match or line.startswith("## "):
-                if current_claim and pending_markers:
-                    out_lines.append(render_sources_footer(pending_markers).rstrip())
-                    out_lines.append("")
-                pending_markers = []
-                if heading_match:
-                    current_claim = f"C{heading_match.group(1)}"
-                    pending_markers = list(anchors.get(current_claim, []))
-                else:
-                    current_claim = None
-            out_lines.append(line)
-        if current_claim and pending_markers:
-            out_lines.append(render_sources_footer(pending_markers).rstrip())
-        stripped = "\n".join(out_lines)
+    # Strip a leading H1 (and any blank lines immediately after it) — Reflect
+    # auto-prepends the subject as an H1, so including our own produces a
+    # duplicate title in the rendered note.
+    lines = list(raw_lines)
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("# ") and not stripped.startswith("## "):
+            j = i + 1
+            while j < len(lines) and not lines[j].strip():
+                j += 1
+            lines = lines[j:]
+        break
 
-    # Normalize trailing whitespace and append footer.
-    stripped = stripped.rstrip() + "\n"
+    # Pass 1: collect markers per claim, using positional scoping.
+    claim_markers: dict[int, list[str]] = {}
+    current_claim: int | None = None
+    in_fence = False
+    for raw in lines:
+        line = raw.rstrip()
+        heading_match = CLAIM_HEADING_RE.match(line)
+        if heading_match and not in_fence:
+            current_claim = int(heading_match.group(1))
+            claim_markers.setdefault(current_claim, [])
+            continue
+        if FENCE_OPEN_RE.match(line):
+            in_fence = True
+            continue
+        if in_fence and FENCE_CLOSE_RE.match(line):
+            in_fence = False
+            continue
+        if in_fence and current_claim is not None and line.strip():
+            claim_markers[current_claim].append(line.strip())
+
+    # Pass 2: rebuild the body, dropping fences and inserting Sources footers
+    # immediately before the next heading after a claim's prose.
+    out: list[str] = []
+    current_claim = None
+    pending: list[str] = []
+    in_fence = False
+    for raw in lines:
+        line = raw.rstrip()
+        if FENCE_OPEN_RE.match(line):
+            in_fence = True
+            continue
+        if in_fence:
+            if FENCE_CLOSE_RE.match(line):
+                in_fence = False
+            continue
+        heading_match = CLAIM_HEADING_RE.match(line)
+        is_any_heading = line.startswith("## ") or line.startswith("### ")
+        if is_any_heading and pending:
+            out.extend(render_sources_footer(pending))
+            out.append("")
+            pending = []
+        if heading_match:
+            current_claim = int(heading_match.group(1))
+            pending = list(claim_markers.get(current_claim, []))
+        elif is_any_heading:
+            current_claim = None
+        out.append(line)
+    if pending:
+        out.extend(render_sources_footer(pending))
+
+    # Collapse trailing blank lines and append the synced-from footer.
+    while out and not out[-1].strip():
+        out.pop()
+    stripped = "\n".join(out) + "\n"
     footer = (
         "\n---\n\n"
         f"_Synced from `{path.as_posix()}` on {synced_at}. "
