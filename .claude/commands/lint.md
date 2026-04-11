@@ -11,7 +11,10 @@ Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint
 | Per-note parse errors — items 1-10 of `protocols/wiki-schema.md`, plus dangling `@cite` targets (both surface under the `parse-error` code) | ERROR | `scripts/trust.py` parser + resolver |
 | Duplicate titles across wiki entries (breaks `@cite` resolution) | ERROR | `scripts/lint.py` |
 | Slug ↔ title alignment (filename stem matches slugified H1) | WARN | `scripts/lint.py` |
+| Orphan entry — no inbound `@cite` from any other wiki entry (trust cannot propagate to it) | WARN | `scripts/lint.py` graph topology |
 | Manifest drift — dead entries (slug in manifest, no file on disk) | WARN | `scripts/lint.py` |
+| No outbound cite — entry does not `@cite` any other wiki entry | INFO | `scripts/lint.py` graph topology |
+| Shared anchor, no cite — two entries reference the same `@anchor` but lack a `@cite` edge | INFO | `scripts/lint.py` graph topology |
 | Unsynced wiki entries (file on disk, no manifest row) | INFO | `scripts/lint.py` |
 | Claim missing `^cn` block ID (`block-id-missing`, deferred — Phase D) | WARN | `scripts/lint.py` — regex `\^c[0-9]+$` on last line of each claim body; absent marker is a nudge, not a reject (per `protocols/wiki-schema.md` §"When `^cn` is recommended") |
 | Non-`^cn` block ID inside a wiki entry (`block-id-violation`, deferred — Phase D) | ERROR | `scripts/lint.py` — any `^<token>` that does not match `\^c[0-9]+$` is a schema violation (no `^summary`, `^fig1`, `^revlog-*`, etc.) |
@@ -62,6 +65,8 @@ For each fixable category, ask the user before acting:
 | `parse-error` (e.g., missing `valid_at`, non-sequential `[Cn]`) | Edit the wiki entry | Route to the user; do not auto-edit wiki entries. |
 | `duplicate-title` | Edit one of the H1 titles | Ask the user which note keeps the title. |
 | `dangling-cite` | Fix the `@cite` target or remove the marker | Surfaced under `parse-error` code (trust.py's resolver appends to `parse_errors`). Route to the user. |
+| `orphan-entry` | Add `@cite` markers from related entries | Suggest specific claims in other entries that could cite the orphan. The `shared-anchor-no-cite` findings often point to the right pairs. |
+| `shared-anchor-no-cite` | Add `@cite` between the pair | Show the shared anchor and suggest which direction the cite should flow (from the more general to the more specific claim). |
 
 ### Phase 4: Rerun (if fixes applied)
 

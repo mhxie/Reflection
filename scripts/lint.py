@@ -11,7 +11,15 @@ at the corpus level — things no single-note parser can see:
      which is how trust.py's edge builder finds targets).
   3. Slug / title alignment (file stem should match the slugified H1 so
      /sync's manifest keys stay stable across renames).
-  4. Manifest drift:
+  4. Graph topology (inspired by llm_wiki's graph-insights):
+       a. Orphan entry (WARN) — wiki entry with 0 inbound @cite edges
+          from other entries, meaning no trust propagates to it.
+       b. No outbound cite (INFO) — entry that @cites nothing, meaning
+          it does not propagate trust to any other entry.
+       c. Shared anchor, no cite (INFO) — two entries reference the same
+          @anchor source but have no @cite edge between them: a candidate
+          cross-reference that the trust graph is missing.
+  5. Manifest drift:
        a. Dead manifest entries — slug in zk/.sync-manifest.json whose
           file no longer exists on disk (rename, delete, or never
           committed).
@@ -227,6 +235,104 @@ def check_manifest_drift(
     return findings
 
 
+def check_graph_topology(notes: list[WikiNote]) -> list[Finding]:
+    """Graph-level checks over the @cite / @anchor network.
+
+    Inspired by llm_wiki's graph-insights: detect orphan entries, entries
+    with no outbound cites, and entries that share @anchor sources but lack
+    @cite edges between them.
+    """
+    findings: list[Finding] = []
+    ok_notes = [n for n in notes if n.integrity_ok() and n.title]
+
+    if len(ok_notes) < 2:
+        # With fewer than 2 entries the graph topology checks are vacuous.
+        return findings
+
+    # Build cite edge sets (note-level, not claim-level).
+    # inbound[path] = set of paths that cite this note
+    # outbound[path] = set of paths this note cites
+    title_to_path: dict[str, Path] = {}
+    for n in ok_notes:
+        if n.title is not None:
+            title_to_path[n.title] = n.path
+    inbound: dict[Path, set[Path]] = {n.path: set() for n in ok_notes}
+    outbound: dict[Path, set[Path]] = {n.path: set() for n in ok_notes}
+
+    for note in ok_notes:
+        for claim in note.claims:
+            for c in claim.cites:
+                target_title = c.fields.get("_cite_title", "")
+                target_path = title_to_path.get(target_title)
+                if target_path and target_path != note.path:
+                    outbound[note.path].add(target_path)
+                    inbound[target_path].add(note.path)
+
+    # 1. orphan-entry: no inbound @cite edges from any other note.
+    for note in ok_notes:
+        if not inbound[note.path]:
+            findings.append(
+                Finding(
+                    "WARN",
+                    "orphan-entry",
+                    note.path.as_posix(),
+                    f"no other wiki entry cites `{note.title}` — "
+                    f"add @cite markers from related entries to enable trust propagation",
+                )
+            )
+
+    # 2. no-outbound-cite: entry cites nothing.
+    for note in ok_notes:
+        if not outbound[note.path]:
+            findings.append(
+                Finding(
+                    "INFO",
+                    "no-outbound-cite",
+                    note.path.as_posix(),
+                    f"`{note.title}` does not @cite any other wiki entry",
+                )
+            )
+
+    # 3. shared-anchor-no-cite: two entries share an @anchor source but
+    #    have no @cite edge between them (in either direction).
+    #    This is the "surprising connection" signal from llm_wiki.
+    anchor_to_notes: dict[str, set[Path]] = {}
+    for note in ok_notes:
+        for claim in note.claims:
+            for a in claim.anchors:
+                node_id = a.fields.get("_node_id", "")
+                if node_id:
+                    anchor_to_notes.setdefault(node_id, set()).add(note.path)
+
+    reported_pairs: set[tuple[str, str]] = set()
+    for anchor_id, paths in anchor_to_notes.items():
+        if len(paths) < 2:
+            continue
+        sorted_paths = sorted(paths, key=lambda p: p.as_posix())
+        for i, pa in enumerate(sorted_paths):
+            for pb in sorted_paths[i + 1:]:
+                pair_key = (pa.as_posix(), pb.as_posix())
+                if pair_key in reported_pairs:
+                    continue
+                # Check if there's a cite edge in either direction.
+                if pb in outbound[pa] or pa in outbound[pb]:
+                    continue
+                reported_pairs.add(pair_key)
+                title_a = next(n.title for n in ok_notes if n.path == pa)
+                title_b = next(n.title for n in ok_notes if n.path == pb)
+                findings.append(
+                    Finding(
+                        "INFO",
+                        "shared-anchor-no-cite",
+                        f"{pa.as_posix()} + {pb.as_posix()}",
+                        f"`{title_a}` and `{title_b}` share @anchor `{anchor_id}` "
+                        f"but are not @cite-linked — consider adding a cross-reference",
+                    )
+                )
+
+    return findings
+
+
 def run_lints(notes: list[WikiNote], manifest: dict) -> list[Finding]:
     findings: list[Finding] = []
     # Resolve @cite targets so dangling-cite errors land on the source note
@@ -236,6 +342,7 @@ def run_lints(notes: list[WikiNote], manifest: dict) -> list[Finding]:
     findings.extend(check_parse_errors(notes))
     findings.extend(check_duplicate_titles(notes))
     findings.extend(check_slug_alignment(notes))
+    findings.extend(check_graph_topology(notes))
     findings.extend(check_manifest_drift(notes, manifest))
     findings.sort(key=lambda f: (SEVERITY_ORDER.get(f.severity, 99), f.code, f.where))
     return findings

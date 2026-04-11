@@ -158,10 +158,11 @@ If profile files don't exist, tell the user: "Run `/introspect` first to build y
 | `/curate` | **Curate inbox** — goal-aware triage of Readwise inbox (also under `/reflect` → Act) |
 | `/introspect` | **Build self-model** — discover identity, taste, curiosity, and directions from your notes |
 | `/sync` | **Push `zk/wiki/` entries to Reflect** for mobile display (one-way, manifest-tracked) |
-| `/lint` | **Structural + corpus-level lint** over `zk/wiki/` and the sync manifest — parse errors, duplicate titles, slug drift, manifest dead rows, anchor conflicts |
+| `/lint` | **Structural + corpus-level lint** over `zk/wiki/` and the sync manifest — parse errors, duplicate titles, slug drift, graph topology (orphan entries, missing cross-references, shared anchors without @cite), manifest dead rows |
+| `/promote` | **Create L4 wiki entry** from L2 source notes — two-step analyze-then-generate pipeline (Researcher finds claims + anchors, Curator drafts schema-compliant entry), with post-creation lint and index regeneration |
 | `/restore` | **Emergency recovery** of wiki entries from Reflect's append-only archive into `zk/cache/restore-*.md` for hand-reconstruction. **Very rarely triggered** — last resort when a wiki entry is lost locally and git history doesn't help. Lossy by design (see `.claude/commands/restore.md`) |
 
-The `/reflect` command presents choices: daily reflection, goal review, weekly review, decision journal, exploration, energy audit, reading hub, content curation, or introspection. All other commands (`/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/curate`, `/introspect`, `/sync`, `/lint`) still work directly if you know what you want.
+The `/reflect` command presents choices: daily reflection, goal review, weekly review, decision journal, exploration, energy audit, reading hub, content curation, or introspection. All other commands (`/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/curate`, `/introspect`, `/sync`, `/lint`, `/promote`) still work directly if you know what you want.
 
 **Reading path — Phase C complete.** Every command under `.claude/commands/` and every subagent under `.claude/agents/` reads from the local `zk/` vault. `scripts/semantic.py query` is the primary content lookup; `Grep` is for structural queries. The only Reflect read MCP call anywhere in the system is the orchestrator-only `get_daily_note(today)` fallback for today's unsynced capture, and the one-off orchestrator `get_note(id)` used by the curator snapshot flow in `protocols/agent-handoff.md`. Any `search_notes`, `list_tags`, or non-`today` `get_daily_note` call in a command, agent, or protocol file is a bug — flag it.
 
