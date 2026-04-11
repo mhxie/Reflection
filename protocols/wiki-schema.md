@@ -109,7 +109,7 @@ Markers live inside fenced code blocks with the language label `anchors`, one ma
 An external source. This is a **seed** in the trust graph: only `@anchor` markers contribute initial trust mass to the personalized PageRank.
 
 ```
-@anchor: <type>:<id> | valid_at: <YYYY-MM-DD> [| invalid_at: <YYYY-MM-DD>] [| weight: <float>]
+@anchor: <type>:<id> | valid_at: <YYYY-MM-DD> [| invalid_at: <YYYY-MM-DD>] [| weight: <float>] [| readwise: <document_id>]
 ```
 
 Anchor types and id formats:
@@ -126,6 +126,29 @@ Anchor types and id formats:
 **URL escaping rule.** Marker fields are pipe-separated, so URLs (in `url` and `gist` anchors and in `ref:` fields) must not contain literal pipe characters. If a URL contains `|`, encode it as `%7C` before storing it in the marker. The parser will not try to be clever about pipe placement; it splits on the first occurrence of ` | ` (space-pipe-space) per line, then on `:` for each field's key. Multi-line values are not supported; each marker is exactly one line.
 
 `weight` is optional and defaults to `1.0`. For papers, weight may be set to `s2.influentialCitationCount`-derived values or OpenAlex FWCI when the user wants to bias trust toward higher-quality anchors. v1 trust engine treats all weights as `1.0` unless explicitly set; weighted seeding is a Phase B optional feature.
+
+### Anchor Evidence Resolution
+
+Every `@anchor` marker claims "this external source existed and supported this claim on the `valid_at` date." The evidence backing that claim must be durable (L3), not ephemeral (L1). The resolution chain defines where to find the source content for each anchor type:
+
+| Anchor type | Durable evidence (L3) | Ephemeral cache (L1) | Last resort |
+|---|---|---|---|
+| `url:` | **Readwise** (by `readwise:` document ID) | `zk/cache/web-*.md` (current session only) | WebFetch |
+| `gist:` | **Readwise** (save the gist URL) | `zk/cache/web-*.md` | WebFetch |
+| `s2:` / `arxiv:` / `doi:` | `zk/papers/` (local PDF + review notes) | — | `sources/cite.py` |
+| `isbn:` | (no local evidence expected) | — | Manual verification |
+
+**The `readwise:` field.** Optional on all anchor types, recommended on `url:` and `gist:` anchors. Contains the Readwise Reader document ID (e.g., `01kk0zpka139am1v9jftnae9dw`). When present, the full source content can be retrieved via `readwise reader-get-document-details --document-id <id>` regardless of whether the URL is still live. Readwise snapshots web content at save time and stores it permanently.
+
+**Authoring workflow.** When creating a wiki entry with `url:` anchors:
+1. Check if the URL is already in Readwise: `readwise reader-search-documents --query "<url>"`
+2. If not, save it: `readwise reader-create-document --url "<url>" --tags anchor-evidence`
+3. Add the document ID to the anchor marker: `| readwise: <id>`
+4. Optionally snapshot to `zk/cache/web-<slug>.md` for current-session agent use (ephemeral; will be cleaned up)
+
+Tag convention: Readwise saves that back wiki anchors carry the `anchor-evidence` tag. This makes them discoverable via `readwise reader-list-documents --tag anchor-evidence`.
+
+**`/lint` behavior.** A `url:` or `gist:` anchor without a `readwise:` field is a WARN, not an ERROR. The anchor is still valid; the evidence is just harder to retrieve if the URL goes down. Pre-existing anchors without `readwise:` fields may be retrofitted opportunistically.
 
 ### `@cite`
 
