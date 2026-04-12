@@ -109,33 +109,15 @@ Based on Step 1, use a second `AskUserQuestion`:
    - Dispatch additional Reader instances with specific lenses if the user wants to go deeper on an aspect
 
 4. **Quality gate — Phase 4 (review + challenge):**
-   - Before write-back, dispatch **Reviewer** + **Challenger** in parallel:
+   - Before saving, dispatch **Reviewer** + **Challenger** in parallel:
      - Reviewer checks: citation accuracy, grounding, honesty
      - Challenger checks: are we asking the right questions? What did we miss?
-   - Fix any issues they surface before presenting the write-back
+   - Fix any issues they surface before writing the reflection file
 
-5. **Article note — Phase 5 (create standalone note):**
-   - Before write-back, create a standalone article note in Reflect using `create_note` with:
-     - Title: the article's title
-     - Body: source URL, author, publication date, and key data points / takeaways from the reading analysis
-     - Tags: `#article` and relevant topic tags
-   - This note becomes the canonical reference for this article in the user's knowledge graph.
-
-6. **Write-back — Phase 6 (with approval):**
-   - Present proposed write-back to user for approval
-   - Include [[backlinks]] to the article note created in Phase 5 and any related notes discussed
-   - No provenance tag. Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`). Topic tags are fine. The descriptive heading is the duplicate-detection signal, not a tag.
-
-#### Article Note (all reading flows)
-
-For **all** reading session types (Read & Discuss, Focused Read, Multi-Lens Read), create a standalone article note before the write-back:
-
-1. Use `create_note` with the article's title as the note title
-2. Include in the body: source URL, author, publication date, and key data points / takeaways
-3. Tag with `#article` and relevant topic tags (e.g., `#ai`, `#career`, `#systems`)
-4. Backlink to this note from the daily note write-back using [[Article Title]]
-
-This ensures every article read has a permanent, searchable reference in Reflect's knowledge graph.
+5. **Save — Phase 5 (local reflection file):**
+   - Write the reflection file to `zk/reflections/YYYY-MM-DD-reading-<slug>.md`
+   - Include full source text under `### Full Text` (see source-text persistence rule in CLAUDE.md)
+   - No write-back to daily notes. The reflection file is the durable output.
 
 ### If Learn:
 
@@ -169,8 +151,10 @@ Run a reflection session grounded in your Reflect notes and goals.
 2. **Read recent reflections** (last 3 files from `zk/reflections/` directory, sorted by date). If none exist, this is the first session — note that.
 
 3. **Pull fresh context from the local mirror:**
-   - `Read zk/daily-notes/<today>.md` — what you've done today. If the file is missing or visibly truncated (today's capture hasn't synced yet), fall through to `get_daily_note(date: "<today>")` via MCP.
-   - `Read zk/daily-notes/<yesterday>.md` — what you did yesterday. Local only; no MCP fallback needed for a sync-complete day.
+   - Determine the **effective date**: if current local time is before 03:00, use yesterday's date; otherwise use today's. This is the user's day boundary (late-sleep rule). All subsequent "today" references in this session use the effective date.
+   - `Read zk/daily-notes/<effective-date>.md` — what you've done today. If the file is missing, empty, or visibly truncated, **sync from Reflect first:** call `get_daily_note(date: "<effective-date>")` via MCP, then overwrite the local file. (Orchestrator only.)
+   - If effective date differs from the calendar date (late-sleep active), also read `zk/daily-notes/<calendar-date>.md` if it exists — the user may have captured something after midnight.
+   - `Read zk/daily-notes/<effective-date - 1>.md` — what you did the day before. Local only; no MCP fallback needed for a sync-complete day.
    - For recent activity related to your themes, run `Bash: scripts/semantic.py query "<theme>" --after "<7 days ago, YYYY-MM-DD>" --top 5` first — this is the primary content lookup. For structural follow-up (exact strings, known tags), list files modified in the last 7 days with `Bash: find zk/daily-notes zk/reflections -type f -name "*.md" -mtime -7 2>/dev/null | sort`, then `Grep` the theme keyword across those paths.
 
 ## Coaching Session
@@ -260,28 +244,6 @@ After the interactive session, write a reflection file:
 
 After writing the reflection file, emit a session log to `zk/sessions/YYYY-MM-DD-reflection.md` following `protocols/session-log.md`. Populate from data accumulated during the session: agent dispatches (from handoff tracking), search log (from Researcher handoffs and direct searches), gate results (from Reviewer handoffs), questions and engagement (from Challenger handoffs and your own questions), frameworks applied (from Thinker handoffs), continuity data (from step 0 and step 5), routing decisions, anomalies, and harness assumptions exercised. This is a local file write only. No MCP call. No user approval needed. If the write fails, warn and continue.
 
-## Write-Back to Reflect
-
-After writing the reflection file, check if today's daily note already contains a write-back from today's session. Detect by descriptive heading (the heading is the signal, not a tag). As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier in the day something pre-Phase-A wrote using the old convention.
-
-- If **a write-back already exists**: Skip. Tell the user: "Already wrote to today's daily note earlier. Skipping duplicate write-back."
-
-- If **no write-back exists yet**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. Then **ask the user for approval before writing.** Present the proposed write-back and wait for confirmation. Do not auto-write. **Write-backs are always in English**, even if the session was conducted in Chinese. The write-back should follow this format:
-  ```
-  ## [Descriptive Title]
-  [2-3 sentence summary of key insights from today's reflection session]
-  Related: [[Note Title 1]] [[Note Title 2]]
-  ```
-  **Title guidelines:** The heading must describe the session's core theme or question, not its source. Titles are in English (same as the write-back body). Good examples:
-  - Topic-based: `Constraint creates meaning`
-  - Question-based: `Why does unlimited freedom feel empty?`
-  - Date+theme: `03/15 Energy dip and recovery patterns`
-  - Insight-based: `Delegation as a trust signal`
-
-  Never use generic titles like "AI Reflection" or "Daily Reflection Summary." The descriptive heading is load-bearing: it is the duplicate-detection signal and the only visible marker of a session write-back in the daily note. **No provenance tag.** Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`). Topic tags are fine when they describe subject matter.
-
-  Include [[backlinks]] to all notes referenced during the session so they appear in Reflect's backlink graph. Use today's date in YYYY-MM-DD format.
-
 ## Wrap Up
 
-Tell the user the reflection has been saved.
+The reflection file in `zk/reflections/` is the durable session output. No write-back to daily notes — the user's daily note is their capture stream, read-only from the system's perspective. Tell the user the reflection has been saved and where to find it.

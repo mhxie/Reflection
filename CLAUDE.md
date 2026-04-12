@@ -27,7 +27,7 @@ reflectl operates on a **five-tier model** organized by depth of crystallization
 | **L5: Foundation** | (reserved — no folder yet) | Universally certified knowledge (textbook-level) | — |
 | **L4: Locally certified** | `zk/wiki/*.md` | Authoritative knowledge layer — schema-structured, anchored, TrustRank-scored | Append-only markers, additive invalidation, revision-log tracked |
 | **L3: Externally certified** | `zk/papers/` + Readwise | Peer-reviewed papers, high-citation work, curated reading corpus | Append-only via scout fetches and Readwise saves |
-| **L2: Working / half-baked** | `zk/daily-notes/`, `zk/reflections/`, `zk/preprints/`, `zk/agent-findings/`, `zk/drafts/`, `zk/gtd/` | Alloy: daily free-writes, session reflections, arxiv preprints + paper reviews, agent synthesis briefs, working drafts | Append-mostly, edited freely |
+| **L2: Working / half-baked** | `zk/daily-notes/`, `zk/reflections/`, `zk/preprints/`, `zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, `zk/health/` | Alloy: daily free-writes, session reflections, arxiv preprints + paper reviews, agent synthesis briefs, working drafts, personal health records | Append-mostly, edited freely |
 | **L1: Raw capture** | Reflect UI, Readwise inbox, `zk/cache/`, `zk/readwise/` | Voice transcripts, mobile quick-notes, ephemeral web fetches, inbox items | Fast, sloppy, no guarantees |
 
 `zk/` is the data layer (the user's Obsidian vault, mounted into the repo as a subdirectory). The rest of `reflectl/` is the execution layer. All paths in protocols, agents, scripts, and wiki entries are project-relative — no env-var prefixes.
@@ -38,7 +38,7 @@ Sync direction is **one-way local → Reflect display.** Wiki entries are writte
 
 ## Reading Rules — Local-Only, Semantic-Primary for Content
 
-The authoritative read path is `Read` + `Grep` + `scripts/semantic.py` over `zk/`. The user's full Reflect corpus is synced to `zk/daily-notes/` (YYYY-MM-DD.md), plus `zk/reflections/`, `zk/wiki/`, `zk/readwise/`, `zk/papers/`, `zk/preprints/`, `zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, and `zk/archive/`. Local reads are faster, deterministic, return full content (no lossy snippets), and do not hallucinate.
+The authoritative read path is `Read` + `Grep` + `scripts/semantic.py` over `zk/`. The user's full Reflect corpus is synced to `zk/daily-notes/` (YYYY-MM-DD.md), plus `zk/reflections/`, `zk/wiki/`, `zk/readwise/`, `zk/papers/`, `zk/preprints/`, `zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, `zk/health/`, and `zk/archive/`. Local reads are faster, deterministic, return full content (no lossy snippets), and do not hallucinate.
 
 **Subagents have no general Reflect read MCP tools.** As of Phase C, every subagent frontmatter (Researcher, Reader, Librarian, Challenger, Reviewer, Synthesizer, Scout, Meeting) has been stripped of `mcp__reflect__search_notes`, `mcp__reflect__get_note`, `mcp__reflect__get_daily_note`, and `mcp__reflect__list_tags`. The Curator retains `mcp__reflect__get_note` solely to verify its own `create_note` calls did not silently produce an empty note — not as a general read path. Every other Reflect MCP read call is an orchestrator-only escape hatch. Everything else lives on disk.
 
@@ -59,23 +59,28 @@ The authoritative read path is `Read` + `Grep` + `scripts/semantic.py` over `zk/
 - **Prioritize by validation depth, not origin.** Do NOT exclude `#ai-reflection` notes from search. The criterion is validation depth (alloy → wiki entry under `zk/wiki/` → `#solo-flight`) and trust score (from `scripts/trust.py` in Phase B), not who or what produced it. See `protocols/epistemic-hygiene.md`. Legacy `#ai-reflection` / `#ai-generated` tags are historical alloy markers and remain searchable.
 - **Local `Read` has no 20KB limit.** The old "cache large notes to `zk/cache/`" rule was a workaround for MCP's size limit; on the local path you only cache *synthesized* findings (comparison tables, compaction drafts), not raw note content.
 
-## Writing Rules — MCP for Capture Layer, Local Files for Wiki
+## Writing Rules — Local Files Primary, MCP for Standalone Notes
 
-Writes split by destination. L4 wiki entries are written to local files under `zk/wiki/` first (Curator, Phase C — not yet wired). Daily-note write-backs and standalone Reflect notes go through the MCP, unchanged.
+Writes split by destination. L4 wiki entries and session reflections are written to local files. Standalone Reflect notes (article notes, compacted notes) go through the MCP. **Daily notes are never written to by sessions** — they are the user's capture stream, read-only from the system's perspective.
 
-**Writing to Reflect (L1 capture layer):**
-- **Always ask for user approval before writing.** Never auto-write to daily notes. Present what you plan to write and wait for confirmation.
-- Use `append_to_daily_note` to write reflection insights back to Reflect daily notes. Parameter name is `text` (not `content`).
+**Daily notes (read-only):**
+- Daily notes originate in Reflect and sync to `zk/daily-notes/`. The system reads them but never appends to them.
+- **Late-sleep date rule.** If the current time is before 03:00 local, the user's "today" is the previous calendar day. Use this as the effective date when reading the daily note. When the effective date differs from the calendar date, also read the calendar date's note if it exists (the user may have captured something after midnight).
+- **Sync-before-read.** When reading the effective date's daily note and the local file is missing, empty, or visibly truncated, sync from Reflect first: call `get_daily_note(date)` and overwrite the local file before proceeding. (Orchestrator only; subagents flag `needs: get_daily_note(date)` to the orchestrator instead.)
+
+**Session output (local files only):**
+- Session reflections go to `zk/reflections/YYYY-MM-DD-*.md`. This is the durable output of every session. No short write-back to daily notes.
+- **Source-text persistence.** When a session analyzes external content (article, tweet, paper), include the full source text (or key excerpts for long content) in the reflection file under a `### Full Text` section. A future agent must be able to reconstruct the source in one `Read` call without fetching from Readwise or the web.
+
+**Writing to Reflect (standalone notes only):**
+- **Always ask for user approval before writing.**
 - Use `create_note` to create standalone notes. Parameter name is `contentMarkdown` (not `content`). Title parameter is `subject`. **Using the wrong parameter name silently succeeds but creates an empty note.**
 - **Validation-depth taxonomy** (replaces the old `#ai-reflection`/`#ai-generated` binary; full spec in `protocols/epistemic-hygiene.md`):
-  - **Alloy (default, no tag).** Most session write-backs, daily notes, and routine notes. Mixed authorship, mixed validation, fully searchable, citable but not certified. Reflection write-backs default to alloy. The heading text must be **descriptive of the session's theme** (e.g., `## Constraint creates meaning`), never generic like "AI Reflection."
-  - **Wiki entry (location-based, no tag).** A note that lives under `zk/wiki/` and follows the wiki schema (`protocols/wiki-schema.md`). Location is the certification — there is no `#compiled-truth` or `#wiki` tag; the trust engine walks the directory. Wiki entries are the only notes that participate in TrustRank propagation. Never write a Reflect-only note as if it were a wiki entry; wiki entries require the local file plus structural-integrity verification.
-  - **`#solo-flight`** — rare, location-independent. The user's deliberate AI-free calibration unit (monthly or quarterly free-write). Used to detect drift between AI-assisted and unassisted thinking.
+  - **Alloy (default, no tag).** Mixed authorship, mixed validation, fully searchable, citable but not certified.
+  - **Wiki entry (location-based, no tag).** Lives under `zk/wiki/` and follows the wiki schema (`protocols/wiki-schema.md`). Location is the certification.
+  - **`#solo-flight`** — rare, location-independent. The user's deliberate AI-free calibration unit.
   - **Legacy `#ai-reflection` and `#ai-generated`** — historical alloy markers; treat as alloy, do not exclude from search, do not apply to new content.
-- When referencing specific notes in write-backs, include [[backlinks]] to those notes so they appear in Reflect's backlink graph.
-- Before writing back, check if today's daily note already contains an AI-generated section under any of the legacy tags to avoid duplicates.
-- **Write-backs are always in English**, even for sessions conducted in Chinese or with Chinese-language notes.
-- Write-back is optional and should never block a session. If it fails, continue.
+- When referencing specific notes, include [[backlinks]] to those notes so they appear in Reflect's backlink graph.
 - For note operations (create, compact, merge), delegate to the **Curator** agent.
 
 **MCP Write Limitations:**
@@ -116,6 +121,7 @@ The corresponding **data** lives under `zk/` (gitignored, the data layer), flat 
 - `zk/agent-findings/` — **L2** promoted scout briefs and other agent synthesis outputs that informed wiki entries (renamed from `research-briefs`).
 - `zk/drafts/` — **L2** working drafts of long notes before they land in their final location.
 - `zk/gtd/` — **L2** active planning notes (year goals, project trackers).
+- `zk/health/` — **L2** personal health records: raw PDFs under `raw/`, structured exam extracts under `reports/`, longitudinal `metrics.md`, `followups.md`, working `thesis.md`, and `resources.md`. Local-only — never synced to Reflect.
 - `zk/cache/` — **L1** ephemeral local cache: Reflect note snapshots during compaction, raw web fetches not promoted to findings, and triage outputs (`zk/cache/triage-*.md`). Agents read and write here freely; nothing persists across sessions intentionally.
 - `zk/archive/` — pre-2026 topic directories (career, research, people, etc.) parked here until individual notes are gradually surfaced upward to L2/L4.
 

@@ -130,21 +130,8 @@ Note: Slugify the topic for the filename — lowercase, replace spaces with hyph
 
 After writing the decision file, emit a session log to `zk/sessions/YYYY-MM-DD-decision.md` following `protocols/session-log.md`. Local file write only; no MCP call; no user approval needed. If the write fails, warn and continue.
 
-## Write-Back
+## Wrap Up
 
-Check if today's daily note already contains a write-back from today's session. Detect by descriptive heading. As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier content was written with the old convention.
-
-- If **no write-back exists yet**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Use `append_to_daily_note` to add decision summary using this format:
-  ```
-  ## [Descriptive Title] #decision
-  [2-3 sentence summary of the decision analysis and current status]
-  Related: [[Note Title 1]] [[Note Title 2]]
-  ```
-  **Title guidelines:** The heading must describe the decision's core question, not just "Decision Journal." Good examples:
-  - `## Decision: startup vs. big tech trade-offs #decision`
-  - `## Decision: stay vs. switch teams #decision`
-  - `## Rent vs. buy: framework analysis #decision`
-
-  Never use generic titles like "Decision Summary." The descriptive heading is the duplicate-detection signal. The `#decision` topic tag is allowed because it marks subject matter, not provenance. **No provenance tag** (`#ai-reflection` is retired). Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`).
+The decision file in `zk/reflections/` is the durable session output. No write-back to daily notes — daily notes are the user's capture stream, read-only from the system's perspective. Tell the user the decision journal has been saved and where to find it.
 
 - If **a write-back already exists**: Skip to avoid duplicates. Tell the user about the skip.

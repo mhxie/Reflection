@@ -92,18 +92,9 @@ After discussing, write a review file:
 
 After writing the review file, emit a session log to `zk/sessions/YYYY-MM-DD-review.md` following `protocols/session-log.md`. Local file write only; no MCP call; no user approval needed. If the write fails, warn and continue.
 
-## Write-Back to Reflect
+## Wrap Up
 
-After writing the review file, check if today's daily note already contains a write-back from today's session. Detect by descriptive heading. As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier content was written with the old convention.
-
-- If **no write-back exists yet**: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Use `append_to_daily_note` to add:
-  ```
-  ## [Descriptive Title]
-  [3-4 sentence summary: what's progressing, what's neglected, top suggested experiment]
-  ```
-  The title should describe the review's findings, not the session type. E.g., `Learning goals stalled, energy direction shifted` or `Q2 goals: shipping beats planning`. Never use generic titles like "Goal Review Summary." **No provenance tag.** Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`); the descriptive heading is the duplicate-detection signal.
-
-- If **a write-back already exists**: Skip. Tell the user about the skip.
+The review file in `zk/reflections/` is the durable session output. No write-back to daily notes — daily notes are the user's capture stream, read-only from the system's perspective. Tell the user the review has been saved and where to find it.
 
 ## Trend Analysis (if prior reviews exist)
 
