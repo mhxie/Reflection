@@ -97,7 +97,9 @@ Present findings as:
 
 ## Session Log
 
-After writing the energy audit file, emit a session log to `zk/sessions/YYYY-MM-DD-energy-audit.md` following `protocols/session-log.md`. Local file write only; no MCP call; no user approval needed. If the write fails, warn and continue.
+After writing the energy audit file, emit a session log:
+1. `Bash: python3 scripts/session_log.py --type energy-audit --duration <minutes>`
+2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
 ## Write-Back
 

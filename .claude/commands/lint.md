@@ -2,7 +2,7 @@
 
 Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint.py` is the single source of truth, mirroring the `/sync` and `scripts/trust.py` pattern.
 
-**Scope:** Everything under `zk/wiki/` plus `zk/.sync-manifest.json`. Other tiers (`zk/daily-notes/`, `zk/reflections/`, etc.) are not linted — they have no schema to enforce.
+**Scope:** Two passes. (1) Structural: everything under `zk/wiki/` plus `zk/.sync-manifest.json`. (2) Staleness: L2 working-layer directories (`zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, `zk/preprints/`, `zk/reflections/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).
 
 **What gets checked:**
 
@@ -25,7 +25,7 @@ Exit code: 0 if no ERROR-level findings, 1 otherwise. WARN and INFO never fail t
 
 ## Process
 
-### Phase 1: Run
+### Phase 1a: Structural lint
 
 ```
 Bash: scripts/lint.py --json
@@ -44,6 +44,24 @@ Parse the JSON. It has the shape:
 }
 ```
 
+### Phase 1b: Staleness lint
+
+```
+Bash: scripts/staleness.py --json
+```
+
+Parse the JSON. Shape:
+
+```json
+{
+  "thresholds": { "stale": 90, "dormant": 45, ... },
+  "counts": { "stale": N, "dormant": N, "promote": N, "active": N, "total": N },
+  "notes": [{ "path": "...", "staleness": N, "category": "stale|dormant|promote|active", ... }]
+}
+```
+
+Staleness findings are always advisory (no ERROR level). They surface L2 notes that have gone cold, using the formula `days_since_modified / (1 + log(1 + reference_count))`. Notes referenced from wiki entries or recent reflections decay slower.
+
 ### Phase 2: Present
 
 Group findings by severity. If the corpus is clean, say so and stop.
@@ -53,6 +71,12 @@ For each ERROR-level finding: show the code, file path, and message verbatim. Do
 For WARN-level findings: show them but mark them as non-blocking.
 
 For INFO-level findings: roll them up into a one-line summary (e.g., "3 wiki entries not yet synced: `/sync` to push") unless the user asks for the full list.
+
+**Staleness section** (from Phase 1b): present after the structural findings, under a separate heading. Group by category:
+- **stale** notes: list paths, suggest archiving to `zk/archive/`
+- **dormant** notes: list paths, suggest review or compaction
+- **promote** candidates: list paths, suggest `/promote` to create L4 wiki entries
+- If all notes are active, say so in one line and move on.
 
 ### Phase 3: Offer fixes
 

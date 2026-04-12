@@ -242,7 +242,27 @@ After the interactive session, write a reflection file:
 
 ## Session Log
 
-After writing the reflection file, emit a session log to `zk/sessions/YYYY-MM-DD-reflection.md` following `protocols/session-log.md`. Populate from data accumulated during the session: agent dispatches (from handoff tracking), search log (from Researcher handoffs and direct searches), gate results (from Reviewer handoffs), questions and engagement (from Challenger handoffs and your own questions), frameworks applied (from Thinker handoffs), continuity data (from step 0 and step 5), routing decisions, anomalies, and harness assumptions exercised. This is a local file write only. No MCP call. No user approval needed. If the write fails, warn and continue.
+After writing the reflection file, emit a session log. Two steps:
+
+**Step 1: Create skeleton.**
+```
+Bash: python3 scripts/session_log.py --type reflection --duration <minutes>
+```
+The script prints the file path (e.g., `zk/sessions/2026-04-11-reflection.md`). It handles the late-sleep date rule and collision auto-increment.
+
+**Step 2: Fill the skeleton.**
+Use `Edit` to populate each section of the skeleton from data you accumulated during the session:
+
+- **Agents Dispatched:** One row per agent you dispatched. Include agent name, task summary, success/failure, and approximate turns.
+- **Search Log:** Every `semantic.py query` and notable `Grep` you or agents issued. Mark whether results were useful (yes/no).
+- **Questions & Engagement:** Each question you asked the user. Note depth level (surface/structural/paradigmatic) and whether it landed (got substantive response).
+- **Frameworks Applied:** Any framework the Thinker applied. Include fit score if available.
+- **Continuity:** Which previous session you referenced (from step 0), and the seed/next-action from step 5.
+- **Decisions & Branches:** Non-obvious routing decisions (e.g., "skipped framework; user in a rush").
+- **Anomalies:** MCP failures, empty searches, user course corrections, degraded mode.
+- **Harness Assumptions Exercised:** Any assumption from `protocols/harness-assumptions.md` that was load-bearing (e.g., "Profile stale >7d warning triggered").
+
+If a section has no data, leave the table headers but add no rows. Do not invent data. If the write fails, warn and continue; session logs never block a session.
 
 ## Wrap Up
 

@@ -53,6 +53,7 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 |------|----------|--------------|-------------|
 | Profile staleness warning | CLAUDE.md, reflect.md, review.md | 7 days | User data shows profiles change faster/slower |
 | Semantic search recency window | reflect.md | 7 days for recent, 3+ months for forgotten | Embedding index makes recency less important |
+| L2 staleness thresholds | staleness.py | dormant=45d, stale=90d, promote=180d+2refs | First real corpus ages past 90 days; tune with actual archival decisions |
 | Meta-reflection trigger | meta-reflection.md | Every 5 sessions | Session volume data |
 
 ### API Constraints
