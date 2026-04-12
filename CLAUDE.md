@@ -27,7 +27,7 @@ reflectl operates on a **five-tier model** organized by depth of crystallization
 | **L5: Foundation** | (reserved — no folder yet) | Universally certified knowledge (textbook-level) | — |
 | **L4: Locally certified** | `zk/wiki/*.md` | Authoritative knowledge layer — schema-structured, anchored, TrustRank-scored | Append-only markers, additive invalidation, revision-log tracked |
 | **L3: Externally certified** | `zk/papers/` + Readwise | Peer-reviewed papers, high-citation work, curated reading corpus | Append-only via scout fetches and Readwise saves |
-| **L2: Working / half-baked** | `zk/daily-notes/`, `zk/reflections/`, `zk/preprints/`, `zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, `zk/health/` | Alloy: daily free-writes, session reflections, arxiv preprints + paper reviews, agent synthesis briefs, working drafts, personal health records | Append-mostly, edited freely |
+| **L2: Working / half-baked** | `zk/daily-notes/`, `zk/reflections/`, `zk/research/`, `zk/preprints/`, `zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, `zk/health/` | Alloy: daily free-writes, session reflections, user-initiated research reports, arxiv preprints + paper reviews, agent synthesis briefs, working drafts, personal health records | Append-mostly, edited freely |
 | **L1: Raw capture** | Reflect UI, Readwise inbox, `zk/cache/`, `zk/readwise/` | Voice transcripts, mobile quick-notes, ephemeral web fetches, inbox items | Fast, sloppy, no guarantees |
 
 `zk/` is the data layer (the user's Obsidian vault, mounted into the repo as a subdirectory). The rest of `reflectl/` is the execution layer. All paths in protocols, agents, scripts, and wiki entries are project-relative — no env-var prefixes.
@@ -116,6 +116,7 @@ The corresponding **data** lives under `zk/` (gitignored, the data layer), flat 
 - `zk/readwise/` — **L1→L3** Readwise mirror; inbox items are L1 raw, curated saves become L3 receipts when anchored.
 - `zk/daily-notes/` — **L2** daily free-writes synced from Reflect (the capture stream).
 - `zk/reflections/` — **L2** session reflection files written by `/reflect` and related commands.
+- `zk/research/` — **L2** user-initiated research session outputs: landscape maps, competitive analyses, topic deep-dives, structured briefings. Answers external questions (what is X?), distinct from reflections (internal questions) and agent-findings (agent-produced briefs).
 - `zk/sessions/` — **L2** session process logs written by the orchestrator at session end. Machine-readable complement to `zk/reflections/`. See `protocols/session-log.md`.
 - `zk/preprints/` — **L2** arxiv and other non-peer-reviewed papers awaiting L3 promotion, plus reading artifacts and paper review notes.
 - `zk/agent-findings/` — **L2** promoted scout briefs and other agent synthesis outputs that informed wiki entries (renamed from `research-briefs`).

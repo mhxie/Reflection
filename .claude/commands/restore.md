@@ -83,7 +83,7 @@ Tell the user which cache files were written and what to do next:
 1. **One-way.** `/restore` reads from Reflect, writes only to `zk/cache/`. It never writes to `zk/wiki/` and never updates the manifest.
 2. **Per-slug confirmation.** Never batch-restore without explicit per-slug approval. Recovery is a reconstruction task, not an import.
 3. **Prose is not schema.** What comes back is lossy. The user must re-author the `anchors` fences by hand. This is the whole point of the workflow and is documented in the cache file header.
-4. **Covers only `zk/wiki/`.** `/sync` only pushes wiki entries, so `/restore` only recovers wiki entries. L2 content (`zk/reflections/`, `zk/drafts/`, `zk/gtd/`, `zk/agent-findings/`, `zk/preprints/`) never crossed the sync boundary and has no Reflect copy to restore from. For that, use `git`.
+4. **Covers only `zk/wiki/`.** `/sync` only pushes wiki entries, so `/restore` only recovers wiki entries. L2 content (`zk/reflections/`, `zk/research/`, `zk/drafts/`, `zk/gtd/`, `zk/agent-findings/`, `zk/preprints/`) never crossed the sync boundary and has no Reflect copy to restore from. For that, use `git`.
 5. **Daily notes are out of scope.** Daily notes flow Reflect → local continuously as the primary capture path. If a local `zk/daily-notes/<date>.md` is lost, rerun the Obsidian/Reflect sync that populates the mirror, not `/restore`.
 
 ## When this has fired historically

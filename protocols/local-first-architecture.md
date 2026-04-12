@@ -20,8 +20,8 @@ The model has **five layers (L1–L5), numbered by depth of crystallization.** H
           peer-reviewed or high-citation receipts
     ────────────────────────────
     L2 — Working / half-baked         zk/daily-notes/, zk/reflections/,
-          alloy by default            zk/preprints/, zk/agent-findings/,
-                                      zk/drafts/, zk/gtd/
+          alloy by default            zk/research/, zk/preprints/,
+                                      zk/agent-findings/, zk/drafts/, zk/gtd/
     ────────────────────────────
     L1 — Raw capture                  Reflect UI, Readwise inbox,
           fast, sloppy, ephemeral     zk/cache/, zk/readwise/ inbox
@@ -37,7 +37,7 @@ Reflect's corpus is continuously mirrored to `zk/daily-notes/` (YYYY-MM-DD.md fi
 
 ### L2 — Working / half-baked
 
-The alloy layer. Most of the user's active thinking lives here: daily free-writes (`zk/daily-notes/`, synced from Reflect), session reflections (`zk/reflections/`), arxiv preprints and paper reviews (`zk/preprints/`), promoted agent synthesis briefs (`zk/agent-findings/`, formerly `research-briefs`), working drafts (`zk/drafts/`), and active planning (`zk/gtd/`). Alloy by default — see `epistemic-hygiene.md`. Fully searchable, citable, but not certified. The substrate from which wiki entries are distilled.
+The alloy layer. Most of the user's active thinking lives here: daily free-writes (`zk/daily-notes/`, synced from Reflect), session reflections (`zk/reflections/`), user-initiated research reports (`zk/research/`), arxiv preprints and paper reviews (`zk/preprints/`), promoted agent synthesis briefs (`zk/agent-findings/`, formerly `research-briefs`), working drafts (`zk/drafts/`), and active planning (`zk/gtd/`). Alloy by default — see `epistemic-hygiene.md`. Fully searchable, citable, but not certified. The substrate from which wiki entries are distilled.
 
 Pre-2026 topic directories (career, research, people, etc.) that were carried over from the user's Obsidian vault are parked in `zk/archive/` and stay there until individual notes are surfaced upward.
 
@@ -70,7 +70,7 @@ Universally certified knowledge — textbook-level material that the user consid
 The repo has two layers under one root:
 
 - **Execution layer** — everything in `reflectl/` *outside* `zk/`. Orchestrator config, agents, protocols, scripts, source-handling teaching docs, and `sources/cite.py`. Version-controlled, no personal data.
-- **Data layer** — everything under `reflectl/zk/`. The user's Obsidian vault, holding a flat set of tier-labeled directories: `wiki/` (L4), `papers/` (L3), `readwise/` (L1→L3 mirror), `daily-notes/` / `reflections/` / `preprints/` / `agent-findings/` / `drafts/` / `gtd/` (L2), `cache/` (L1), and `archive/` (parked pre-2026 topic notes). Gitignored.
+- **Data layer** — everything under `reflectl/zk/`. The user's Obsidian vault, holding a flat set of tier-labeled directories: `wiki/` (L4), `papers/` (L3), `readwise/` (L1→L3 mirror), `daily-notes/` / `reflections/` / `research/` / `preprints/` / `agent-findings/` / `drafts/` / `gtd/` (L2), `cache/` (L1), and `archive/` (parked pre-2026 topic notes). Gitignored.
 
 All paths in protocols, agents, scripts, and wiki entries are **project-relative** (`zk/wiki/`, `zk/papers/`, `sources/cite.py`). There is no `$ZK_HOME` or `$RFL_HOME` reference inside the repo. The user's fish config may still export those variables for shell convenience, but nothing in this repo reads them.
 
@@ -102,6 +102,7 @@ reflectl/                           (the repo root — the only root)
     ├── readwise/                   # L1 inbox → L3 curated (Readwise mirror)
     ├── daily-notes/                # L2 — daily free-writes synced from Reflect
     ├── reflections/                # L2 — session reflection files
+    ├── research/                   # L2 — user-initiated research reports
     ├── preprints/                  # L2 — arxiv + paper reviews
     ├── agent-findings/             # L2 — promoted scout briefs and agent synthesis
     ├── drafts/                     # L2 — working drafts

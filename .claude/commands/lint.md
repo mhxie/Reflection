@@ -2,7 +2,7 @@
 
 Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint.py` is the single source of truth, mirroring the `/sync` and `scripts/trust.py` pattern.
 
-**Scope:** Two passes. (1) Structural: everything under `zk/wiki/` plus `zk/.sync-manifest.json`. (2) Staleness: L2 working-layer directories (`zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, `zk/preprints/`, `zk/reflections/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).
+**Scope:** Two passes. (1) Structural: everything under `zk/wiki/` plus `zk/.sync-manifest.json`. (2) Staleness: L2 working-layer directories (`zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, `zk/preprints/`, `zk/reflections/`, `zk/research/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).
 
 **What gets checked:**
 
