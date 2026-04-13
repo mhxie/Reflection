@@ -227,6 +227,7 @@ def real_query(args: argparse.Namespace) -> int:
         warn("empty query; no results")
         return 0
 
+    sources = set(args.sources.split(","))
     retriever = _build_retriever()
 
     # Build filters from CLI args
@@ -243,19 +244,40 @@ def real_query(args: argparse.Namespace) -> int:
         filters["mtime_before"] = before_dt.timestamp()
 
     t0 = time.time()
-    results = retriever.query(args.query, top_k=args.top, filters=filters or None)
+    results = []
+
+    # Local search
+    if "local" in sources:
+        local_results = retriever.query(args.query, top_k=args.top, filters=filters or None)
+        results.extend(local_results)
+        warn(f"local: {len(local_results)} results")
+
+    # Readwise federated search
+    if "readwise" in sources:
+        from semantic_backends import ReadwiseSearcher
+        if ReadwiseSearcher.available():
+            rw_results = ReadwiseSearcher.search(args.query, top_k=args.top)
+            results.extend(rw_results)
+            warn(f"readwise: {len(rw_results)} results")
+        else:
+            warn("readwise: CLI not installed, skipping")
+
+    # Merge by score, take top_k
+    results.sort(key=lambda r: -r.score)
+    results = results[:args.top]
+
     elapsed = time.time() - t0
-    warn(f"query returned {len(results)} results in {elapsed:.2f}s")
+    warn(f"total: {len(results)} results in {elapsed:.2f}s")
 
     if args.format == "json":
         payload = [
-            {"path": r.path, "score": r.score, "matched_tokens": []}
+            {"path": r.path, "score": r.score, "source": r.source, "matched_tokens": []}
             for r in results
         ]
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
         for r in results:
-            print(f"{r.path}\t{r.score:.3f}\t")
+            print(f"{r.path}\t{r.score:.3f}\t{r.source}")
 
     return 0
 
@@ -354,6 +376,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["tsv", "json"],
         default="tsv",
         help="Output format. Default: tsv.",
+    )
+    q.add_argument(
+        "--sources",
+        default="local,readwise",
+        help="Comma-separated search sources. Options: local, readwise. "
+        "Default: local,readwise (federated).",
     )
     q.set_defaults(func=cmd_query)
 

@@ -48,6 +48,7 @@ class SearchResult:
     chunk_text: str = ""
     tier: str = ""
     mtime: float = 0.0
+    source: str = "local"  # "local" or "readwise"
 
 
 @dataclass
@@ -737,3 +738,64 @@ class LanceStore:
         except Exception:
             pass
         self._table = self._ensure_table()
+
+
+# ---------------------------------------------------------------------------
+# Concrete: Readwise Searcher (federated query source)
+# ---------------------------------------------------------------------------
+
+class ReadwiseSearcher:
+    """
+    Searches the user's Readwise Reader library via CLI.
+
+    Not an Embedder or Store; this is a standalone search source that
+    the Retriever merges with local results during federated queries.
+    """
+
+    @staticmethod
+    def available() -> bool:
+        """Check if the readwise CLI is installed."""
+        import shutil
+        return shutil.which("readwise") is not None
+
+    @staticmethod
+    def search(query: str, top_k: int = 10) -> List[SearchResult]:
+        """Search Readwise Reader and return normalized SearchResults."""
+        import json
+        import subprocess
+
+        try:
+            proc = subprocess.run(
+                ["readwise", "reader-search-documents", "--query", query, "--json"],
+                capture_output=True, text=True, timeout=30,
+            )
+            if proc.returncode != 0:
+                return []
+            docs = json.loads(proc.stdout)
+        except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError):
+            return []
+
+        results: List[SearchResult] = []
+        for rank, doc in enumerate(docs[:top_k]):
+            # Rank-based scoring calibrated to local cosine range (~0.3-0.6).
+            # Top result gets 0.6, decays to ~0.3 over 10 results.
+            score = max(0.25, 0.6 - rank * 0.035)
+
+            # Use first match chunk as the representative text
+            chunk_text = ""
+            if doc.get("matches"):
+                chunk_text = doc["matches"][0].get("plaintext", "")[:500]
+
+            title = doc.get("title", "")
+            path = f"readwise://{doc.get('document_id', '')}"
+
+            results.append(SearchResult(
+                path=path,
+                score=round(score, 4),
+                chunk_id=0,
+                chunk_text=f"[{title}] {chunk_text}" if title else chunk_text,
+                tier="L3",
+                source="readwise",
+            ))
+
+        return results
