@@ -39,9 +39,8 @@ from pathlib import Path
 from typing import Iterator, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-# Lance index lives inside zk/ so both laptops share it via Drive.
-# LanceDB uses few large columnar files, which syncs well.
-LANCE_DIR = REPO_ROOT / "zk" / ".semantic" / "lance"
+# Lance index is machine-local (rebuild is ~7s on MPS, not worth syncing binaries).
+LANCE_DIR = Path.home() / ".cache" / "reflectl" / "lance"
 DEFAULT_PATH = "zk"
 # Directories excluded from indexing (ephemeral caches, not worth embedding)
 INDEX_EXCLUDE = {"zk/cache"}

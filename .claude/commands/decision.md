@@ -38,7 +38,7 @@ This determines how much analysis is appropriate.
 ### Step 3: Search for Relevant History
 
 Pull prior thinking from the local vault. No Reflect MCP.
-- `Bash: scripts/semantic.py query "<decision topic>" --top 10` — **primary**: has the user thought about adjacent versions of this before? Reframe and retry if thin.
+- `Bash: uv run scripts/semantic.py query "<decision topic>" --top 10` — **primary**: has the user thought about adjacent versions of this before? Reframe and retry if thin.
 - `Grep(pattern: "<key terms>", path: "zk/")` — exact-match related notes for structural follow-up. Try both languages.
 - `Grep(pattern: "<goal keyword>", path: "zk/gtd/")` AND `Grep(pattern: "<goal keyword>", path: "zk/wiki/")` — two separate calls; `Grep`'s `path` takes a single root, not a space-separated list. Checks which active goals (gtd) and which certified directions (wiki) are affected by this decision.
 
@@ -129,7 +129,7 @@ Note: Slugify the topic for the filename — lowercase, replace spaces with hyph
 ## Session Log
 
 After writing the decision file, emit a session log:
-1. `Bash: python3 scripts/session_log.py --type decision --duration <minutes>`
+1. `Bash: uv run scripts/session_log.py --type decision --duration <minutes>`
 2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
 ## Wrap Up

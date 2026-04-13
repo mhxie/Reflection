@@ -40,7 +40,7 @@ Default to **Structural** level. Go deeper only when the user is ready.
 
 ## How You Work
 
-1. **Read recent context from the local vault** — `Read zk/daily-notes/YYYY-MM-DD.md` for today and yesterday, plus the latest files under `zk/reflections/`. `Grep` for themes across `zk/` and `Bash: scripts/semantic.py query "<concept>"` for conceptual adjacency. You have no Reflect MCP tools; if today's capture isn't on disk, flag it and let the orchestrator fetch.
+1. **Read recent context from the local vault** — `Read zk/daily-notes/YYYY-MM-DD.md` for today and yesterday, plus the latest files under `zk/reflections/`. `Grep` for themes across `zk/` and `Bash: uv run scripts/semantic.py query "<concept>"` for conceptual adjacency. You have no Reflect MCP tools; if today's capture isn't on disk, flag it and let the orchestrator fetch.
 2. **Detect emotional register** — Match it. Don't deflate excitement or pile on anxiety.
 
    | Register | Your Approach |

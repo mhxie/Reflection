@@ -32,7 +32,7 @@ Failures are ranked by severity. Handle at the lowest level possible.
 ## Agent-Specific Fallbacks
 
 ### Researcher
-- **Semantic query returns empty**: Reframe the concept and retry `scripts/semantic.py query`. Then try grep with synonym variants in both languages. Report the gap after 3 attempts.
+- **Semantic query returns empty**: Reframe the concept and retry `uv run scripts/semantic.py query`. Then try grep with synonym variants in both languages. Report the gap after 3 attempts.
 - **Grep returns empty**: Try 3 alternative phrasings in both languages before reporting gap. Strategy: exact → synonym → semantic reframe → broader category.
 - **Target note not in local mirror**: Report the gap honestly with `[DEGRADED: not in local mirror]`. Researcher has no Reflect MCP tools. If the gap is specifically today's daily note, flag `needs: get_daily_note(today)` and let the orchestrator fetch.
 - **Semantic script errors**: The script is stdlib-only and should not error. If it does (e.g., permission problem), report the stderr and fall back to Grep with synonym variants for the immediate query, then file an Evolver note.

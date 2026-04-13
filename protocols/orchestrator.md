@@ -73,9 +73,9 @@ The user can request these actions during or after any session:
 ### Research Operations (→ Researcher)
 | User Says | Action | Agent |
 |-----------|--------|-------|
-| "Find notes about X" | `Bash: scripts/semantic.py query "X" --top 10` (semantic-primary for content queries) then `Grep` for exact-string follow-ups | Researcher |
+| "Find notes about X" | `Bash: uv run scripts/semantic.py query "X" --top 10` (semantic-primary for content queries) then `Grep` for exact-string follow-ups | Researcher |
 | "What did I write about X last year?" | Filename-date filter on `zk/daily-notes/` + `Grep`. No MCP — report the gap if the local mirror is incomplete for that date range. | Researcher |
-| "Are there related notes I'm forgetting?" | `Bash: scripts/semantic.py query "<concept>" --top 10` — stub lexical-falls-through today, embedding-backed once the real-mode sentinel lands. Reframe and retry if thin. | Researcher |
+| "Are there related notes I'm forgetting?" | `Bash: uv run scripts/semantic.py query "<concept>" --top 10` — stub lexical-falls-through today, embedding-backed once the real-mode sentinel lands. Reframe and retry if thin. | Researcher |
 | "Show me everything tagged #X" | `Grep "#X"` over `zk/` | Researcher |
 
 ### Meeting Operations (→ Meeting)

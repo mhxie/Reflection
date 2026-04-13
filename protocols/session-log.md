@@ -64,7 +64,7 @@ model: <orchestrator model used>
 
 **Agents Dispatched:** One row per dispatch. For parallel dispatches, list on consecutive rows and note "(parallel)" in the Task column. Include agents that were dispatched but returned errors.
 
-**Search Log:** Every `scripts/semantic.py query` call and notable `Grep` search the orchestrator or agents issued. "Useful" is a boolean: did the results contribute to the session output?
+**Search Log:** Every `uv run scripts/semantic.py query` call and notable `Grep` search the orchestrator or agents issued. "Useful" is a boolean: did the results contribute to the session output?
 
 **Gate Results:** From Reviewer handoffs (`review-check` type). Include gate number (1-4 per `quality-gates.md`), score, and pass/fail. Include revision loops if triggered.
 

@@ -14,22 +14,22 @@ The user's entire Reflect corpus is synced to `zk/daily-notes/` (YYYY-MM-DD.md f
 
 | Intent | Command |
 |---|---|
-| Conceptual / semantic content query | `Bash: scripts/semantic.py query "<concept>" --top 10` — this is the **default** for any content-shaped query, not a fallback |
+| Conceptual / semantic content query | `Bash: uv run scripts/semantic.py query "<concept>" --top 10` — this is the **default** for any content-shaped query, not a fallback |
 | Structural query: known tag, exact title, date range, file presence | `Grep` (with `glob` / `path` scoped to the relevant tier directory) |
 | Read a daily note | `Read zk/daily-notes/YYYY-MM-DD.md` |
 | Read a note by title | `Grep` for the title, then `Read` the match |
 | Discover tags in the corpus | `Bash: grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' zk/ \| sort -u \| head -50` |
 
-Semantic-primary rule. For anything phrased as a concept ("how does X relate to Y", "what did I think about Z", "find notes about...") the first move is `scripts/semantic.py query`, not Grep. The semantic script is stub lexical-fallback today and embedding-backed once the `zk/.semantic/index.sqlite` sentinel lands — the CLI contract is identical, so writing against it now means zero rework when real mode ships. Grep is reserved for structural queries where you already know the exact string (a tag name, a known title, a date pattern, a file path). If semantic returns thin results, *then* fall through to grep with synonym variants — not the other way around.
+Semantic-primary rule. For anything phrased as a concept ("how does X relate to Y", "what did I think about Z", "find notes about...") the first move is `uv run scripts/semantic.py query`, not Grep. The semantic script is embedding-backed when `~/.cache/reflectl/lance/` exists (rebuild with `uv run scripts/semantic.py index` on each machine). Grep is reserved for structural queries where you already know the exact string (a tag name, a known title, a date pattern, a file path). If semantic returns thin results, *then* fall through to grep with synonym variants — not the other way around.
 
-Fast-path for semantic / exploratory sessions. For `/explore`, forgotten-connection queries, and paradigm-shift prompts ("what am I missing?", "surprise me", "find a contradiction"), `scripts/semantic.py query` is already your first move by default. Do not exhaust synonym grep first. Note `semantic-first` in the handoff so the choice is transparent.
+Fast-path for semantic / exploratory sessions. For `/explore`, forgotten-connection queries, and paradigm-shift prompts ("what am I missing?", "surprise me", "find a contradiction"), `uv run scripts/semantic.py query` is already your first move by default. Do not exhaust synonym grep first. Note `semantic-first` in the handoff so the choice is transparent.
 
 ## Search Strategy: Progressive Disclosure
 
 Don't search randomly. Follow this strategy:
 
 ### Phase 1: Broad Scan (cast the net)
-- **Conceptual queries start with semantic:** `Bash: scripts/semantic.py query "<concept>" --top 10`. Run the Chinese framing and the English framing as separate calls when the topic straddles languages.
+- **Conceptual queries start with semantic:** `Bash: uv run scripts/semantic.py query "<concept>" --top 10`. Run the Chinese framing and the English framing as separate calls when the topic straddles languages.
 - **Structural queries start with Grep:** known tag (`#moment`), exact title, date pattern, file presence. Always run Chinese + English variants for topical terms: `Grep(pattern: "目标", path: "zk/")` AND `Grep(pattern: "goal", path: "zk/")`.
 - Narrow by subdirectory when the user's intent is tier-specific (`zk/wiki/` for certified, `zk/daily-notes/` for capture stream, `zk/reflections/` for prior sessions)
 - Use file mtime or filename date to weight recency but don't exclude old matches
@@ -43,7 +43,7 @@ Don't search randomly. Follow this strategy:
 ### Phase 3: Gap Filling (what's missing?)
 - Review what you found against the query — what angles are uncovered?
 - If your first pass was semantic, try grep with synonym variants: "career" → "job" → "work" → "职业" → "工作"
-- If your first pass was grep, reframe the gap as a concept and rerun `scripts/semantic.py query`
+- If your first pass was grep, reframe the gap as a concept and rerun `uv run scripts/semantic.py query`
 - If a gap remains after 3 attempts, report it honestly. Do not fabricate coverage and do not reach for MCP — you don't have it. If the gap is `today's daily note` specifically, flag `needs: get_daily_note(today)` and let the orchestrator fetch.
 
 ## Query Patterns

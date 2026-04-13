@@ -155,7 +155,7 @@ Run a reflection session grounded in your Reflect notes and goals.
    - `Read zk/daily-notes/<effective-date>.md` — what you've done today. If the file is missing, empty, or visibly truncated, **sync from Reflect first:** call `get_daily_note(date: "<effective-date>")` via MCP, then overwrite the local file. (Orchestrator only.)
    - If effective date differs from the calendar date (late-sleep active), also read `zk/daily-notes/<calendar-date>.md` if it exists — the user may have captured something after midnight.
    - `Read zk/daily-notes/<effective-date - 1>.md` — what you did the day before. Local only; no MCP fallback needed for a sync-complete day.
-   - For recent activity related to your themes, run `Bash: scripts/semantic.py query "<theme>" --after "<7 days ago, YYYY-MM-DD>" --top 5` first — this is the primary content lookup. For structural follow-up (exact strings, known tags), list files modified in the last 7 days with `Bash: find zk/daily-notes zk/reflections -type f -name "*.md" -mtime -7 2>/dev/null | sort`, then `Grep` the theme keyword across those paths.
+   - For recent activity related to your themes, run `Bash: uv run scripts/semantic.py query "<theme>" --after "<7 days ago, YYYY-MM-DD>" --top 5` first — this is the primary content lookup. For structural follow-up (exact strings, known tags), list files modified in the last 7 days with `Bash: find zk/daily-notes zk/reflections -type f -name "*.md" -mtime -7 2>/dev/null | sort`, then `Grep` the theme keyword across those paths.
 
 ## Coaching Session
 
@@ -196,7 +196,7 @@ Each question should:
 - Match the user's language (Chinese for Chinese goals)
 
 ### 3. Forgotten Connection (Semantic Discovery)
-Use `Bash: scripts/semantic.py query "<concept>" --before "<3 months ago, YYYY-MM-DD>" --top 10` to find a semantically related note the user may have forgotten. Reframe and retry if thin — Phase C removed the `search_notes` escape hatch.
+Use `Bash: uv run scripts/semantic.py query "<concept>" --before "<3 months ago, YYYY-MM-DD>" --top 10` to find a semantically related note the user may have forgotten. Reframe and retry if thin — Phase C removed the `search_notes` escape hatch.
 - Search with a concept from the conversation, not just keywords
 - Go back at least 3 months for genuine surprise
 - Present as a provocation, not a summary:
@@ -246,7 +246,7 @@ After writing the reflection file, emit a session log. Two steps:
 
 **Step 1: Create skeleton.**
 ```
-Bash: python3 scripts/session_log.py --type reflection --duration <minutes>
+Bash: uv run scripts/session_log.py --type reflection --duration <minutes>
 ```
 The script prints the file path (e.g., `zk/sessions/2026-04-11-reflection.md`). It handles the late-sleep date rule and collision auto-increment.
 

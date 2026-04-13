@@ -6,7 +6,7 @@ These rules apply to every turn, every agent. Violations are bugs.
 
 - Never hallucinate note content. If search returns nothing, say so honestly, because the user trusts citations to be real.
 - No em dashes in written output. Use colons, semicolons, parentheses, or restructure, because the user's reading style rejects them.
-- Semantic-primary search. Content queries start with `scripts/semantic.py query`, not Grep, because semantic search finds conceptual matches that keyword search misses. Grep is for structural queries only (known tags, exact strings, file presence).
+- Semantic-primary search. Content queries start with `uv run scripts/semantic.py query`, not Grep, because semantic search finds conceptual matches that keyword search misses. Grep is for structural queries only (known tags, exact strings, file presence).
 - Local-first reads. Read from `zk/` via Read + Grep + semantic.py. No Reflect MCP reads except orchestrator-only escape hatches (see Reading Rules), because local reads are faster, deterministic, and return full content.
 - Daily notes are read-only. The system never writes to `zk/daily-notes/`, because they are the user's personal capture stream.
 - Ask before writing to Reflect. Always get user approval before `create_note`, because the API has no update or delete operations.
@@ -38,7 +38,7 @@ Sync: one-way local to Reflect display via `/sync`. See `protocols/local-first-a
 
 | Intent | Command |
 |---|---|
-| Content query | `Bash: scripts/semantic.py query "<concept>" --top N` |
+| Content query | `Bash: uv run scripts/semantic.py query "<concept>" --top N` |
 | Structural query | `Grep` with path/glob scoped to tier directory |
 | Daily note by date | `Read zk/daily-notes/YYYY-MM-DD.md` |
 | Note by title | `Grep` for title then `Read` the file |

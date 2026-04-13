@@ -64,7 +64,7 @@ The default mode. Scores session output on 5 dimensions.
 
 ### 1. Citation Accuracy (weight: 30%)
 
-**Process:** Spot-check 3-5 [[Note Title]] references by grepping the local vault: `Grep(pattern: "<title>", path: "zk/")` then `Read` the match. For conceptual verification, use `Bash: scripts/semantic.py query "<claim>"`. You have no Reflect MCP tools.
+**Process:** Spot-check 3-5 [[Note Title]] references by grepping the local vault: `Grep(pattern: "<title>", path: "zk/")` then `Read` the match. For conceptual verification, use `Bash: uv run scripts/semantic.py query "<claim>"`. You have no Reflect MCP tools.
 
 | Score | Criteria |
 |-------|---------|

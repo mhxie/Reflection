@@ -86,7 +86,7 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 
 | Rule | Location | Current Value | Re-test When |
 |------|----------|--------------|-------------|
-| semantic.py is primary for content queries | CLAUDE.md | Stub lexical mode | Real embedding mode ships (`zk/.semantic/index.sqlite` sentinel) |
+| semantic.py is primary for content queries | CLAUDE.md | Real embedding mode | Index is machine-local at `~/.cache/reflectl/lance/`; rebuild with `uv run scripts/semantic.py index` |
 | Grep for structural queries only | CLAUDE.md | Always | semantic.py covers structural queries too |
 | Retry with synonyms on empty results | error-handling.md | Manual retry | semantic.py handles synonyms natively |
 

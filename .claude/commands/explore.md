@@ -13,7 +13,7 @@ Free-form exploration session for when the user doesn't have a specific question
 
 Run 3-4 diverse searches over the local `zk/` mirror to find surprising connections. `/explore` is the one command where **semantic search leads** — exploration is exactly the case where lexical grep fails by design.
 
-1. **Semantic search on a recent theme:** `Bash: scripts/semantic.py query "<topic from today's note>" --top 10` — conceptual neighbors. In stub mode this lexical-falls-through (stderr warning); in real mode (sentinel `zk/.semantic/index.sqlite`) it uses embeddings. If the stub returns thin results, reframe the concept and retry — Phase C removed the `search_notes` escape hatch.
+1. **Semantic search on a recent theme:** `Bash: uv run scripts/semantic.py query "<topic from today's note>" --top 10` — conceptual neighbors. In stub mode this lexical-falls-through (stderr warning); in real mode (sentinel `~/.cache/reflectl/lance/`) it uses embeddings. If the stub returns thin results, reframe the concept and retry — Phase C removed the `search_notes` escape hatch.
 2. **Tag exploration:** `Bash: grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' zk/ | sort | uniq -c | sort -rn | head -40` → pick a tag the user hasn't engaged with recently → `Grep(pattern: "#<tag>", path: "zk/")`.
 3. **Time-shifted search:** `Bash: find zk/daily-notes zk/reflections -type f -name "*.md" -newermt "<12 months ago>" ! -newermt "<6 months ago>"` → `Grep` for the current interest inside that set. What were they thinking about this 6-12 months ago?
 4. **Cross-domain search:** `Grep` for a term from one life area in another. E.g., if career-focused recently, grep for "health" or "learning" inside `zk/`.
@@ -45,7 +45,7 @@ Don't summarize — provoke. Present 3-4 "sparks":
 ### Step 4: Follow the Thread
 
 Let the user pick which spark interests them. Then:
-- Pull more related notes via `scripts/semantic.py query` (or `Grep` once the concept has a name)
+- Pull more related notes via `uv run scripts/semantic.py query` (or `Grep` once the concept has a name)
 - Apply a relevant framework if appropriate
 - Ask deepening questions (use Challenger's question taxonomy)
 
@@ -81,7 +81,7 @@ Let the user pick which spark interests them. Then:
 ## Session Log
 
 After writing the exploration file, emit a session log:
-1. `Bash: python3 scripts/session_log.py --type exploration --duration <minutes>`
+1. `Bash: uv run scripts/session_log.py --type exploration --duration <minutes>`
 2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
 ## Write-Back

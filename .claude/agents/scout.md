@@ -52,7 +52,7 @@ Each Scout instance states its assigned direction in the output.
 
 ### Phase 1: Contextualize
 Before searching the web, check the user's local vault for context. You have no Reflect MCP tools.
-- `Bash: scripts/semantic.py query "<topic>" --top 5` — primary conceptual lookup across `zk/`
+- `Bash: uv run scripts/semantic.py query "<topic>" --top 5` — primary conceptual lookup across `zk/`
 - `Grep(pattern: "<topic keywords>", path: "zk/readwise/")` — what the user has already saved from the web via Readwise
 - This prevents you from surfacing things the user already knows
 

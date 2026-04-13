@@ -142,7 +142,7 @@ Phase A wired the read path. Phase B shipped `scripts/trust.py`. **Phase C (this
 
 | Agent | L1 capture | L4 wiki (`zk/wiki/`) | L3 receipts |
 |---|---|---|---|
-| **Researcher** | **Local-only, semantic-primary.** `Bash: scripts/semantic.py query` for content queries, `Grep` + `Read` for structural queries. No Reflect MCP tools in frontmatter. If today's daily note is not yet on disk, flags `needs: get_daily_note(today)` and the orchestrator fetches. | Reads `zk/wiki/` with grep directly. | Reads `zk/readwise/`, `zk/papers/` directly. |
+| **Researcher** | **Local-only, semantic-primary.** `Bash: uv run scripts/semantic.py query` for content queries, `Grep` + `Read` for structural queries. No Reflect MCP tools in frontmatter. If today's daily note is not yet on disk, flags `needs: get_daily_note(today)` and the orchestrator fetches. | Reads `zk/wiki/` with grep directly. | Reads `zk/readwise/`, `zk/papers/` directly. |
 | **Curator** | Continues to write to daily notes via `append_to_daily_note` (write-side MCP retained). | **Phase C: drafts wiki entries as markdown proposals with `target_path: zk/wiki/<slug>.md`.** The orchestrator writes the file after user approval (subagents cannot Write). Then `scripts/trust.py --note <path>` verifies structural integrity and reports initial scores. | Unchanged. |
 | **Synthesizer** | Reads capture-layer briefs from Researcher; writes session reflections to `zk/reflections/`. | Reads wiki trust scores when available to weight evidence. | Unchanged. |
 | **Reviewer** | Continues to gate capture-layer write-backs. | Phase C: gates wiki writes as well. A `@pass: reviewer | status: verified` marker is added to a claim only after Reviewer signs off. | Unchanged. |

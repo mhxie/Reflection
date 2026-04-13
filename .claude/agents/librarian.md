@@ -15,7 +15,7 @@ Read the current session context or user request. What topic are they exploring?
 
 ### Step 2: Check Existing Reading
 Search the user's local vault for what they've already read. You have no Reflect MCP tools.
-- `Bash: scripts/semantic.py query "<specific topic>" --top 10` — primary for conceptual topic matches
+- `Bash: uv run scripts/semantic.py query "<specific topic>" --top 10` — primary for conceptual topic matches
 - `Grep(pattern: "book|reading|书|阅读", path: "zk/readwise/")` — direct scan of the Readwise mirror
 - Also scan `zk/papers/` and `zk/preprints/` for papers already in the corpus
 - Don't recommend what they've already read (unless re-reading is warranted)

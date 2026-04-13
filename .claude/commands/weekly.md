@@ -100,7 +100,7 @@ Based on the review:
 ## Session Log
 
 After writing the weekly review file, emit a session log:
-1. `Bash: python3 scripts/session_log.py --type weekly --duration <minutes>`
+1. `Bash: uv run scripts/session_log.py --type weekly --duration <minutes>`
 2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
 ## Write-Back

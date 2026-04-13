@@ -14,7 +14,7 @@ Deep assessment of where your energy goes — physical, mental, emotional, and s
    - `Grep(pattern: "累|疲惫|精力", path: "zk/")` — Chinese exhaustion markers (local, exact).
    - `Grep(pattern: "运动|健康|睡眠", path: "zk/")` — Chinese health markers (local, exact).
    - `Grep(pattern: "exercise|health|sleep", path: "zk/")` — English health markers (local, exact).
-   - `Bash: scripts/semantic.py query "tired exhausted drained" --top 10` — **primary** for affective states that may not use literal "tired/exhausted" language. Reframe the concept and retry if results are thin. No MCP fallback in Phase C.
+   - `Bash: uv run scripts/semantic.py query "tired exhausted drained" --top 10` — **primary** for affective states that may not use literal "tired/exhausted" language. Reframe the concept and retry if results are thin. No MCP fallback in Phase C.
 
 ## The Four Energy Dimensions
 
@@ -98,7 +98,7 @@ Present findings as:
 ## Session Log
 
 After writing the energy audit file, emit a session log:
-1. `Bash: python3 scripts/session_log.py --type energy-audit --duration <minutes>`
+1. `Bash: uv run scripts/session_log.py --type energy-audit --duration <minutes>`
 2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
 ## Write-Back

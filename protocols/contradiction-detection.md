@@ -11,7 +11,7 @@ Five Whys root cause: Sessions feel generic when questions aren't grounded in th
 ### Strategy 1: Temporal Contradiction
 Search for the same topic across time:
 1. Identify a strong current belief from today's/recent notes
-2. Search for the same topic in older daily notes: `Bash: scripts/semantic.py query "<topic>" --before "<3 months ago, YYYY-MM-DD>" --top 5` — the semantic script supports date filters and walks `zk/daily-notes/` + `zk/reflections/` directly. For exact-string follow-ups, `Grep(pattern: "<term>", path: "zk/daily-notes/")` and filter by filename date.
+2. Search for the same topic in older daily notes: `Bash: uv run scripts/semantic.py query "<topic>" --before "<3 months ago, YYYY-MM-DD>" --top 5` — the semantic script supports date filters and walks `zk/daily-notes/` + `zk/reflections/` directly. For exact-string follow-ups, `Grep(pattern: "<term>", path: "zk/daily-notes/")` and filter by filename date.
 3. Compare: has the user's position changed? If yes, that's a contradiction worth surfacing.
 
 **Example:** "Today you're excited about ML infra. But 6 months ago in [[Note]], you wrote 'I want to stay close to distributed systems fundamentals.' What shifted?"
