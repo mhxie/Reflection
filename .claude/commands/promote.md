@@ -55,7 +55,7 @@ After user approval of the brief, dispatch the **Curator** agent with the approv
 ```
 Wiki entry draft request.
 
-Target path: zk/wiki/<slugified-title>.md
+Target path: zk/wiki/<Title>.md   (title-case with spaces, matching the H1)
 Schema reference: protocols/wiki-schema.md
 
 Approved claims and anchors:
@@ -83,14 +83,28 @@ Instructions:
 ### Phase 3: Validate and Write
 
 1. **Present the draft** to the user for review. Show the full markdown.
-2. On user approval, **write the file** to `zk/wiki/<slug>.md`.
-3. Run `scripts/trust.py --note zk/wiki/<slug>.md` to verify structural integrity.
+2. On user approval, **write the file** to `zk/wiki/<Title>.md` (title-case with spaces, matching the H1).
+3. Run `scripts/trust.py --note "zk/wiki/<Title>.md"` to verify structural integrity.
    - If errors: show them, ask the user if they want to fix or abort.
    - If clean: report the initial trust score (will be raw PageRank, no floor until a reviewer pass).
 4. Run `scripts/lint.py` to check for corpus-level issues (shared anchors, etc.).
 5. Regenerate the wiki index: `scripts/trust.py --index`.
 
-### Phase 4: Post-Creation Suggestions
+### Phase 4: Chinese Shadow (`wiki-cn`)
+
+After the English entry passes validation, generate a Chinese shadow copy:
+
+1. **Translate** the entry to Chinese following these rules:
+   - Translate all prose (Summary, claim text, body paragraphs, Revision Log)
+   - DO NOT translate: technical terms (Lance, Ray Data, PyArrow, MVCC, etc.), code identifiers, URLs, file paths
+   - DO NOT translate `@anchor`/`@pass` blocks or `@cite` lines: copy exactly as-is
+   - DO NOT translate `^cn` block IDs
+   - Keep the `# Title` in English (filename must match)
+   - Add at the top: `> 本文为 [[English Title]] 的中文版本。核心技术术语保留英文原文。`
+2. **Write** to `zk/wiki-cn/<Title>.md` (same filename as the English version).
+3. This step is automatic and does not require additional user approval.
+
+### Phase 5: Post-Creation Suggestions
 
 After successful creation, suggest next steps:
 
@@ -98,6 +112,7 @@ After successful creation, suggest next steps:
 2. **Request reviewer pass:** "Run a review session to add `@pass: reviewer | status: verified` markers, which unlocks the 0.1 trust floor."
 3. **Sync to Reflect:** "Run `/sync` to push the new entry to Reflect for mobile reading."
 4. **Update the wiki index:** Already done in Phase 3 step 5.
+5. **Snapshot anchors to Readwise:** Save all `url:` anchors to Readwise with `anchor-evidence` + category tag, backfill `readwise:` document IDs.
 
 ## Example Invocation
 

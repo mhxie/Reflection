@@ -1,6 +1,9 @@
 # OS
 .DS_Store
 
+# Org-specific config (contains private domain names)
+scripts/readwise_skip_domains.txt
+
 # Personal data (PRIVATE — never commit)
 # Raw note snapshots
 reflect-*/

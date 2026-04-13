@@ -25,10 +25,11 @@ import sys
 from datetime import date
 from pathlib import Path
 
-CLAIM_HEADING_RE = re.compile(r"^###\s+\[C(\d+)\]")
-FENCE_OPEN_RE = re.compile(r"^```anchors\s*$")
-FENCE_CLOSE_RE = re.compile(r"^```\s*$")
+# Import shared regexes from trust.py to avoid silent divergence.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from trust import BARE_CITE_RE, FENCE_CLOSE_RE, FENCE_OPEN_RE  # noqa: E402
 
+CLAIM_HEADING_RE = re.compile(r"^###\s+\[C(\d+)\]")
 
 MARKER_PREFIX_RE = re.compile(r"^@(anchor|cite|pass):\s*")
 
@@ -113,6 +114,9 @@ def strip_body(path: Path, synced_at: str) -> str:
             continue
         if in_fence and current_claim is not None and line.strip():
             claim_markers[current_claim].append(line.strip())
+        # Bare @cite outside fence (unified format)
+        if not in_fence and current_claim is not None and BARE_CITE_RE.match(line):
+            claim_markers[current_claim].append(line.strip())
 
     # Pass 2: rebuild the body, dropping fences and inserting Sources footers
     # immediately before the next heading after a claim's prose.
@@ -128,6 +132,9 @@ def strip_body(path: Path, synced_at: str) -> str:
         if in_fence:
             if FENCE_CLOSE_RE.match(line):
                 in_fence = False
+            continue
+        # Skip bare @cite lines in output (they'll appear in Sources footer)
+        if not in_fence and BARE_CITE_RE.match(line):
             continue
         heading_match = CLAIM_HEADING_RE.match(line)
         is_any_heading = line.startswith("## ") or line.startswith("### ")

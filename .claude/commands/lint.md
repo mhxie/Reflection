@@ -10,12 +10,14 @@ Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint
 |---|---|---|
 | Per-note parse errors — items 1-10 of `protocols/wiki-schema.md`, plus dangling `@cite` targets (both surface under the `parse-error` code) | ERROR | `scripts/trust.py` parser + resolver |
 | Duplicate titles across wiki entries (breaks `@cite` resolution) | ERROR | `scripts/lint.py` |
-| Slug ↔ title alignment (filename stem matches slugified H1) | WARN | `scripts/lint.py` |
+| Slug ↔ title alignment (filename stem matches H1 title) | WARN | `scripts/lint.py` |
 | Orphan entry — no inbound `@cite` from any other wiki entry (trust cannot propagate to it) | WARN | `scripts/lint.py` graph topology |
 | Manifest drift — dead entries (slug in manifest, no file on disk) | WARN | `scripts/lint.py` |
 | No outbound cite — entry does not `@cite` any other wiki entry | INFO | `scripts/lint.py` graph topology |
 | Shared anchor, no cite — two entries reference the same `@anchor` but lack a `@cite` edge | INFO | `scripts/lint.py` graph topology |
 | Unsynced wiki entries (file on disk, no manifest row) | INFO | `scripts/lint.py` |
+| `url:` or `gist:` anchor missing `readwise:` field (`readwise-missing`) | WARN | `scripts/lint.py` — save to Readwise with `anchor-evidence` tag and backfill the document ID; fix via `uv run scripts/snapshot_anchors.py --apply --note "zk/wiki/<Title>.md"` |
+| Technical term in claim body not in vocabulary allowlist and not matching any wiki entry title (`unfounded-term`) | INFO | `scripts/lint.py` — add term to `scripts/wiki_vocabulary.txt` if common knowledge, or add a wiki entry, or add a parenthetical definition inline |
 | Claim missing `^cn` block ID (`block-id-missing`, deferred — Phase D) | WARN | `scripts/lint.py` — regex `\^c[0-9]+$` on last line of each claim body; absent marker is a nudge, not a reject (per `protocols/wiki-schema.md` §"When `^cn` is recommended") |
 | Non-`^cn` block ID inside a wiki entry (`block-id-violation`, deferred — Phase D) | ERROR | `scripts/lint.py` — any `^<token>` that does not match `\^c[0-9]+$` is a schema violation (no `^summary`, `^fig1`, `^revlog-*`, etc.) |
 

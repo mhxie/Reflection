@@ -37,9 +37,10 @@ Optional body paragraph(s) elaborating the claim. Verbatim quotes from anchors s
 
 ```anchors
 @anchor: s2:gyongyi-vldb-2004 | valid_at: 2026-04-06
-@cite: [[PageRank fundamentals]] | valid_at: 2026-04-06
 @pass: reviewer | status: verified | at: 2026-04-06
 ```
+
+@cite: [[PageRank fundamentals]] | valid_at: 2026-04-06
 
 ### [C2] One-sentence claim text
 
@@ -64,7 +65,7 @@ The `# Title`, `## Summary`, `## Claims`, and `## Revision Log` headings are req
 
 Wiki entries need two independent addressing mechanisms for each claim: one the trust parser reads, and one Obsidian's wikilink resolver reads. They live in the same claim block and do not interfere.
 
-**Why `[[note#Cn]]` does not work.** Obsidian's internal-link heading resolution matches the **literal heading text**, not a prefix or token inside it. A claim heading `### [C1] Lance tables are composed of immutable fragments...` has the literal text `[C1] Lance tables are composed of immutable fragments...`, not `C1`. A link written as `[[lance-mvcc-commit-protocol#C1]]` looks for a heading literally named "C1", finds nothing, and silently fails — no error, no navigation, no warning. This is a real recurring footgun; every agent writing backlinks from alloy notes to wiki claims has tripped it at least once.
+**Why `[[note#Cn]]` does not work.** Obsidian's internal-link heading resolution matches the **literal heading text**, not a prefix or token inside it. A claim heading `### [C1] Lance tables are composed of immutable fragments...` has the literal text `[C1] Lance tables are composed of immutable fragments...`, not `C1`. A link written as `[[Lance MVCC Commit Protocol#C1]]` looks for a heading literally named "C1", finds nothing, and silently fails — no error, no navigation, no warning. This is a real recurring footgun; every agent writing backlinks from alloy notes to wiki claims has tripped it at least once.
 
 **The convention.** Each claim carries an Obsidian block identifier `^cn` (lowercase `c`, matching the claim number) placed inline at the end of the last body paragraph of the claim, immediately before the fenced `anchors` block. Per Obsidian's spec, block identifiers "can only consist of Latin letters, numbers, and dashes," so human-readable `^c1`, `^c2`, ... are valid and deliberately mirror the `[Cn]` heading numbering.
 
@@ -79,13 +80,13 @@ A Lance table is a directory containing `data/`, `_versions/`, `_deletions/`, an
 ```
 ```
 
-The `^c1` marker is a **sibling of the claim text**, not a sibling of the fenced anchors block. Place it at the end of the last prose paragraph. Obsidian then resolves `[[lance-mvcc-commit-protocol#^c1]]` to that exact location and scrolls the reader to it.
+The `^c1` marker is a **sibling of the claim text**, not a sibling of the fenced anchors block. Place it at the end of the last prose paragraph. Obsidian then resolves `[[Lance MVCC Commit Protocol#^c1]]` to that exact location and scrolls the reader to it.
 
-**Citing a claim from an alloy note.** Use the block-ID form: `[[wiki-entry#^c1]]`. This is how learning packs, daily notes, session reflections, and any other alloy content under `zk/` should point at a specific wiki claim when they want fine-grained navigation. The wiki-entry slug is the filename without the `.md` extension.
+**Citing a claim from an alloy note.** Use the block-ID form: `[[Note Title#^c1]]`. This is how learning packs, daily notes, session reflections, and any other alloy content under `zk/` should point at a specific wiki claim when they want fine-grained navigation.
 
-**Citing a claim from session output (orchestrator or subagent chat).** Keep using the path form described in "Session-Visible Markers" above: `zk/wiki/<slug>.md [C1]`. The session-visible path citation is about legibility of the certification tier in chat, not about click-through navigation, so block IDs are not involved.
+**Citing a claim from session output (orchestrator or subagent chat).** Keep using the path form described in "Session-Visible Markers" above: `zk/wiki/Note Title.md [C1]`. The session-visible path citation is about legibility of the certification tier in chat, not about click-through navigation, so block IDs are not involved.
 
-**Citing a claim from another wiki entry's `@cite`.** Keep using the `#Cn` suffix defined in the `@cite` marker grammar below (e.g., `@cite: [[lance-mvcc-commit-protocol]] #C1`). That suffix is parsed by `scripts/trust.py`, which reads claim headings by position and is oblivious to block IDs. **Do not** write `@cite: ... #^c1` — the trust parser will not recognize it. `@cite` uses `#Cn`; Obsidian-visible backlinks from alloy notes use `#^cn`. The two notations address the same claim through different resolvers.
+**Citing a claim from another wiki entry's `@cite`.** Use the same `#^cn` block-ID form: `@cite: [[Note Title#^c1]] | valid_at: ...`. The trust parser extracts the note title and claim number from this syntax, and Obsidian renders it as a clickable link that navigates to the claim. This is the unified notation: one syntax works for both the trust graph and Obsidian navigation.
 
 **Parser impact: none.** `scripts/trust.py` walks claim headings structurally and ignores trailing `^cn` tokens in body text. The structural-integrity check treats a claim body containing `^c1` at the end exactly the same as one without. The schema contract is unchanged — adding `^cn` markers is purely additive for human navigation.
 
@@ -102,7 +103,9 @@ A block ID outside the `^cn` family in a wiki entry is a schema violation that `
 
 ## The Marker Vocabulary
 
-Markers live inside fenced code blocks with the language label `anchors`, one marker per line, pipe-separated key-value pairs. The fenced format is non-negotiable because `scripts/trust.py` parses by fence label, not by inference.
+`@anchor` and `@pass` markers live inside fenced code blocks with the language label `anchors`, one marker per line, pipe-separated key-value pairs. The fenced format for these two marker types is non-negotiable because they contain URLs and structured data where code formatting is appropriate, and `scripts/trust.py` parses them by fence label.
+
+`@cite` markers live **outside** the fenced block, as regular Markdown lines immediately after the closing ` ``` `. This allows Obsidian to render the `[[wikilink]]` targets as live backlinks in the graph view and backlinks panel. The parser accepts `@cite` lines both inside and outside fences for backward compatibility, but new entries must place `@cite` outside the fence.
 
 ### `@anchor`
 
@@ -154,13 +157,18 @@ Tag convention: Readwise saves that back wiki anchors carry the `anchor-evidence
 
 An internal pointer to another wiki entry. This is an **edge** in the trust graph: it propagates trust from the cited note's claims to this claim. `@cite` markers do not contribute initial mass.
 
+**Placement:** `@cite` markers are placed **outside** the fenced `anchors` block, as regular Markdown lines immediately after the closing ` ``` `. This allows Obsidian to render the `[[wikilink]]` targets as live backlinks in the graph view and backlinks panel. The parser also accepts `@cite` inside fences for backward compatibility, but new entries must place `@cite` outside.
+
+**Unified block-level citation:** Claim-level references use Obsidian's native block reference syntax `#^cn` inside the wikilink brackets:
+
 ```
-@cite: [[Note Title]] [#Cn] | valid_at: <YYYY-MM-DD> [| invalid_at: <YYYY-MM-DD>]
+@cite: [[Note Title#^c3]] | valid_at: <YYYY-MM-DD> [| invalid_at: <YYYY-MM-DD>]
+@cite: [[Note Title]] | valid_at: <YYYY-MM-DD>
 ```
 
-The optional `#Cn` suffix lets a citation point at a specific claim within the cited note (e.g., `[[TrustRank fundamentals]]#C2`). Without the suffix, the citation points at the note as a whole and uses the note-level aggregate score as the upstream signal.
+The `#^cn` suffix points at a specific claim via its Obsidian block ID. Obsidian renders this as a single clickable link that navigates directly to the claim. `scripts/trust.py` parses the note title and claim number from the same syntax. Without the suffix, the citation points at the note as a whole and uses the note-level aggregate score as the upstream signal.
 
-`@cite` markers must resolve. A `@cite` to a note that does not exist in `zk/wiki/`, or a `@cite` with a `#Cn` suffix to a non-existent claim, is a **dangling internal cite** — caught by structural-integrity check, fails the floor.
+`@cite` markers must resolve. A `@cite` to a note that does not exist in `zk/wiki/`, or a `@cite` with a `#^cn` suffix to a non-existent claim, is a **dangling internal cite** — caught by structural-integrity check, fails the floor.
 
 ### `@pass`
 
@@ -238,7 +246,7 @@ N.score = mean(Ci.score for Ci in N.claims)
 
 Mean across claims, simple. v2 may explore weighted aggregation (e.g., by claim length, by anchor count, by claim age) but v1 is mean.
 
-The note-level score is a derived view shown in the trust report and used for ranking in search results. Internal `@cite` references that point at a whole note (no `#Cn`) read this aggregate as the upstream signal. Internal `@cite` references that point at a specific claim (`[[Note]]#C2`) read the claim-level score directly.
+The note-level score is a derived view shown in the trust report and used for ranking in search results. Internal `@cite` references that point at a whole note (no `#^cn` suffix) read this aggregate as the upstream signal. Internal `@cite` references that point at a specific claim (`[[Note Title#^c2]]`) read the claim-level score directly.
 
 ## Structural Integrity Check
 
@@ -250,9 +258,9 @@ A note **passes structural integrity** if all of the following hold. `scripts/tr
 2. The note has a `## Claims` section.
 3. Every claim heading matches `### [Cn] <text>` with `n` sequential starting from 1.
 4. Every claim has at least one paragraph of body text.
-5. Every fenced `anchors` block parses: every line is either blank, a comment, or matches `@anchor:` / `@cite:` / `@pass:` with valid pipe-separated fields.
+5. Every fenced `anchors` block parses: every line is either blank, a comment, or matches `@anchor:` / `@pass:` (and optionally `@cite:` for backward compatibility) with valid pipe-separated fields. Bare `@cite:` lines outside fences parse as markers when they appear in the `## Claims` section after a claim heading.
 6. Every `@anchor` has a recognized type and a `valid_at`.
-7. Every `@cite` resolves: the target note exists in `zk/wiki/`. If a `#Cn` suffix is given, the target claim exists in the target note.
+7. Every `@cite` resolves: the target note exists in `zk/wiki/`. If a `#^cn` suffix is given, the target claim exists in the target note.
 8. Every `@pass` has a recognized agent and status.
 9. `valid_at` is a valid ISO date <= today.
 10. If `invalid_at` is present, it is a valid ISO date > the corresponding `valid_at`.
@@ -277,6 +285,18 @@ Documented here so they do not get lost between sessions.
 - **Anchor weight from S2 / OpenAlex.** Use `influentialCitationCount` or FWCI as the seed weight for paper anchors. v1 treats all weights as 1.0. The schema field `weight` already exists for forward compatibility.
 - **Note-level aggregation alternatives.** Weighted mean by claim length, anchor count, or claim age. v1 is unweighted mean.
 - **Claim invalidation.** Currently a marker can be invalidated. A whole claim cannot — there is no `[Cn]` invalidation syntax. If a claim becomes wrong, the v1 workflow is to invalidate all its markers and add a Revision Log entry. v2 may add `### [Cn] ~~Claim text~~` strikethrough as a structural signal.
+
+## Chinese Shadow (`wiki-cn`)
+
+Every wiki entry in `zk/wiki/` has a Chinese shadow copy in `zk/wiki-cn/` with the same filename. The shadow is generated automatically by `/promote` (Phase 4) and can be regenerated on demand.
+
+Translation rules:
+- Translate all prose (Summary, claim text, body paragraphs, Revision Log) to Chinese
+- DO NOT translate: technical terms, code identifiers, URLs, file paths, `@anchor`/`@pass`/`@cite` markers, `^cn` block IDs
+- Keep the `# Title` in English (filename must match the English version)
+- Prepend: `> 本文为 [[English Title]] 的中文版本。核心技术术语保留英文原文。`
+
+The CN shadow is not part of the trust graph: `scripts/trust.py` only scans `zk/wiki/`. The CN version is for reading convenience and mobile review via Reflect. It does not need its own anchors or reviewer passes. If the English source is updated, the CN shadow should be regenerated.
 
 ## Cross-References
 

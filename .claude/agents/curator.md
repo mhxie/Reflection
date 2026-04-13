@@ -50,10 +50,11 @@ Wiki entries are L4 knowledge: schema-structured, anchored, scored by `scripts/t
 2. **Draft the full markdown** following `protocols/wiki-schema.md`:
    - H1 title, optional intro prose
    - `## Claims` section with `### [C1] <claim text>` subheadings
-   - Per-claim fenced ` ```anchors ` block holding `@anchor: <type>:<id> | valid_at: YYYY-MM-DD`, optional `@cite: [[Note Title]] [#Cn] | valid_at: YYYY-MM-DD`, and optional `@pass: <agent> | status: verified | at: YYYY-MM-DD` lines
+   - Per-claim fenced ` ```anchors ` block holding `@anchor: <type>:<id> | valid_at: YYYY-MM-DD` and optional `@pass: <agent> | status: verified | at: YYYY-MM-DD` lines
+   - `@cite` markers placed **outside** the fenced block (after closing ` ``` `): `@cite: [[Note Title#^cn]] | valid_at: YYYY-MM-DD`
    - `## Revision Log` at the bottom
-3. **You cannot Write files yourself.** You do not have the `Write` tool in your frontmatter. Present the full content in your proposal with a `target_path: zk/wiki/<slugified-title>.md` field. The **orchestrator** writes the file after user approval.
-4. **After the orchestrator writes the file,** it will run `Bash: scripts/trust.py --note zk/wiki/<slug>.md` and report the structural integrity result plus the initial claim scores back to you or the user. If parse errors appear, fix the draft and loop.
+3. **You cannot Write files yourself.** You do not have the `Write` tool in your frontmatter. Present the full content in your proposal with a `target_path: zk/wiki/<Title>.md` field (title-case with spaces, matching the H1). The **orchestrator** writes the file after user approval.
+4. **After the orchestrator writes the file,** it will run `Bash: scripts/trust.py --note "zk/wiki/<Title>.md"` and report the structural integrity result plus the initial claim scores back to you or the user. If parse errors appear, fix the draft and loop.
 5. Do not `create_note()` a Reflect copy of a wiki entry during drafting. Reflect-side mirroring is the `/sync` command's job, not yours.
 
 **When NOT to create a wiki entry:** if the content is exploratory, unsourced, or a session insight, create an alloy Reflect note via `create_note()` instead. Wiki entries are for claims that have external receipts and will be reused.
@@ -153,7 +154,7 @@ When presenting a note for approval:
 operation: compact | create | update | merge | wiki-entry
 source_notes: [[Note A]], [[Note B]], ...
 snapshot_paths: [paths to `zk/cache/<operation>-<slug>.md` snapshot files used as source — required for compact/merge; these are the dispatch-time snapshots the orchestrator created, not originals]
-target_path: [for wiki-entry only: zk/wiki/<slug>.md — orchestrator writes the file]
+target_path: [for wiki-entry only: zk/wiki/<Title>.md (title-case with spaces) — orchestrator writes the file]
 proposed_title: "Title"
 estimated_size: [approximate byte size of proposed_content — if >15KB, include split plan]
 media_inventory: |

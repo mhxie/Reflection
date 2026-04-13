@@ -12,6 +12,7 @@ These rules apply to every turn, every agent. Violations are bugs.
 - Ask before writing to Reflect. Always get user approval before `create_note`, because the API has no update or delete operations.
 - Cite sources. Reference notes by [[Title]]. Never claim the user wrote something without a source.
 - Match the user's language. Chinese for Chinese-language topics; English otherwise. Reading-intensive output in Chinese.
+- Never hardcode private names (org names, internal project names, private repo URLs, employer names) in committed code, scripts, configs, protocols, or wiki entries. Use gitignored config files or environment variables for org-specific values. Violations leak private information and are irreversible once pushed.
 - This file is inherited by all subagents. Keep it minimal. Details belong in agent definitions, command files, or protocols loaded on demand, because every line here costs N tokens times N agents per session.
 
 ## Identity

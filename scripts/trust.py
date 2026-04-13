@@ -73,7 +73,9 @@ CLAIMS_HEADING_RE = re.compile(r"^##\s+Claims\s*$")
 FENCE_OPEN_RE = re.compile(r"^```anchors\s*$")
 FENCE_CLOSE_RE = re.compile(r"^```\s*$")
 H1_RE = re.compile(r"^#\s+(.+?)\s*$")
-CITE_TARGET_RE = re.compile(r"^\[\[([^\]]+)\]\](?:\s*#C(\d+))?\s*$")
+# Unified format: [[Note Title#^c3]] or [[Note Title]] (note-level)
+CITE_TARGET_RE = re.compile(r"^\[\[([^\]#]+?)(?:#\^c(\d+))?\]\]\s*$")
+BARE_CITE_RE = re.compile(r"^\s*@cite:\s+")
 
 
 # ----------------------------------------------------------------------------
@@ -211,7 +213,7 @@ def _parse_marker(kind: str, first: str, extras: list[str], line_no: int, raw: s
         if not m:
             return None, f"line {line_no}: malformed @cite target `{first}`"
         fields["_cite_title"] = m.group(1).strip()
-        fields["_cite_claim_number"] = m.group(2) if m.group(2) else ""
+        fields["_cite_claim_number"] = m.group(2) or ""
     elif kind == "@pass":
         agent = first.strip()
         if agent not in PASS_AGENTS:
@@ -329,6 +331,29 @@ def parse_wiki_note(path: Path, today: date) -> WikiNote:
         # Stray fence close with no open.
         if FENCE_CLOSE_RE.match(raw):
             continue
+
+        # Bare @cite outside fence (Obsidian backlink format).
+        if BARE_CITE_RE.match(raw):
+            if current_claim is None:
+                note.parse_errors.append(
+                    f"line {idx}: @cite marker outside any claim body"
+                )
+                continue
+            parsed = _split_marker_line(raw)
+            if parsed is not None:
+                kind, first, extras = parsed
+                if kind == "@cite":
+                    marker, err = _parse_marker(kind, first, extras, idx, raw)
+                    if err:
+                        note.parse_errors.append(err)
+                    else:
+                        current_claim.cites.append(marker)
+                    continue
+                else:
+                    note.parse_errors.append(
+                        f"line {idx}: `{kind}` marker must be inside a fenced anchors block"
+                    )
+                    continue
 
         m = CLAIM_HEADING_RE.match(raw)
         if m:
