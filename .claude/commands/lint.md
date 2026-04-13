@@ -25,6 +25,22 @@ Exit code: 0 if no ERROR-level findings, 1 otherwise. WARN and INFO never fail t
 
 ## Process
 
+### Phase 0: Harness health
+
+```
+Bash: wc -c CLAUDE.md
+```
+
+If CLAUDE.md exceeds 8,192 bytes (~2,000 tokens), emit a WARN: "CLAUDE.md is [size] bytes (target: <8KB). This file is inherited by every subagent; excess size multiplies token cost across all agent dispatches. Run a prune pass or move rules to agent definitions/protocols."
+
+If CLAUDE.md exceeds 15,000 bytes, escalate to ERROR. The file has likely accumulated rules that belong elsewhere.
+
+Also check for bold formatting:
+```
+Bash: grep -c '\*\*' CLAUDE.md
+```
+If count > 0, emit INFO: "CLAUDE.md contains [N] bold markers. Bold has no semantic weight for the model and wastes tokens. Consider removing."
+
 ### Phase 1a: Structural lint
 
 ```

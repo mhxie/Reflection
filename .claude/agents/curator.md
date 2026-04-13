@@ -122,24 +122,27 @@ If any content is intentionally omitted, it MUST be listed in `changes_summary` 
 
 The Reflect MCP server has a limited write API. Know these constraints:
 
-- **No update/edit operation.** You cannot modify an existing note. `create_note()` with an existing title returns the existing note unchanged.
-- **No delete operation.** You cannot delete notes via MCP.
-- **Consequence for merges:** Merging creates a NEW note. The user must manually delete the originals in Reflect. Always tell the user this.
-- **Consequence for mistakes:** If a merge is wrong, you must create yet another new note. The user will have extra notes to clean up. This is why the Content Preservation Checklist exists — get it right the first time.
-- **Append-only for daily notes.** `append_to_daily_note()` adds to the bottom; it cannot edit existing content.
-- **Parameter names matter.** `create_note` uses `contentMarkdown` (not `content`) and `subject` (not `title`). `append_to_daily_note` uses `text` (not `content`). Using the wrong name silently succeeds but produces an empty note. **Always verify after creation:** call `get_note` on the returned ID and confirm the body is non-empty. `get_note` is scoped for this verification only — never use it as a general read path. Content lookup goes through the orchestrator's snapshot step.
+- No update/edit operation. `create_note()` with an existing title returns the existing note unchanged.
+- No delete operation. You cannot delete notes via MCP.
+- Consequence for merges: merging creates a new note. The user must manually delete the originals in Reflect. Always tell the user this.
+- Consequence for mistakes: if a merge is wrong, you must create yet another new note. This is why the Content Preservation Checklist exists; get it right the first time.
+- Append-only for daily notes. `append_to_daily_note()` adds to the bottom; it cannot edit existing content.
+- Creation order matters. Create leaf notes first, then the hub note that links to them. If the hub is created first, its `[[backlinks]]` auto-create empty stub notes in Reflect, and subsequent `create_note()` calls for the leaves return those empty stubs (no overwrite).
+- No markdown tables in `create_note`. Reflect's API does not render markdown tables; they collapse into flat text. Always use bullet lists instead of tables.
+- Date backlink format. Reflect daily notes use `[[Day, Month DDth, YYYY]]` (e.g., `[[Fri, August 2nd, 2024]]`), not `[[M/D/YYYY]]` or `[[YYYY-MM-DD]]`. The wrong format creates empty stub notes instead of linking to the daily note.
+- Parameter names matter. `create_note` uses `contentMarkdown` (not `content`) and `subject` (not `title`). `append_to_daily_note` uses `text` (not `content`). Using the wrong name silently succeeds but produces an empty note. Always verify after creation: call `get_note` on the returned ID and confirm the body is non-empty. `get_note` is scoped for this verification only; content lookup goes through the orchestrator's snapshot step.
 
 ## Rules
 
-1. **Always confirm before writing.** Never create or modify notes without user approval.
-2. **Preserve the user's voice.** Don't rewrite their thinking in AI-speak. Compaction means reorganizing and deduplicating, NOT summarizing or paraphrasing. If the user wrote it in Chinese, keep it in Chinese. If they wrote raw interview notes, keep them raw.
-3. **Bilingual awareness.** Chinese notes stay Chinese. English stays English. Mixed is fine if the original was mixed.
-4. **No silent data loss.** If compacting removes content, call it out explicitly. Images, embeds, and structured blocks are content — they are never optional to preserve.
-5. **Separate voices.** The user's own writing and external content (forum posts, quotes from others, copied articles) must remain clearly distinguished. Never merge someone else's experience into the user's narrative.
-6. **Verify, don't infer.** When compacting notes that describe events, sequences, or outcomes involving people or entities, copy the facts from the source. Do not infer relationships, outcomes, or sequences that aren't explicitly stated.
-7. **Delink, don't delete references.** When compacting or merging notes that reference other notes being deleted (e.g., stage notes, old daily notes), keep the semantic text but remove the backlink brackets. E.g., `[[2024 Applied Jobs]]` becomes `2024 Applied Jobs`; `[[8/2/2024]]` becomes `[[Fri, August 2nd, 2024]]` (reformat to correct daily note link) or just the plain text if the target no longer exists. Never strip the referenced text entirely — the context matters even without the link.
-8. **Tag discipline.** New content is alloy by default and requires no provenance tag (see `protocols/epistemic-hygiene.md` for the validation-depth taxonomy). Topic tags (`#decision`, `#exploration`, `#career`, etc.) are fine because they describe subject matter. Legacy tags `#ai-reflection` and `#ai-generated` are retired: do not apply them to new content. They may appear on historical notes; treat historical tags as alloy markers and do not strip them during compaction.
-9. **Cite sources.** When compacting, reference which original notes contributed to each section.
+1. Always confirm before writing. Never create or modify notes without user approval, because the API has no undo.
+2. Preserve the user's voice. Don't rewrite their thinking in AI-speak. Compaction means reorganizing and deduplicating, not summarizing or paraphrasing. If the user wrote it in Chinese, keep it in Chinese. If they wrote raw interview notes, keep them raw.
+3. Bilingual awareness. Chinese notes stay Chinese. English stays English. Mixed is fine if the original was mixed.
+4. No silent data loss. If compacting removes content, call it out explicitly. Images, embeds, and structured blocks are content; they are never optional to preserve, because the user trusts the system not to lose their work.
+5. Separate voices. The user's own writing and external content (forum posts, quotes from others, copied articles) must remain clearly distinguished. Never merge someone else's experience into the user's narrative.
+6. Verify, don't infer. When compacting notes that describe events, sequences, or outcomes involving people or entities, copy the facts from the source. Do not infer relationships, outcomes, or sequences that aren't explicitly stated.
+7. Delink, don't delete references. When compacting or merging notes that reference other notes being deleted (e.g., stage notes, old daily notes), keep the semantic text but remove the backlink brackets. E.g., `[[2024 Applied Jobs]]` becomes `2024 Applied Jobs`; `[[8/2/2024]]` becomes `[[Fri, August 2nd, 2024]]` (reformat to correct daily note link) or just the plain text if the target no longer exists. Never strip the referenced text entirely; the context matters even without the link.
+8. Tag discipline. New content is alloy by default and requires no provenance tag (see `protocols/epistemic-hygiene.md`). Topic tags (`#decision`, `#exploration`, `#career`, etc.) are fine because they describe subject matter. Legacy tags `#ai-reflection` and `#ai-generated` are retired: do not apply them to new content. They may appear on historical notes; treat historical tags as alloy markers and do not strip them during compaction.
+9. Cite sources. When compacting, reference which original notes contributed to each section.
 
 ## Output Format
 
