@@ -6,8 +6,12 @@ Executable tooling for the reflectl knowledge layer. All scripts are stdlib-only
 
 | Script | Purpose | Phase | Deps |
 |---|---|---|---|
-| `semantic.py` | Local semantic search over `zk/` (stub lexical fallback; embedding backend deferred) | B.5-stub | stdlib |
+| `semantic.py` | Local semantic search over `zk/` — BGE-M3 embeddings + LanceDB with tier-aware reranking; lexical fallback when index is absent | B.5 | `lancedb`, `sentence-transformers` (optional; falls back to lexical) |
+| `semantic_backends.py` | Backend implementations for semantic.py (LanceDB embedding backend, lexical fallback) | B.5 | `lancedb`, `sentence-transformers` (optional) |
 | `trust.py` | TrustRank for `zk/wiki/` — Personalized PageRank with external anchor seeds, claim-level granularity, bi-temporal filtering, floor trust | B | stdlib |
+| `lint.py` | Structural + corpus-level lint over `zk/wiki/` and sync manifest — parse errors, duplicate titles, slug drift, orphan entries, graph topology | D | stdlib |
+| `staleness.py` | L2 staleness scoring — surfaces dormant, stale, and promotion-candidate notes | D | stdlib |
+| `session_log.py` | Session event log skeleton generator — handles late-sleep date rule and collision auto-increment | E | stdlib |
 | `review.sh` | External reviewer wrapper (codex + gemini in parallel) for system-evolution diffs | ops | `codex`, `gemini` CLIs |
 
 ## `trust.py` — quick reference

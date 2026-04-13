@@ -1,7 +1,7 @@
 [project]
 name = "reflectl"
 version = "0.1.0"
-description = "Reflection team orchestrator with semantic search over a local zk/ vault"
+description = "Your AI-native personal operating system"
 requires-python = ">=3.14.3"
 dependencies = [
     "sentence-transformers>=5.4.0",

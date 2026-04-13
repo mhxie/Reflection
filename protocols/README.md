@@ -41,7 +41,10 @@ This is the entry point for all agents. When you need to know how to behave, sta
 | **Reviewer** | quality-gates.md, agent-handoff.md, cognitive-bias-detection.md |
 | **Challenger** | feedback-loops.md, cognitive-bias-detection.md, coaching-progressions.md, escalation.md |
 | **Thinker** | pattern-library.md, context-management.md |
-| **Curator** | error-handling.md, agent-handoff.md |
+| **Curator** | error-handling.md, agent-handoff.md, epistemic-hygiene.md |
+| **Scout** | error-handling.md, context-management.md |
+| **Reader** | agent-handoff.md, context-management.md |
+| **Meeting** | agent-handoff.md |
 | **Librarian** | context-management.md, feedback-loops.md |
 | **Evolver** | meta-reflection.md, feedback-loops.md, session-scoring.md, harness-assumptions.md |
 
@@ -67,9 +70,16 @@ pattern-library.md (recognizes patterns)
 
 context-management.md (standalone — token budgets)
 
+epistemic-hygiene.md (validation-depth taxonomy)
+  └── wiki-schema.md (L4 entry format, claim markers, anchors)
+
+local-first-architecture.md (five-tier model, zk/ layout)
+
 session-log.md (session process recording)
   └── meta-reflection.md (reads session logs for system health)
 
 harness-assumptions.md (model-era assumption registry)
   └── evolver.md (checks during Observe phase)
+
+contradiction-detection.md (4 strategies for surfacing contradictions)
 ```
