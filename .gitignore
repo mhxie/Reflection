@@ -26,9 +26,13 @@ handoffs/
 # Build state
 *.build-state.json
 
-# Python bytecode cache from running scripts/*.py
+# Python (venv symlink points to ~/.cache/reflectl/.venv, outside Cloud Storage)
+.venv
 __pycache__/
 *.pyc
+
+# Device-dependent config (each machine gets its own)
+semantic.toml
 
 # Local-first data layer (symlink or subdir; never commit the vault)
 zk

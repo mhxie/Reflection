@@ -1,0 +1,19 @@
+# Device-dependent parameters for semantic search.
+# Copy to semantic.toml and adjust for your hardware.
+# If semantic.toml is missing, safe defaults are used (16GB-class machine).
+
+[embedding]
+# max_tokens: Token limit per chunk. Higher = better accuracy, more memory.
+#   16GB RAM: 512   (safe)
+#   32GB RAM: 768   (balanced)
+#   64GB RAM: 1024  (recommended)
+#   128GB+:   2048  (high quality)
+max_tokens = 512
+
+# encode_batch_size: Texts per encoding call. Higher = faster, more memory.
+#   16GB RAM: 4
+#   64GB RAM: 8
+encode_batch_size = 4
+
+# device: "auto" detects mps > cuda > cpu. Override if needed.
+device = "auto"

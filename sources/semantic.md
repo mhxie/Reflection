@@ -4,15 +4,11 @@ Teaching doc for the `semantic.py` CLI. Agents and command files call this scrip
 
 **This doc describes the contract, not the implementation.** The backend swaps across three stages (stub, BGE-M3, corpus-tuned local model) without changing anything below.
 
-## Current mode: STUB
+## Modes
 
-Today, `semantic.py` runs in **stub mode**: it uses lexical token matching (substring `count`) over the Markdown corpus under `zk/`. Stub mode will:
+**Stub mode** (lexical fallback): active when `zk/.semantic/lance/` does not exist. Uses lexical token matching (substring `count`) over the Markdown corpus under `zk/`. Prints a warning to stderr on every invocation so callers never mistake "empty result" for "no conceptual neighbor exists."
 
-- Return results when the query shares literal tokens with a file.
-- Return nothing when the concept uses different words (that is the whole point of semantic search, and the whole limitation of the stub).
-- Print a warning to stderr on every invocation so callers never mistake "empty result" for "no conceptual neighbor exists."
-
-Real mode activates when `zk/.semantic/index.sqlite` exists (sentinel). No caller code changes across the swap.
+**Real mode** (embedding-backed): active when `zk/.semantic/lance/` exists (sentinel). Day-one stack: BGE-M3 (1024-dim, multilingual, 8K-token context) + LanceDB (embedded columnar store, cosine distance). Documents are chunked at markdown heading boundaries (~2K chars per chunk). Build with `semantic.py index`; no caller code changes across the swap.
 
 ## CLI
 
@@ -78,7 +74,7 @@ JSON (`--format json`): a list of objects with `path`, `score`, `matched_tokens`
 - **CJK-tolerant.** Chinese characters are preserved through tokenization, so queries like `"目标 精力"` work for exact-phrase matches but not conceptual ones.
 - **No ranking beyond token frequency.** A daily note that mentions the query word five times in passing will outrank a wiki entry that discusses the concept in depth using different words. Real mode fixes this.
 
-When stub limitations hurt a specific session, the documented escape hatch is Reflect's vector search (`mcp__reflect__search_notes` with `searchType: "vector"`). Use it sparingly and note the fallback in the session record. The escape hatch goes away when real mode ships.
+To exit stub mode, run `uv run python scripts/semantic.py index` to build the lance index.
 
 ## Examples
 
@@ -115,12 +111,20 @@ scripts/semantic.py query "contradiction" --top 5 | \
 1. **Contract-first.** The CLI flags and output schema will not change when the backend swaps.
 2. **Transparent degradation.** Stub mode always warns on stderr. Callers treat the stream as authoritative.
 3. **Unix-composable.** stdout for data, stderr for meta, exit codes for control flow.
-4. **Sentinel mode detection.** `zk/.semantic/index.sqlite` present → real mode. Absent → stub. Nothing else.
+4. **Sentinel mode detection.** `zk/.semantic/lance/` present → real mode. Absent → stub. Nothing else.
 5. **Encoder-agnostic interface.** BGE, local model encoder, or any future backend all produce `(path, score)` pairs with the same semantics.
-6. **Stdlib-only in stub mode.** No dependencies shipped with the interface commit. Real mode adds `sentence-transformers` and `sqlite-vec` in its own commit.
+6. **Stdlib-only in stub mode.** No dependencies shipped with the interface commit. Real mode deps managed via `pyproject.toml` + `uv`.
+
+## Setup
+
+```bash
+uv sync                                    # install deps (venv at ~/.cache/reflectl/.venv)
+uv run python scripts/semantic.py index    # build index (~4K files, takes a few minutes)
+uv run python scripts/semantic.py query "curiosity vectors"  # search
+```
 
 ## References
 
-- Design decision record: `handoffs/2026-04-06-phase-bcd-trust-engine.md` (Addendum: Phase B.5)
+- Backend implementations: `scripts/semantic_backends.py`
 - Local-first architecture: `protocols/local-first-architecture.md`
 - Sibling teaching docs: `sources/scholar.md`, `sources/local-papers.md`, `sources/readwise.md`
