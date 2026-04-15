@@ -296,7 +296,13 @@ Translation rules:
 - Keep the `# Title` in English (filename must match the English version)
 - Prepend: `> 本文为 [[English Title]] 的中文版本。核心技术术语保留英文原文。`
 
-The CN shadow is not part of the trust graph: `scripts/trust.py` only scans `zk/wiki/`. The CN version is for reading convenience and mobile review via Reflect. It does not need its own anchors or reviewer passes. If the English source is updated, the CN shadow should be regenerated.
+The CN shadow is not part of the trust graph: `scripts/trust.py` only scans `zk/wiki/`. The CN version is for reading convenience and mobile review via Reflect. It does not need its own anchors or reviewer passes.
+
+**Sync requirement:** When the English source is updated, the CN shadow must be regenerated. `scripts/lint.py` enforces this with two checks:
+- `cn-shadow-missing` (WARN): English entry exists but no CN shadow
+- `cn-shadow-stale` (WARN): CN shadow is older than the English source
+
+Edit the English source first, then regenerate the CN shadow in the same working session. Do not commit an English edit without its CN update.
 
 ## Cross-References
 
