@@ -56,7 +56,8 @@ When the source material is a transcript (video, podcast, research talk, recorde
 2. **Capture metadata:** Speaker names, timestamps, data points (numbers, dates, references).
 3. **Separate user notes:** If the user interleaved their own notes (marked by "note from me" / "end note" or similar), extract and present these separately.
 4. **Bilingual terms:** For important concepts, provide both Chinese and English.
-5. **Then apply your assigned lens** to the extracted content as you would any other text.
+5. **Quote ranked claims verbatim.** When a speaker explicitly ranks items ("X is the most important", "the biggest bottleneck is Y", "the first thing is...the second thing is..."), the ranking statement MUST appear verbatim in your brief with its timestamp, not paraphrased. Paraphrasing a ranked list invites order-inversion (calling Z "most important" when the speaker said X). If you cannot find the verbatim quote in the transcript, the ranking claim does not appear in the brief at all; downgrade it to an unranked enumeration ("speaker mentions X, Y, Z as bottlenecks; ranking unclear in source"). This rule exists because rank-inversion is a high-impact failure mode that mishearing-flagging does not catch. Per `protocols/epistemic-hygiene.md`, unranked enumeration is more honest than paraphrased ranking when the source is ambiguous.
+6. **Then apply your assigned lens** to the extracted content as you would any other text.
 
 ### Podcast / Interview Sub-Branch
 
@@ -80,7 +81,7 @@ Readwise auto-transcribed podcasts have specific quirks. Apply these **before** 
 5. **Guest identity in citation.** The Readwise `author` field is the show host. Cite separately in the brief header:
    `source: "20VC: Anj Midha on Investing $300M into Anthropic" (host: Harry Stebbings, guest: Anj Midha)`
 
-This is preprocessing, not a separate lens. The real analysis comes from whichever lens you were dispatched with.
+This is preprocessing, not a separate lens. The real analysis comes from whichever lens you were dispatched with. The generic Transcript Format Handling rule #5 (quote ranked claims verbatim) applies here with extra force: podcast guests verbally rank things mid-sentence without any typographic cue, making rank-inversion especially easy.
 
 ## How You Work
 
