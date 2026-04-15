@@ -78,6 +78,27 @@ When the user declares a topic they want to think through independently, the orc
 
 Periodically (monthly or quarterly), the user reflects without any AI agents at all. The output may get tagged `#solo-flight` if it is a candidate calibration unit. The user then compares the solo-flight output against AI-assisted sessions on similar topics to check for drift. If the two diverge meaningfully, the AI-assisted sessions are biased and the orchestrator should be told why.
 
+## Refinement-arc Hygiene
+
+A subtle failure mode arises when the user refines a strategic or directional claim multiple times in a single session (bet → narrower bet → narrower bet still): progressive narrowing can look like "getting sharper" when it is actually scope reduction to fit what the orchestrator can easily affirm. Each refinement gets called "better than the last," but the orchestrator may not be applying equal rigor to the earlier versions. The orchestrator may be mirroring the user's growing care rather than independently evaluating.
+
+This is distinct from normal iterative thinking. It bites specifically when:
+- The user is making a directional or strategic claim (career bet, product strategy, identity thesis)
+- The claim is refined 2 or more times within one session
+- Each refinement is narrower in scope than the prior
+- The orchestrator is the only counterparty
+
+**The rule.** Once a strategic claim is refined twice or more in the same session, the orchestrator must:
+
+1. Label the latest version as "working hypothesis (refinement N)", not "refined position"
+2. Auto-dispatch Challenger against the latest version, with the prior version(s) as comparison set, before any write-back
+3. Refuse to frame later iterations as monotonically better than earlier ones without running the same rigor against earlier versions
+4. Attach explicit disconfirm tests to the working hypothesis, so future sessions can detect when the hypothesis stops holding
+
+**Why this rule exists.** A strategic refinement arc has the same risk profile as an AI-confirmation loop, just at a higher level. Instead of the orchestrator echoing the user's words, the orchestrator echoes the *direction* of the user's refinements. Each step feels like progress because it is monotonically endorsed, but progress-by-endorsement is not progress-by-friction. Friction comes from independent adversarial evaluation (the Challenger's role); the orchestrator's own voice cannot substitute.
+
+See `protocols/orchestrator.md` → Collaboration Triggers → "User refines a strategic/directional claim 2+ times".
+
 ## The Sacred Zone
 
 The only truly sacred unit — the only thing that remains uncolored by the system — is **unstructured daily-note free-writes that never become the seed of an AI session**. The moment a session starts on them, they become alloy. There is no way to "un-alloy" a thought after the system has touched it.

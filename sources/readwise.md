@@ -27,7 +27,7 @@ These are pre-built Claude Code skills (installed via `readwise skills install c
 readwise reader-list-documents --location new --limit 20 \
   --response-fields title,author,summary,category,word_count,saved_at,tags
 
-# Search across all saved documents
+# Search across all saved documents (chunk-level FTS; see gotcha below)
 readwise reader-search-documents --query "distributed training"
 
 # Filter by category and location
@@ -36,6 +36,24 @@ readwise reader-list-documents --location later --category article --tag researc
 # Semantic search across highlights
 readwise readwise-search-highlights --vector-search-term "compounding knowledge"
 ```
+
+### Finding a document by title or author (gotcha)
+
+`reader-search-documents --query` is **chunk-level full-text search over content**, not metadata search. A query for a guest's name (e.g. `--query "Anj Midha"`) will only hit documents that mention that name in their body text; it will NOT match a podcast whose title is `"20VC: Anj Midha on Investing $300M..."` if the name does not also appear in the transcript prose. This bites whenever you remember a podcast or article by its title or author but the name is not in the chunked content.
+
+Recipe when FTS misses: pivot to metadata filtering with `reader-list-documents`.
+
+```bash
+# Find a podcast you remember by guest/title (not body)
+readwise reader-list-documents --location new --category podcast \
+  --response-fields id,title,author,saved_at | jq '.results[] | select(.title | test("Anj Midha"; "i"))'
+
+# Same pattern for articles by author
+readwise reader-list-documents --location later --category article \
+  --response-fields id,title,author | jq '.results[] | select(.author | test("<name>"; "i"))'
+```
+
+If both fail, the document may be in `archive` or under a different category; widen the location/category before concluding it is not saved.
 
 ### Read content
 ```bash

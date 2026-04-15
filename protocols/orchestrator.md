@@ -250,6 +250,7 @@ During any session, actively look for these signals and chain agents:
 | Energy audit shows a life area below amenity floor | Flag it: "[Area] is below amenity floor." See `protocols/session-scoring.md` |
 | User tries to change focus mid-session | Enforce Focus Lock — redirect to a full `/review` session first |
 | User says "this was great" or "this wasn't helpful" | Route feedback to Evolver |
+| User refines a strategic/directional claim 2+ times in one session | Treat as refinement-arc. Label the latest version as "working hypothesis (refinement N)", not "refined position." Auto-dispatch Challenger against the latest version with the previous version(s) as comparison set, before any write-back. Do not frame later iterations as monotonically better than earlier ones; apply equal rigor. See `protocols/epistemic-hygiene.md` → "Refinement-arc hygiene". |
 | Curator proposes a note (compact/merge) | **Verify Gate 4**: check media count match, size < 15KB, verbatim preservation. Block if any check fails. |
 | **Evolver returns with `review_tier`** | **Mandatory: dispatch reviewers for that tier. Never skip.** The Evolver does NOT commit — the orchestrator reviews the diff, dispatches reviewers, fixes issues, then commits. The orchestrator owns this gate. See Review Tiers above for which reviewers to dispatch per tier. |
 
