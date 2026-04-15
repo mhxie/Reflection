@@ -22,29 +22,45 @@ You are triaging a content inbox against the user's active goals and directions.
 
 ## Task
 1. Run BOTH commands in parallel (two Bash calls in one response):
-   - `readwise reader-list-documents --location new --limit 30 --response-fields id,title,author,summary,category,word_count,saved_at,tags,source_url --json`
-   - `readwise reader-list-documents --location later --limit 20 --response-fields id,title,author,summary,category,word_count,saved_at,tags,source_url --json`
-3. For each item, assign a tier:
-   - **deep-read** — directly relevant to an active goal or learning direction, worth a full reflectl reading session
-   - **digest** — interesting context, include in weekly summary, but not worth dedicated time
-   - **archive** — low relevance or already absorbed from the summary
+   - `readwise reader-list-documents --location new --limit 30 --response-fields title,author,summary,category,word_count,reading_time,saved_at,tags,source_url --json`
+   - `readwise reader-list-documents --location later --limit 20 --response-fields title,author,summary,category,word_count,reading_time,saved_at,tags,source_url --json`
+
+   Note: `id` is NOT a valid `--response-fields` value (the API rejects it). The document `id` is returned implicitly on every result as the top-level `id` key.
+
+2. For each item, assign a tier. **Thresholds are commitment-adjusted by `category`.** A 69-minute podcast and a 1,200-word article are not the same ask:
+
+   | Category | deep-read means | digest | archive |
+   |---|---|---|---|
+   | `article`, `rss`, `email` | directly relevant to an active goal; worth ~10–30 min close read | interesting context, summary captures it | low relevance |
+   | `podcast`, `video` | relevant to an active goal AND `reading_time` ≤ ~90 min (the user will actually listen) | worth skimming highlights/summary only | too long or not relevant |
+   | `book`, `pdf`, `epub` | rarely auto-promoted; only if user explicitly tagged `#deep-read` | save summary, chapter-scan worthy | low relevance |
+   | `tweet` | almost never deep-read | quote worth keeping | archive |
+
+3. Podcast metadata: the Readwise `author` field is the show **host**, not the guest. Parse the title for the guest. Common patterns:
+   - `"20VC: <Guest> on <Topic>"`
+   - `"<Show> with <Guest>: <Topic>"`
+   - `"Episode N: <Guest>, <Topic>"`
+
+   Cite the guest in the relevance reason, not the host (the host is the same every episode). Flag any auto-transcript as potentially misrendering proper nouns; do not write a guest name to the triage file without high confidence.
+
 4. Write the ranked list to `zk/cache/triage-YYYY-MM-DD.md` with format:
 
    ```markdown
-   # Triage — YYYY-MM-DD
-   
+   # Triage: YYYY-MM-DD
+
    ## Deep Read
-   - `id:DOC_ID` [Title](url) — author — *one-line reason tied to a specific goal*
-   
+   - `id:DOC_ID` [Title](https://read.readwise.io/read/DOC_ID) (<category>, <commitment: e.g. "1h 9m listen" for podcasts or "~12 min read" for articles>, by <author or guest>): *one-line reason tied to a specific goal*
+
    ## Digest
-   - `id:DOC_ID` [Title](url) — author — *one-line summary*
-   
+   - `id:DOC_ID` [Title](https://read.readwise.io/read/DOC_ID) (<category>, by <author or guest>): *one-line summary*
+
    ## Archive
-   - `id:DOC_ID` [Title](url) — *why skipped*
-   
+   - `id:DOC_ID` [Title](https://read.readwise.io/read/DOC_ID): *why skipped*
+
    ## Stats
    - Inbox: N items | Later: N items
    - Deep read: N | Digest: N | Archive: N
+   - Podcasts: N (total listen: Xh Ym) | Articles: N | Other: N
    ```
 
 5. Return ONLY: the stats line + the Deep Read section (titles and reasons). Do not return the full list.

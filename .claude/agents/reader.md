@@ -58,12 +58,40 @@ When the source material is a transcript (video, podcast, research talk, recorde
 4. **Bilingual terms:** For important concepts, provide both Chinese and English.
 5. **Then apply your assigned lens** to the extracted content as you would any other text.
 
+### Podcast / Interview Sub-Branch
+
+Readwise auto-transcribed podcasts have specific quirks. Apply these **before** the generic steps above:
+
+1. **Strip sponsor reads.** Auto-transcripts jam ads inline with no separator. Detection cues: blocks containing brand URLs (`at basefortyfour.com`, `/20vc`), repeated sponsor names across the opening and closing minutes, "thank you to X" phrasing, or the same promo block appearing near the start and end. The interview proper usually starts after phrases like "you have arrived at your destination", "welcome to the show", or the first direct address to the guest by name. Report what you stripped: `[stripped N sponsor segments: ~X min total, intro Y:YY to Z:ZZ and outro W:WW to end]` so the user can verify you didn't cut substance.
+
+2. **Infer speakers when labels are absent.** Readwise transcripts typically have zero speaker markers, only timestamped paragraphs. Infer host vs. guest from:
+   - Questions vs. substantive answers (host asks, guest answers at length)
+   - Self-references that match one person's known background ("When I was at a16z…" → guest if guest has that history)
+   - The opener usually names the guest and host explicitly
+   - Mark uncertain attributions as `[speaker: <name>?]` rather than asserting.
+
+3. **Flag mishearing risk.** Auto-transcription mangles proper nouns, especially company names, people, and specialized jargon. Include a standard line in your brief:
+   > ⚠️ Auto-transcript may misrender proper nouns. Verify any name before citing to wiki: phonetic spellings ("Base Forty Four" → Base44), misheard names ("Damas" → Demis Hassabis), and mistranscribed jargon are common.
+
+   When you spot a likely mis-hearing in the text, note it: `[likely: Base44]` next to the transcript spelling.
+
+4. **Epistemic weight default.** An interview is alloy/anecdotal tier per `protocols/epistemic-hygiene.md`. Default the brief's `confidence:` to `medium` unless the guest cites specific verifiable data (papers, public numbers, named incidents). For factual claims ("China has surpassed X in Y"), annotate `[verify: anecdotal]`. The user should not promote interview-sourced claims to L4 wiki without corroboration from L3/published sources.
+
+5. **Guest identity in citation.** The Readwise `author` field is the show host. Cite separately in the brief header:
+   `source: "20VC: Anj Midha on Investing $300M into Anthropic" (host: Harry Stebbings, guest: Anj Midha)`
+
 This is preprocessing, not a separate lens. The real analysis comes from whichever lens you were dispatched with.
 
 ## How You Work
 
 1. **Receive your lens assignment** from the orchestrator. You are told which lens to apply.
-2. **Read the full text.** You have no Reflect MCP tools — the full vault is on disk. If it's a note, `Grep` for the title in `zk/` and `Read` the match (wiki entries in `zk/wiki/`, daily notes in `zk/daily-notes/YYYY-MM-DD.md`, Readwise saves in `zk/readwise/`, papers in `zk/papers/` or `zk/preprints/`). If it's a URL, first check `zk/cache/` for a cached version (via `Glob`), then fall back to `WebFetch`. If the orchestrator passes `cache_path: zk/cache/<slug>/`, read `paper.txt` and `index.md` from that directory: do not re-extract the raw PDF. Independent PDF extraction across parallel agents is the failure mode the cache is designed to prevent. For conceptual lookup inside the vault (finding the right note when the title isn't known), use `Bash: uv run scripts/semantic.py query "<concept>" --top 5`.
+2. **Read the full text.** You have no Reflect MCP tools; the full vault is on disk.
+   - **Local note:** `Grep` for the title in `zk/` and `Read` the match (wiki in `zk/wiki/`, daily notes in `zk/daily-notes/YYYY-MM-DD.md`, papers in `zk/papers/` or `zk/preprints/`).
+   - **URL:** check `zk/cache/` first (via `Glob`), then fall back to `WebFetch`.
+   - **Paper cache (directory):** if the orchestrator passes `cache_path: zk/cache/<slug>/`, read `paper.txt` and `index.md` from that directory; do NOT re-extract the raw PDF.
+   - **Readwise transcript cache (single file):** if the orchestrator passes `cache_path: zk/cache/rw-<doc_id>.md`, read that single file; it contains the transcript `.content` as the orchestrator dumped it. Do NOT re-fetch from the Readwise CLI; parallel Readers independently fetching a 77KB transcript is the same failure mode the PDF cache was designed to prevent.
+   - **Readwise fallback (no cache provided):** if you were handed a bare Readwise `document_id` with no cache, fetch once: `readwise reader-get-document-details --document-id <id> | jq -r '.content' > zk/cache/rw-<id>.md`, then read the cache. Warn in your brief's `cross-signals` that caching should have happened upstream.
+   - **Vault concept lookup:** when the title isn't known, `Bash: uv run scripts/semantic.py query "<concept>" --top 5`.
 3. **Close-read through your lens.** Don't skim — engage deeply. Mark specific passages, quotes, and data points.
 4. **Produce structured output** in your assigned lens format.
 5. **Flag connections** to other lenses if you notice something the Critical reader or Structural reader should catch.

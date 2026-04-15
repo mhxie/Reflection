@@ -83,9 +83,18 @@ Based on Step 1, use a second `AskUserQuestion`:
 | 2 | **Focused Read** | Pick 1-2 specific lenses to focus on |
 | 3 | **Multi-Lens Read** | Read with all 4 lenses in parallel — full analysis |
 
-- **Read & Discuss:** Ask for the article/note. Dispatch 1 Reader (Critical lens) + 1 Researcher (find related notes). Present the analysis, then enter interactive discussion mode. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). This is the lightweight default — most reading sessions start here.
-- **Focused Read:** Ask the user which article/note and which lens(es): Critical, Structural, Practical, or Dialectical. Dispatch 1-2 Reader instances with the chosen lenses. Reader automatically handles transcript format (video/podcast) with preprocessing before applying the lens. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). Use when the user knows what angle they want.
-- **Multi-Lens Read:** Ask the user which article or note to read. Then follow the Reading Hub flow below. Use for important articles worth deep multi-angle analysis.
+#### Prefetch Step (Readwise podcasts, videos, articles; applies to all three Read modes)
+
+If the source is a Readwise podcast, video, or article (user provides a Readwise URL, `document_id`, or names a podcast), **cache the transcript once before dispatching any Reader**. Independent fetches across parallel Readers are the failure mode this step exists to avoid (same reasoning as the paper cache).
+
+1. Resolve `document_id`. If the user gave a title, find it: `readwise reader-search-documents --query "<keywords>"` → pick the match.
+2. Snapshot content: `readwise reader-get-document-details --document-id <id> | jq -r '.content' > zk/cache/rw-<id>.md`
+3. Pass `cache_path: zk/cache/rw-<id>.md` to every Reader dispatch. The Reader agent knows this convention (see `.claude/agents/reader.md`, section "Readwise transcript cache").
+4. For podcasts specifically: also pass the guest name (parsed from title) and host name (from the `author` field) in the dispatch prompt so Reader doesn't have to re-infer for citation.
+
+- **Read & Discuss:** Ask for the article/note. Run the Prefetch Step above if it's a Readwise source. Dispatch 1 Reader (Critical lens) + 1 Researcher (find related notes). Present the analysis, then enter interactive discussion mode. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). This is the lightweight default — most reading sessions start here.
+- **Focused Read:** Ask the user which article/note and which lens(es): Critical, Structural, Practical, or Dialectical. Run the Prefetch Step above if it's a Readwise source. Dispatch 1-2 Reader instances with the chosen lenses. Reader automatically handles transcript format (video/podcast) with preprocessing before applying the lens. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). Use when the user knows what angle they want.
+- **Multi-Lens Read:** Ask the user which article or note to read. Run the Prefetch Step above if it's a Readwise source. Then follow the Reading Hub flow below. Use for important articles worth deep multi-angle analysis.
 
 #### Reading Hub Flow (Multi-Lens Read)
 
