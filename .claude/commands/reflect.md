@@ -151,7 +151,7 @@ Run a reflection session grounded in your Reflect notes and goals.
 1. Check if `profile/identity.md` exists. If not, tell the user: "No profile found. Run `/introspect` first to build your self-model." and stop.
 2. Read `profile/identity.md`. Check the `Last built:` date. If older than 7 days, warn: "Your profile is stale (built on [date]). Consider running `/introspect` to refresh. Continuing with current profile."
 
-**Protocols used in this session:** `protocols/session-continuity.md` (connecting sessions), `protocols/contradiction-detection.md` (surfacing contradictions in Step 3), `protocols/epistemic-hygiene.md` (write-first nudge in warm-up, provenance tagging in write-back).
+**Protocols used in this session:** `protocols/session-continuity.md` (connecting sessions), `protocols/epistemic-hygiene.md` (write-first nudge in warm-up, provenance tagging in write-back).
 
 ## Context Loading
 
