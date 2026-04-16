@@ -91,10 +91,10 @@ Write a meta-reflection report:
 ## Evolution Applied: [what was changed, or pending]
 ```
 
-## The Double-Loop on the System
+## Step 6: Governing Variables Audit (Double-Loop)
 
-This is Double-Loop Learning applied to the reflection system itself:
-- **Single-loop:** "How do we improve this session?" → adjust within existing framework
-- **Double-loop:** "Are we asking the right kind of questions? Is our session structure right?" → question the framework itself
+Single-loop asks "how do we improve this session?" Double-loop asks "are we measuring the right things and questioning the right assumptions?" Every meta-reflection must answer these three questions to prevent the system from optimizing confidently in the wrong direction.
 
-Don't just optimize within the current paradigm — periodically question the paradigm.
+1. Rubric validity: Is the scoring rubric measuring what matters? Read the last 5 session metas. Are high-scoring sessions actually the ones the user found most valuable? If scores and user engagement diverge, the rubric needs recalibration before any other evolution.
+2. Ontology completeness: Were there any session anomalies that didn't fit the symptom-source table in evolver.md? If yes, the table needs updating before any other evolution, because unclassifiable failures repeat silently.
+3. Complexity audit: Count protocols, agents, frameworks. Compare to session count. If protocols exceed 3x session count, trigger a pruning review before any additive changes, because the system's default failure mode is monotonic growth.
