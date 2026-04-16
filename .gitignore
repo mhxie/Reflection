@@ -7,20 +7,16 @@ scripts/readwise_skip_domains.txt
 # Personal data (PRIVATE — never commit)
 # Raw note snapshots
 reflect-*/
-# Reflection index (legacy) with personal goals/summaries
-index/
-!index/.gitkeep
 # Profile with personal identity/goals/expertise
-profile/
+profile
 # Personal reference material (examples, sensitive context)
-personal/
-!personal/.gitkeep
+personal
 # Reader persona (personal data)
 reader_persona.md
 # Paper review methodology (functional locally, kept out of public repo)
 .claude/commands/paper-review.md
 # Handoff plans with personal note references
-handoffs/
+handoffs
 # Local MCP server URL
 .mcp.json
 # Codex session state

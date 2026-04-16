@@ -4,7 +4,7 @@ Your AI-native personal operating system.
 
 Capture what you learn. Reflect on what you think. Research what you don't know. Read deeply. Make decisions. Track goals across life chapters. Crystallize knowledge you trust. All orchestrated by a team of 11 AI agents over a local-first Zettelkasten — your data on your machine, scored by a deterministic trust engine, improving itself every session.
 
-Built on [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with `zk/` as the local data layer. [Reflect.app](https://reflect.app/) and [Readwise](https://readwise.io/) are optional capture surfaces; the authoritative knowledge lives on disk.
+Built on [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with `$ZK/` as the local data layer. [Reflect.app](https://reflect.app/) and [Readwise](https://readwise.io/) are optional capture surfaces; the authoritative knowledge lives on disk.
 
 ## What It Does
 
@@ -18,9 +18,9 @@ Built on [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with `zk/
 
 **Learn** — Get reading recommendations or introspect to rebuild your self-model.
 
-**Wiki** — Crystallize validated thinking into `zk/wiki/` entries with structured claims, external anchors, and bi-temporal markers. A TrustRank pass (`scripts/trust.py`) scores each claim via Personalized PageRank with external anchors as trust seeds. `/lint` enforces corpus-level structure and harness health; `/sync` pushes wiki entries to Reflect for mobile reading.
+**Wiki** — Crystallize validated thinking into `$ZK/wiki/` entries with structured claims, external anchors, and bi-temporal markers. A TrustRank pass (`scripts/trust.py`) scores each claim via Personalized PageRank with external anchors as trust seeds. `/lint` enforces corpus-level structure and harness health; `/sync` pushes wiki entries to Reflect for mobile reading.
 
-Session reflections are written to `zk/reflections/` as the durable session output. Daily notes are the user's capture stream and are read-only from the system's perspective. Compiled knowledge lives locally in `zk/wiki/` and syncs out one-way.
+Session reflections are written to `$ZK/reflections/` as the durable session output. Daily notes are the user's capture stream and are read-only from the system's perspective. Compiled knowledge lives locally in `$ZK/wiki/` and syncs out one-way.
 
 ## Getting Started
 
@@ -39,9 +39,16 @@ Core scripts (`trust.py`, `lint.py`, `staleness.py`, `session_log.py`) are stdli
 ### Install
 
 ```bash
-git clone https://github.com/mhxie/reflectl.git
-cd reflectl
+git clone https://github.com/mhxie/reflectl.git ~/reflectl
+cd ~/reflectl
 uv sync                # install dependencies from pyproject.toml
+```
+
+Set `$ZK` to point to your Zettelkasten vault (the directory containing `daily-notes/`, `wiki/`, `reflections/`, etc.):
+
+```bash
+echo 'export ZK="$HOME/path/to/zk"' >> ~/.zshrc
+source ~/.zshrc
 ```
 
 If using Reflect, create `.mcp.json` in the project root:
@@ -61,7 +68,7 @@ If using Reflect, create `.mcp.json` in the project root:
 
 ```bash
 claude                # open Claude Code in the project
-/introspect           # build your self-model from your notes (reads zk/daily-notes/)
+/introspect           # build your self-model from your notes (reads $ZK/daily-notes/)
 /reflect              # start your first session
 ```
 
@@ -91,8 +98,8 @@ You can also go direct: `/review`, `/weekly`, `/decision`, `/explore`, `/energy-
 | Command | What it does |
 |---|---|
 | `/promote` | Create an L4 wiki entry from L2 source notes: Researcher finds claims + anchors, Curator drafts schema-compliant entry. |
-| `/sync` | Push `zk/wiki/` entries to Reflect for mobile display. One-way, manifest-tracked, never pulls back. |
-| `/lint` | Corpus-level structural check over `zk/wiki/` and the sync manifest (parse errors, duplicate titles, slug drift, orphan entries, graph topology). Also checks harness health: CLAUDE.md size and formatting. |
+| `/sync` | Push `$ZK/wiki/` entries to Reflect for mobile display. One-way, manifest-tracked, never pulls back. |
+| `/lint` | Corpus-level structural check over `$ZK/wiki/` and the sync manifest (parse errors, duplicate titles, slug drift, orphan entries, graph topology). Also checks harness health: CLAUDE.md size and formatting. |
 | `/restore` | Emergency wiki recovery from Reflect's append-only archive. Very rarely triggered. |
 
 ## The Team
@@ -109,14 +116,14 @@ Eleven agents work together during sessions. You don't need to manage them — t
 ## How It Works
 
 ```
-Capture sources                 Local data layer (zk/)              Display
-(Reflect, Readwise,  ─sync──>   L4  zk/wiki/         ──/sync──>  Reflect
+Capture sources                 Local data layer ($ZK/)              Display
+(Reflect, Readwise,  ─sync──>   L4  $ZK/wiki/         ──/sync──>  Reflect
  voice, mobile)                 (trust-scored)                   (mobile read)
-                                L3  zk/papers/
-                                L2  zk/daily-notes/, reflections/,
+                                L3  $ZK/papers/
+                                L2  $ZK/daily-notes/, reflections/,
                                     research/, preprints/,
                                     agent-findings/, drafts/, ...
-                                L1  zk/cache/, zk/readwise/
+                                L1  $ZK/cache/, $ZK/readwise/
 
                                         ^
                                         |
@@ -129,15 +136,15 @@ Capture sources                 Local data layer (zk/)              Display
               (11 agents)  (12 types)   (22 + xval)  (trust.py,
                     |           |               |       lint.py)
                     v           v               v
-              Protocols    zk/reflections/   Cross-validation
+              Protocols    $ZK/reflections/   Cross-validation
               (21 rules)   (session outputs) & Pattern Library
 ```
 
-**Five-tier knowledge model.** Everything under `zk/` is classified by depth of crystallization — raw capture (L1), working notes (L2), externally-certified papers (L3), locally-certified wiki entries (L4). Directory = tier; no tags required. Agents read from disk via semantic search and grep, not via MCP. Reflect is demoted to a capture + display surface.
+**Five-tier knowledge model.** Everything under `$ZK/` is classified by depth of crystallization — raw capture (L1), working notes (L2), externally-certified papers (L3), locally-certified wiki entries (L4). Directory = tier; no tags required. Agents read from disk via semantic search and grep, not via MCP. Reflect is demoted to a capture + display surface.
 
-**TrustRank over the wiki.** Wiki entries under `zk/wiki/` follow a structured schema: `## Claims` with `[C1]`, `[C2]`... headings, each backed by fenced `anchors` blocks containing `@anchor` (external evidence), `@cite` (internal edge to another wiki entry), and `@pass` (reviewer verification) markers with bi-temporal `valid_at`/`invalid_at` fields. `scripts/trust.py` runs Personalized PageRank with external anchors as seeds; trust mass enters the graph only at external sources and propagates through internal cites. No external anchor, no trust. `scripts/lint.py` enforces structural integrity across the corpus.
+**TrustRank over the wiki.** Wiki entries under `$ZK/wiki/` follow a structured schema: `## Claims` with `[C1]`, `[C2]`... headings, each backed by fenced `anchors` blocks containing `@anchor` (external evidence), `@cite` (internal edge to another wiki entry), and `@pass` (reviewer verification) markers with bi-temporal `valid_at`/`invalid_at` fields. `scripts/trust.py` runs Personalized PageRank with external anchors as seeds; trust mass enters the graph only at external sources and propagates through internal cites. No external anchor, no trust. `scripts/lint.py` enforces structural integrity across the corpus.
 
-**Session reflection.** The orchestrator dispatches agents, gathers findings, runs a quality gate, and writes session output to `zk/reflections/`. Daily notes are the user's capture stream and are never written to by the system. All personal data under `zk/` is gitignored; only the system configuration (protocols, agents, commands, scripts) is committed.
+**Session reflection.** The orchestrator dispatches agents, gathers findings, runs a quality gate, and writes session output to `$ZK/reflections/`. Daily notes are the user's capture stream and are never written to by the system. All personal data under `$ZK/` is gitignored; only the system configuration (protocols, agents, commands, scripts) is committed.
 
 **Harness engineering.** CLAUDE.md is kept minimal (~7KB) because it is inherited by every subagent; each line costs N tokens times N agents per session. Critical rules live at the top (primacy effect), detailed specifications are loaded on demand from protocols and agent definitions. The Evolver agent has a "subtract before adding" principle and a CLAUDE.md budget gate. `/lint` Phase 0 checks harness health (file size, formatting) alongside the wiki structural pass.
 
