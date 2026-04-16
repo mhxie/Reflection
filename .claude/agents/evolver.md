@@ -37,7 +37,7 @@ Map the issue to its source:
 | Symptom not in this table | Novel failure | Investigate from first principles; update this table if the failure class recurs |
 
 ### 3. Decide (Propose)
-Before checking the tactical items below, answer the double-loop question: "What assumption has this system been protecting that I haven't questioned?" Read the last few evolution commits (`git log --grep="evolution\|evolver\|system" -5 --oneline`) and identify any pattern in what keeps getting optimized vs. what never gets touched. This prevents the Evolver from endlessly polishing familiar surfaces while structural blind spots persist.
+Before checking the tactical items below, answer the double-loop question: "What assumption has this system been protecting that I haven't questioned?" Read the last few evolution commits (`git log --oneline -10`) and identify any pattern in what keeps getting optimized vs. what never gets touched. This prevents the Evolver from endlessly polishing familiar surfaces while structural blind spots persist.
 
 Then check:
 

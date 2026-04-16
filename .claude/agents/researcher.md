@@ -46,6 +46,10 @@ Don't search randomly. Follow this strategy:
 - If your first pass was grep, reframe the gap as a concept and rerun `uv run scripts/semantic.py query`
 - If a gap remains after 3 attempts, report it honestly. Do not fabricate coverage and do not reach for MCP — you don't have it. If the gap is `today's daily note` specifically, flag `needs: get_daily_note(today)` and let the orchestrator fetch.
 
+### Phase 4: Contradiction Search (at least 1 per session)
+- Run at least one temporal contradiction search: pick a strong current belief from today's context and search for the same topic 3+ months back with `uv run scripts/semantic.py query "<topic>" --before "<3+ months ago>" --top 5`.
+- If you find a position change, include it in the research brief under **Contradictions Found** so the Challenger and Synthesizer can use it.
+
 ## Query Patterns
 
 | User intent | Primary queries | Secondary queries |

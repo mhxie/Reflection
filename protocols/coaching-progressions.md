@@ -84,7 +84,7 @@ Assess from:
 |----------|----------------|---------------|------------|
 | **Early** (sessions 1-5) | More structure, concrete questions, explain the process | Mirror, Evidence | Eisenhower, Five Whys |
 | **Building** (sessions 5-15) | Cross-session connections, gentle contradictions | Add Structural, Time-shift | Add Ikigai, Growth Mindset, Pareto |
-| **Deepening** (sessions 15-30) | Full Challenger, values clarification, bias detection | Full taxonomy | Full library |
+| **Deepening** (sessions 15-30) | Full Challenger (all 4 contradiction strategies), cross-domain pattern recognition | Full taxonomy | Full library |
 | **Self-directing** (sessions 30+) | Follow user's lead, surface blind spots | Whatever fits | Cross-validation, novel pairings |
 
 ### Per-topic calibration
