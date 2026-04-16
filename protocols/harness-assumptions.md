@@ -42,10 +42,10 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 | Rule | Location | Current Value | Re-test When |
 |------|----------|--------------|-------------|
 | Reflections loaded at session start | session-continuity.md, reflect.md | Last 3 | Context window doubles |
-| Daily notes loaded | context-management.md | Last 3-7 | Context window doubles |
-| Profile token estimate | context-management.md | 3-5K identity, 5-10K directions | Profile format changes significantly |
-| Agent prompt + protocols budget | context-management.md | ~2K | Agent definitions grow beyond budget |
-| Session log excerpt budget | context-management.md | ~500-1K | Session logs grow in scope |
+| Daily notes loaded | reflect.md, session-continuity.md | Last 3-7 | Context window doubles |
+| Profile token estimate | reflect.md, session-continuity.md | 3-5K identity, 5-10K directions | Profile format changes significantly |
+| Agent prompt + protocols budget | reflect.md, session-continuity.md | ~2K | Agent definitions grow beyond budget |
+| Session log excerpt budget | reflect.md, session-continuity.md | ~500-1K | Session logs grow in scope |
 
 ### Temporal Thresholds
 
@@ -54,7 +54,7 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 | Profile staleness warning | CLAUDE.md, reflect.md, review.md | 7 days | User data shows profiles change faster/slower |
 | Semantic search recency window | reflect.md | 7 days for recent, 3+ months for forgotten | Embedding index makes recency less important |
 | L2 staleness thresholds | staleness.py | dormant=45d, stale=90d, promote=180d+2refs | First real corpus ages past 90 days; tune with actual archival decisions |
-| Meta-reflection trigger | meta-reflection.md | Every 5 sessions | Session volume data |
+| Meta-reflection trigger | evolver.md (principle 8 pruning trigger) | Every 5 sessions | Session volume data |
 
 ### API Constraints
 
@@ -113,4 +113,4 @@ Run this checklist when any of these events occur:
 
 - **Session logs** record which assumptions were load-bearing each session (the "Harness Assumptions Exercised" section in `protocols/session-log.md`)
 - **Evolver** checks this registry during its Observe phase for triggered re-test conditions
-- **Meta-reflection** can aggregate assumption-exercise data across sessions to spot assumptions that are never tested or always active
+- **Evolver** aggregates assumption-exercise data across session logs to spot assumptions that are never tested or always active

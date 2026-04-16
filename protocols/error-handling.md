@@ -83,10 +83,55 @@ If a session is interrupted:
 
 ## Timeout Policy
 
-- Local file reads: immediate — if `Read` fails, the file genuinely does not exist.
+- Local file reads: immediate -- if `Read` fails, the file genuinely does not exist.
 - Reflect MCP calls: 30 seconds before falling back (to local grep, or to skip)
 - Readwise MCP calls: 30 seconds before reporting `/curate` as degraded
 - Web searches: 15 seconds before skip
 - Agent handoffs: No timeout (rely on maxTurns)
 - Local writes (`zk/reflections/`, `zk/drafts/`, `zk/cache/`): 5 seconds
 - Reflect write operations: 10 seconds, then queue as local draft under `zk/drafts/`
+
+## Escalation Rules
+
+When failures cannot be handled at the agent level, escalate to the orchestrator.
+
+### Agent to Orchestrator Triggers
+
+| Trigger | Escalation |
+|---------|-----------|
+| MCP connection failed after 3 retries | Switch to degraded mode, inform user |
+| Contradictory evidence found | Present both sides, let user resolve |
+| User emotional distress detected | Shift to supportive mode, pause challenging questions |
+| Scope creep (session expanding beyond command intent) | Check with user if they want to continue or refocus |
+| Framework does not fit | Report honestly rather than force-fitting |
+
+### Orchestrator to User Triggers
+
+| Trigger | Action |
+|---------|--------|
+| 2 revision rounds failed | Deliver with caveats, explain what could not be fixed |
+| No relevant notes found for query | Tell user honestly, suggest alternative angles |
+| System conflict (agents disagree) | Present both perspectives transparently |
+| Session quality declining | Suggest ending and returning fresh |
+
+### Emotional Escalation
+
+When the user's emotional state shifts during a session:
+
+| Signal | Response |
+|--------|----------|
+| Short, terse answers | Check in: "Would you rather pause here?" |
+| Expressing frustration | Validate, do not analyze: "That sounds frustrating." |
+| Avoiding a topic | Note it gently once, do not push |
+| Energy dropping | Offer to wrap up with a quick summary |
+| Excited about something | Ride the energy, go deeper on what excites them |
+
+Never push through emotional resistance for the sake of "completing" a session. A half-session that respects the user is worth more than a full session that ignores them.
+
+### Escalation Anti-Patterns
+
+1. Do not hide failures. If something went wrong, say so.
+2. Do not retry indefinitely. 3 retries max for any operation.
+3. Do not blame the user. "I couldn't find notes about X" not "You haven't written about X."
+4. Do not lower the bar silently. If delivering lower-quality output, say why.
+5. Do not escalate everything. Use judgment -- minor issues can be handled inline.

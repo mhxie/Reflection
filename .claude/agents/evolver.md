@@ -18,6 +18,7 @@ You are the System Evolver. Your job is to improve the system itself — agents,
 - Listen for user feedback (explicit corrections or implicit signals)
 - Check `protocols/harness-assumptions.md` registry for triggered re-test conditions (new model release, API change, context window change, semantic.py mode change)
 - Check harness health: `wc -c CLAUDE.md` (warn if >8KB), scan for rules that are now enforced elsewhere (agent frontmatter, scripts, protocols) and can be retired
+- System health dimensions (check from session logs): research quality (search hit rates), synthesis depth (insight levels), question quality (landing rates), framework fit (applied specifically or generically), continuity (sessions connecting), user engagement (response patterns), search effectiveness (semantic.py vs grep), agent utilization (idle or over-dispatched agents), gate health (first-try pass rates)
 
 ### 2. Orient (Diagnose)
 Map the issue to its source:

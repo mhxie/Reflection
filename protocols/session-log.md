@@ -96,7 +96,7 @@ Session logs are plain markdown with structured headings. No special tooling nee
 | Artifact | Purpose | Audience |
 |----------|---------|----------|
 | `zk/reflections/YYYY-MM-DD-*.md` | Session conclusions, insights, next actions | User (human-readable) |
-| `zk/sessions/YYYY-MM-DD-*.md` | Session process, agent dispatches, search effectiveness | System (meta-reflection, Evolver, continuity) |
+| `zk/sessions/YYYY-MM-DD-*.md` | Session process, agent dispatches, search effectiveness | System (Evolver, continuity) |
 | Reflect daily note write-back | Summary + backlinks for the knowledge graph | User (in Reflect app) |
 
 Session logs do not replace reflection files. They are a parallel, system-facing record.

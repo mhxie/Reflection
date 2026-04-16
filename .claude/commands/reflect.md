@@ -151,7 +151,7 @@ Run a reflection session grounded in your Reflect notes and goals.
 1. Check if `profile/identity.md` exists. If not, tell the user: "No profile found. Run `/introspect` first to build your self-model." and stop.
 2. Read `profile/identity.md`. Check the `Last built:` date. If older than 7 days, warn: "Your profile is stale (built on [date]). Consider running `/introspect` to refresh. Continuing with current profile."
 
-**Protocols used in this session:** `protocols/session-continuity.md` (connecting sessions), `protocols/integration.md` (insight → action), `protocols/contradiction-detection.md` (surfacing contradictions in Step 3), `protocols/epistemic-hygiene.md` (write-first nudge in warm-up, provenance tagging in write-back).
+**Protocols used in this session:** `protocols/session-continuity.md` (connecting sessions), `protocols/contradiction-detection.md` (surfacing contradictions in Step 3), `protocols/epistemic-hygiene.md` (write-first nudge in warm-up, provenance tagging in write-back).
 
 ## Context Loading
 
@@ -174,7 +174,7 @@ Based on the loaded context, run an interactive reflection:
 
 ### 0. Continuity Check (if not the first session)
 If a previous reflection exists in `zk/reflections/`, read the most recent one. Follow `protocols/session-continuity.md` — one brief callback, then move forward:
-- If the previous session has a "Next Action" and it was from a **different day**: check in gently per `protocols/integration.md`.
+- If the previous session has a "Next Action" and it was from a different day: check in gently. Ask "Last time, you intended to [action]. How did that go?" Accept any answer without judgment -- missed actions are data points, not failures.
 - If the previous session was **today**: skip the check-in (don't nag on multiple sessions per day).
 - If there was no prior action: skip this step entirely.
 
