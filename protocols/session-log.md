@@ -9,7 +9,7 @@ At session end, immediately before (or alongside) the reflection file write. The
 ## Storage
 
 - **File:** `zk/sessions/YYYY-MM-DD-<type>.md`
-- **Types:** reflection, review, weekly, decision, exploration, energy-audit, reading, curate, introspect, meeting, deep-dive, system-review
+- **Types:** reflection, review, weekly, decision, exploration, energy-audit, reading, curate, introspect, meeting, deep-dive, system-review, prm
 - **Collisions:** If multiple sessions of the same type run on the same day, append a sequence number: `YYYY-MM-DD-reflection-2.md`
 - **Tier:** L2, same as `zk/reflections/` and `zk/daily-notes/`
 - **Write method:** Local `Write` only. No MCP call. No user approval needed (system-facing artifact). If the write fails, warn and continue; do not block the session.

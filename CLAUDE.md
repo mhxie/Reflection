@@ -83,6 +83,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 | `/sync` | Push `$ZK/wiki/` to Reflect for mobile display |
 | `/lint` | Structural + corpus-level checks on `$ZK/wiki/` |
 | `/promote` | Create L4 wiki entry from L2 sources |
+| `/prm` | Audit relationship health and support system robustness |
 | `/restore` | Emergency wiki recovery from Reflect |
 
 ## Agent Teams

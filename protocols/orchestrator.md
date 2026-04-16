@@ -31,6 +31,7 @@ Launch agents based on command type:
 | `/project:decision` | Researcher + Thinker (parallel) |
 | `/project:explore` | Researcher |
 | `/project:energy-audit` | Researcher (include amenity floor check) |
+| `/project:prm` | Researcher (daily-note scanning for DL0-1 mentions) + Challenger (vulnerability probing) |
 | Read mode (via `/reflect`) | Reader (1-4 instances by lens) + Researcher + Scout + Thinker (parallel) |
 | Work meeting transcript | Meeting (Executive mode — action items + decisions) |
 | `/project:curate` | Ad-hoc agent (goal-aware Readwise triage — see `commands/curate.md`) |

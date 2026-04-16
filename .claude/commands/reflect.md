@@ -45,10 +45,12 @@ Based on Step 1, use a second `AskUserQuestion`:
 | 1 | **Goal Review** | Check progress on goals — progressing, neglected, or shifted |
 | 2 | **Decision Journal** | Structured decision-making with framework cross-validation |
 | 3 | **Energy Audit** | Four-dimension energy assessment (physical, mental, emotional, social) |
+| 4 | **PRM Audit** | Audit relationship health and support system robustness (monthly) |
 
 - **Goal Review:** Read and follow `.claude/commands/review.md`
 - **Decision Journal:** Read and follow `.claude/commands/decision.md`
 - **Energy Audit:** Read and follow `.claude/commands/energy-audit.md`
+- **PRM Audit:** Read and follow `.claude/commands/prm.md`
 
 ### If Act:
 
@@ -217,7 +219,35 @@ If a clear pattern emerged during the conversation, dispatch to the **Thinker** 
 - Present the Thinker's insight as an "orient" perspective: "Looking at this through [framework]..."
 - This is the Orient phase — contextualizing raw observations against mental models
 
-### 5. Close with Concrete Prompt
+### 5. Support System Pulse (brief, every session)
+A lightweight check-in on the user's interpersonal interactions and support system health. Not a deep conversation topic; a structured micro-review logged for longitudinal tracking.
+
+**Data gathering:** Scan today's daily note for people mentioned and interaction types. If the user brought up relationships during the session, use that context too.
+
+**Ask one question** (rotate across sessions):
+- "今天和谁有过有意义的互动？是哪种类型的？"（mapping interactions）
+- "这周有没有在核心圈之外和谁有过连接？"（weak tie check）
+- "最近有没有某段关系让你觉得能量被消耗？"（boundary check）
+
+**Observe and log** (silently, for the output file):
+
+| Indicator | What to track |
+|-----------|---------------|
+| Interactions today | Names, relationship type, Dunbar layer (DL0-DL5, per PRM template) |
+| Support type exchanged | Emotional / Instrumental / Informational / Appraisal (House model) |
+| Diversity flags | All same domain? Any cross-industry/cross-generational? Any new connections this week? |
+| Concentration warning | Multiple support types pointing to same person? |
+| Energy direction | Net giver or receiver today? Any draining interactions? |
+
+**Offer one observation or suggestion** based on patterns:
+- If interactions are concentrated: note it without judgment, suggest one low-cost diversification action
+- If a new connection appeared: acknowledge it
+- If no meaningful interactions logged: flag gently as a data point, not a problem
+- Compare against prior sessions' logs if available for trend detection
+
+Keep this step under 2 minutes of conversation time. The value is in the longitudinal record, not the daily depth.
+
+### 6. Close with Concrete Prompt
 One specific, actionable next step tied to a goal. Not generic advice — something the user can do today or this week.
 
 ## Output
@@ -242,6 +272,16 @@ After the interactive session, write a reflection file:
 
 ## Notes Referenced
 [List of all notes cited during this session, as [[Note Title]] links]
+
+## Support System Log
+| Person | Dunbar Layer | Support Type | Domain | Direction |
+|--------|-------------|-------------|--------|-----------|
+| [Name] | DL0-DL5 | emotional/instrumental/informational/appraisal | work/family/friend/community | gave/received/mutual |
+
+- Diversity score: [how many distinct domains represented today]
+- Concentration flag: [any person carrying 3+ support types?]
+- New connection this week: yes / no
+- Observation: [one-line pattern note for longitudinal tracking]
 
 ## Session Meta
 - User engagement: high / medium / low
