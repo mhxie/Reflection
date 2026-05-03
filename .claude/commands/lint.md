@@ -93,11 +93,24 @@ Advisory only: never blocks the run. Exit code 0 unless $OV is missing (exit 2).
 Bash: uv run scripts/privacy_check.py --json
 ```
 
-Parse the JSON. Shape:
+`--json` mode emits a document on every run regardless of exit code. Parse stdout as JSON, then route on flags:
+
+| JSON | Flag | Action |
+|---|---|---|
+| Yes | `zk_missing: true` | Soft-skip; note "privacy gate skipped (vault not available)". Continue. |
+| Yes | `vacuous_gate: true` | Soft-skip; note "privacy gate skipped (no private dirs to scan)". Continue. |
+| Yes | `hit_count > 0` | ERROR — block; present each `hits` entry verbatim. |
+| Yes | `hit_count == 0`, no skip flag | Pass; continue. |
+| No / stdout empty / exit ≥ 2 with no JSON | n/a | Real script error. Surface stderr; soft-skip. |
+
+Normal-scan JSON shape:
 ```json
 {
-  "ov_dir": "zk",
-  "titles_scanned": N,
+  "ov_dir": "...",
+  "filename_stems": N,
+  "wikilink_targets": N,
+  "private_slugs": N,
+  "terms_scanned": N,
   "allowlist_size": N,
   "hit_count": N,
   "hits": [
@@ -106,12 +119,12 @@ Parse the JSON. Shape:
 }
 ```
 
-Any non-empty `hits` array is an ERROR: each entry is a multi-word filename stem from the private `$OV` vault that appears as literal text in a tracked file. Present each hit verbatim with its file and line number. Remediation:
+Any non-empty `hits` array is an ERROR: each entry is a private identifier (filename stem, wikilink target, or slug from `personal/private_slugs.txt`) that appears as literal text in a tracked file. Present each hit verbatim with its file and line number. Remediation:
 
 - Replace the private title with a generic placeholder (e.g., `Sample Wiki Entry`, `Topic A`).
 - Or, if the exposure is deliberate (e.g., the title is fully public and appears as an illustrative example), add the stem to `scripts/privacy_allowlist.txt` and document the rationale in the commit message.
 
-The check is a blocking quality gate for any system-evolution commit that touches tracked files. Do not proceed to structural lint if Phase 0c returns hits.
+The check is a blocking quality gate for any system-evolution commit that touches tracked files when the gate ran meaningfully (no skip flag). Do not proceed to structural lint if Phase 0c returns hits.
 
 ### Phase 0d: Auto-memory hygiene
 

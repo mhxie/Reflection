@@ -28,14 +28,15 @@ uv run scripts/privacy_check.py --json
 
 Parse stdout as JSON. `--json` mode emits the document on every run regardless of exit code; `exit 1` is the script's normal "hits found" signal, not a script error.
 
-Match top-to-bottom — first matching row wins. Field defaults when keys are absent: `zk_missing` → `false` (only the missing-vault payload sets it); `hit_count` → `len(hits)` (only the missing-vault payload omits it).
+Match top-to-bottom — first matching row wins. Field defaults when keys are absent: `zk_missing` → `false` (only the missing-vault payload sets it); `vacuous_gate` → `false` (only the empty-dirs payload sets it); `hit_count` → `len(hits)` (only the skip payloads omit it).
 
-| JSON parses? | zk_missing | hit_count | Action |
-|---|---|---|---|
-| Yes | true | any (often absent) | Soft-skip; note "privacy gate skipped (vault not available)" in synthesis. Proceed to Step 2. |
-| Yes | false | >0 | Abort with `NEEDS_REVISION`. Present each `hits` entry verbatim (`file:line` + `private_title`). Do not dispatch reviewers; fix leaks, re-run `/system-review`. |
-| Yes | false | 0 | Proceed to Step 2. |
-| No, OR exit ≥2, OR stdout empty | any | any | Real script error. Surface stderr, soft-skip, note "privacy gate skipped (script error)" in synthesis. |
+| JSON parses? | zk_missing | vacuous_gate | hit_count | Action |
+|---|---|---|---|---|
+| Yes | true | any | any (often absent) | Soft-skip; note "privacy gate skipped (vault not available)" in synthesis. Proceed to Step 2. |
+| Yes | any | true | any (often absent) | Soft-skip; note "privacy gate skipped (no private dirs to scan)" in synthesis. Proceed to Step 2. |
+| Yes | false | false | >0 | Abort with `NEEDS_REVISION`. Present each `hits` entry verbatim (`file:line` + `private_title`). Do not dispatch reviewers; fix leaks, re-run `/system-review`. |
+| Yes | false | false | 0 | Proceed to Step 2. |
+| No, OR stdout empty, OR exit ≥2 with no JSON | any | any | any | Real script error. Surface stderr, soft-skip, note "privacy gate skipped (script error)" in synthesis. |
 
 The script scans tracked files PLUS untracked-but-not-ignored files (per `tracked_files()` in `scripts/privacy_check.py`), so a brand-new command file with a leak is caught before it is staged.
 

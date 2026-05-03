@@ -1,10 +1,24 @@
 # Atelier
 
-Your AI-native personal operating system — the workshop, tools, and circle of operators that surrounds your **œuvre** (the accumulating body of your notes, decisions, and reflections, kept locally under `$OV/`). The system reads and writes plain Markdown; nothing leaves your machine. A 12-specialist agent team (le cercle) and a deterministic trust engine score and structure what you keep. Self-improving on a weekly cadence.
+> **A personal workshop, published.** A reflective-thinking system built around [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and a local-first Zettelkasten — covering daily reflection, decision-making, deep reading, goal tracking, and knowledge crystallization. It is not a product, and not aiming to be one. The patterns are reusable; the configuration is bespoke. Read the code, fork what's useful, build your own.
 
-Capture what you learn. Reflect on what you think. Research what you don't know. Read deeply. Make decisions. Track goals across life chapters. Crystallize knowledge you trust. All orchestrated over a local-first Zettelkasten — your data on your machine, scored by `scripts/trust.py`, refined every session.
+The system surrounds an **œuvre** — the accumulating body of notes, decisions, and reflections, kept locally under `$OV/`. Plain Markdown on disk; nothing leaves your machine. A 12-specialist agent team (le cercle) coordinates session work; a deterministic trust engine (`scripts/trust.py`) scores the wiki layer; `/lint` keeps the corpus self-consistent.
 
-Runs first-class on [Claude Code](https://docs.anthropic.com/en/docs/claude-code); ships with a Codex compatibility layer through `AGENTS.md` plus runtime adapter contracts.
+Capture what you learn. Reflect on what you think. Research what you don't know. Read deeply. Make decisions. Track goals across life chapters. Crystallize knowledge you trust.
+
+Drives natively on Claude Code; the same protocols run under [Codex CLI](https://github.com/openai/codex) via `AGENTS.md` and the runtime-adapter contract. Codex is a real second runtime, not a port — but the Claude Code path is the most fully exercised; the Codex path is functional and lighter-tested.
+
+## Who is this for?
+
+Honest framing matters more here than feature lists. Three rough audiences:
+
+1. **Pattern students.** You want to see how someone wired Claude Code to a personal-knowledge-management substrate end-to-end — agent contracts in `harness/agents.toml`, command portability in `harness/commands.toml`, trust scoring in `scripts/trust.py`, the L1–L4 tier model in `protocols/local-first-architecture.md`, the wiki schema in `protocols/wiki-schema.md`. Take the patterns; leave the configuration. **This is the primary audience.**
+
+2. **System forkers.** You want to run something like this for your own thinking. The repo is MIT-licensed, you can fork it. But: a fresh clone has no `$OV/` vault, no `profile/identity.md`, no Readwise inbox, no archetype mnemonics that mean anything to you. The Atelier vocabulary (le cercle, the Painter, le œuvre) is bespoke. Expect to rip and replace; don't expect to clone-and-run.
+
+3. **Maintainer.** Daily use. Self-improving on a weekly cadence via `/system-review` and `scripts/review.sh`.
+
+If you want a turnkey "second brain," this isn't it — it's also not trying to be. The fastest path to disappointment with this kind of system is to inherit someone else's vocabulary, taxonomy, and tier model wholesale; the value lives in writing your own.
 
 ## What It Does
 
@@ -22,60 +36,66 @@ Runs first-class on [Claude Code](https://docs.anthropic.com/en/docs/claude-code
 
 Session reflections write to `$OV/reflections/`. Daily notes are user-authored — the system reads them but never writes.
 
-## Getting Started
+## Forking the patterns (the primary use case)
+
+If you read one thing in this repo, read these in order:
+
+1. **`protocols/local-first-architecture.md`** — the L1–L4 tier model. This is the load-bearing idea: directory = certification level, no tags required.
+2. **`protocols/wiki-schema.md`** — claim markers (`[C1]`, `@anchor`, `@cite`, `@pass`), bi-temporal `valid_at`/`invalid_at` fields, and how `scripts/trust.py` reads them.
+3. **`harness/agents.toml`, `harness/commands.toml`, `harness/models.toml`, `harness/capabilities.toml`** — provider-neutral registries. The Claude Code and Codex runtimes are *adapters*, not first-class consumers. This is the part most worth lifting.
+4. **`scripts/trust.py`** — Personalized PageRank with external anchors as seeds. Stdlib-only, deterministic. ~700 lines including the schema parser. Adapt freely.
+5. **`scripts/semantic.py`** — pluggable embedder + store backends (BGE-M3 + LanceDB by default). The CLI contract is encoder-agnostic; the embedder choice is yours.
+6. **`scripts/lint.py` and `scripts/privacy_check.py`** — quality gates with structured JSON output. Lint enforces wiki schema integrity; privacy_check fails loud on placebo-pass conditions (empty vault, missing config).
+7. **`.claude/agents/*.md`** — twelve role specs, each <8KB. Useful as a template for your own agent definitions.
+
+What's deliberately *not* portable: `profile/`, `personal/`, `$OV/wiki/` content, the impressionist vocabulary register (le cercle, the Painter, le œuvre), the bilingual English/Chinese behavior, the Era / Direction taxonomy, and the `/civ`, `/dine`, `/prm` commands which encode a bespoke life-area model. Strip those before adapting.
+
+## Running it (if you want to)
+
+This is the maintainer's daily-use configuration. Running it identically end-to-end is supported, but expect a real onboarding cliff: a fresh clone has no vault, no profile, no notes. Most session commands will guard with "Run `/introspect` first" or warn that `profile/identity.md` is missing. That's working as intended for the maintainer; it's a wall for everyone else.
 
 ### Prerequisites
 
-- One AI runtime CLI:
-  - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) for native slash commands and agent teams
-  - [Codex CLI](https://github.com/openai/codex) for the portable `AGENTS.md` harness and external review
-- [uv](https://docs.astral.sh/uv/) — Python package manager
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (the primary path) or [Codex CLI](https://github.com/openai/codex)
+- [uv](https://docs.astral.sh/uv/) — Python package manager (3.11+)
+- A `$OV/` directory with at minimum: `daily-notes/`, `wiki/`, `reflections/`. Other tiers (`papers/`, `readwise/`, `cache/`, etc.) are optional.
 
-**Optional — second-opinion external reviewer:**
-- [Gemini CLI](https://github.com/google-gemini/gemini-cli) — `npm i -g @google/gemini-cli`
-
-Core scripts (`trust.py`, `lint.py`, `staleness.py`, `session_log.py`, `privacy_check.py`, `zk_audit.py`) are stdlib-only. Semantic search and document conversion deps are managed via `pyproject.toml`.
+**Optional:**
+- [Gemini CLI](https://github.com/google-gemini/gemini-cli) — second-opinion external reviewer for `/system-review` (`npm i -g @google/gemini-cli`).
 
 ### Install
 
 ```bash
-git clone https://github.com/mhxie/reflectl.git ~/atelier  # repo URL pending rename
+git clone https://github.com/mhxie/atelier.git ~/atelier
 cd ~/atelier
-uv sync                # install dependencies from pyproject.toml
-```
-
-Set `$OV` to point to your vault (the directory containing `daily-notes/`, `wiki/`, `reflections/`, etc.):
-
-```bash
+uv sync
 echo 'export OV="$HOME/path/to/your/vault"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-The system is fully local-first — no remote services, APIs, or accounts required. All personal content lives under `$OV/` and is gitignored. Only system configuration (protocols, agents, commands, scripts) is committed.
+All personal content under `$OV/` is gitignored. Only system configuration (protocols, agents, commands, scripts) is committed.
 
-### First Run
+### First run
 
 Claude Code:
 
 ```bash
 claude                # open Claude Code in the project
-/introspect           # build your self-model from your notes (reads $OV/daily-notes/)
-/reflect              # start your first session
+/introspect           # build profile/ from $OV/daily-notes/ — required before most session commands
+/reflect              # session menu
 ```
 
-Codex:
+Codex (functional but less exercised than Claude Code):
 
 ```bash
-python3 scripts/atelier.py run reflect            # fresh Codex TUI on /reflect (default)
+python3 scripts/atelier.py run reflect            # fresh Codex TUI on /reflect
 python3 scripts/atelier.py run lint --exec        # one-shot, no TUI
-python3 scripts/atelier.py run reflect "context here"
-python3 scripts/atelier.py run promote --resume   # continue most recent session (resume_friendly only)
-python3 scripts/atelier.py run promote --fork     # branch from most recent without mutating it
+python3 scripts/atelier.py run promote --resume   # continue most recent session
 ```
 
-The `run` subcommand spawns `codex` with the generated prompt pre-loaded and the repo as the working directory. Codex reads `AGENTS.md`, picks up the repo-scoped skill under `.agents/skills/`, then adapts `.claude/commands/*.md` through `protocols/runtime-adapters.md`.
+Codex reads `AGENTS.md`, picks up the repo-scoped skill under `.agents/skills/`, then adapts `.claude/commands/*.md` through `protocols/runtime-adapters.md`. Several Claude-specific affordances (notably `AskUserQuestion` interactive menus) are emulated rather than native under Codex.
 
-Reflection-type commands (`/reflect`, `/weekly`, `/review`, `/decision`, etc.) default to fresh sessions because reusing a prior session pollutes the new reflection. Continuation-friendly commands (`/promote`) are marked `resume_friendly = true` in `harness/commands.toml`; pass `--resume` to chain off a recent session, or `--fork` to branch without mutating it.
+Reflection-type commands (`/reflect`, `/weekly`, `/review`, `/decision`, etc.) default to fresh sessions because reusing a prior session pollutes the new reflection. Continuation-friendly commands (`/promote`) are marked `resume_friendly = true` in `harness/commands.toml`.
 
 ## Sessions
 
@@ -96,7 +116,7 @@ Type `/reflect` to get a menu of everything you can do:
 | Note Triage | Scan for compaction candidates across your notes |
 | Process Meeting | Turn a work meeting transcript into structured notes with action items |
 
-You can also go direct: `/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/curate`, `/introspect`, `/lint`, `/promote`, `/paper-review`, `/dine`, `/prm`, `/civ`, `/system-review`.
+You can also go direct: `/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/curate`, `/introspect`, `/lint`, `/promote`, `/dine`, `/prm`, `/civ`, `/system-review`.
 
 **Knowledge layer commands:**
 
@@ -168,4 +188,4 @@ The system has a narrative register from the impressionist atelier — *le cercl
 
 ## License
 
-MIT
+MIT — for the code. The taste, the vocabulary, and the daily-use configuration are not licensed and not portable. Fork the patterns; build your own atelier.

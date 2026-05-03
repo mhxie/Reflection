@@ -10,9 +10,9 @@ STUB MODE:
 REAL MODE:
     Embedding-backed search using pluggable Embedder + Store backends.
     Day-one stack: BGE-M3 (sentence-transformers) + LanceDB.
-    Active when the resolved lance directory exists (sentinel). Resolution
-    prefers ~/.cache/atelier/lance/ and falls back to legacy
-    ~/.cache/reflectl/lance/ during the rename window.
+    Active when a lance directory exists. Reads prefer
+    ~/.cache/atelier/lance/; if absent, fall back to legacy
+    ~/.cache/reflectl/lance/ (existing installs migrate on next index).
 
 The CLI contract is encoder-agnostic and frozen. Swapping the backend from
 stub to real will NOT change caller code in command files or agents.
@@ -43,19 +43,17 @@ from typing import Iterator, List, Optional, Tuple
 REPO_ROOT = Path(__file__).resolve().parent.parent
 # Lance index is machine-local (rebuild is ~7s on MPS, not worth syncing binaries).
 _LANCE_NEW = Path.home() / ".cache" / "atelier" / "lance"
+# Reads fall back to the pre-rename location so existing installs keep
+# semantic search without a forced rebuild. Writes always go to _LANCE_NEW.
 _LANCE_OLD = Path.home() / ".cache" / "reflectl" / "lance"
 
 
 def _resolve_lance_dir(prefer_new: bool = False) -> Path:
     """Resolve the active lance index directory.
 
-    Read path: prefer the new ~/.cache/atelier/lance/, fall back to the legacy
-    ~/.cache/reflectl/lance/ so existing installations keep semantic search
-    across the atelier rename without a forced rebuild.
-
-    Write path (prefer_new=True): always returns the new path so a rebuild
-    migrates the user off the legacy location instead of silently re-writing
-    to ~/.cache/reflectl/.
+    Reads prefer ~/.cache/atelier/lance/ and fall back to the legacy
+    ~/.cache/reflectl/lance/ if present. Writes (prefer_new=True) always
+    return the new path so a rebuild migrates the user.
     """
     if prefer_new:
         return _LANCE_NEW
@@ -373,9 +371,9 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             f"Local semantic search for zk/ (current mode: {mode_label()}). "
             "STUB mode uses lexical fallback; results are ranked by token "
-            "match count and are NOT semantic. REAL mode activates when the "
-            "resolved lance index exists (preferred ~/.cache/atelier/lance/, "
-            "legacy fallback ~/.cache/reflectl/lance/)."
+            "match count and are NOT semantic. REAL mode activates when "
+            "~/.cache/atelier/lance/ exists, with a legacy fallback to "
+            "~/.cache/reflectl/lance/ for pre-rename installs."
         ),
         epilog="See sources/semantic.md for the full contract.",
         formatter_class=argparse.RawDescriptionHelpFormatter,

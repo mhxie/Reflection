@@ -18,10 +18,13 @@ Auto-skip rules (all fully automated):
   - Explicit opt-out via `privacy_allowlist.txt` for edge cases.
 
 CLI:
-    uv run scripts/privacy_check.py            human report
-    uv run scripts/privacy_check.py --json     machine-readable output
+    uv run scripts/privacy_check.py                   human report
+    uv run scripts/privacy_check.py --json            machine-readable output
+    uv run scripts/privacy_check.py --allow-empty-ov  exit 0 when $OV is unset
 
-Exit code: 0 if no hits, 1 if any hit (treat as ERROR), 2 on IO error.
+Exit code: 0 if no hits, 1 if any hit (treat as ERROR), 2 on IO error or
+when the gate cannot meaningfully run (missing/empty $OV without
+--allow-empty-ov).
 """
 
 from __future__ import annotations
@@ -277,10 +280,23 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     ap.add_argument("--json", action="store_true", help="Emit JSON output.")
+    ap.add_argument(
+        "--allow-empty-ov",
+        action="store_true",
+        help=(
+            "Exit 0 when the gate would scan vacuously: either $OV is "
+            "missing, OR $OV exists but has no private dirs and no "
+            "private_slugs.txt. Without this flag, both cases exit 2 "
+            "to avoid a placebo green light for fresh clones."
+        ),
+    )
     args = ap.parse_args(argv)
 
     if not OV.exists():
-        msg = f"privacy_check: {OV} does not exist; nothing to check against"
+        msg = (
+            f"privacy_check: {OV} does not exist; cannot scan. "
+            "Set $OV or pass --allow-empty-ov to acknowledge an empty gate."
+        )
         if args.json:
             print(json.dumps(
                 {"zk_missing": True, "titles_scanned": 0, "hits": []},
@@ -288,11 +304,30 @@ def main(argv: list[str] | None = None) -> int:
             ))
         else:
             sys.stderr.write(msg + "\n")
-        return 0
+        return 0 if args.allow_empty_ov else 2
 
     allowlist = load_allowlist()
     private_slugs = load_private_slugs()
     dirs = _discover_private_dirs(OV)
+    if not dirs and not private_slugs and not args.allow_empty_ov:
+        msg = (
+            f"privacy_check: $OV={OV} contains no private dirs and no "
+            "private_slugs.txt is configured; gate would pass vacuously. "
+            "Pass --allow-empty-ov to acknowledge."
+        )
+        if args.json:
+            print(json.dumps(
+                {
+                    "vacuous_gate": True,
+                    "ov_dir": OV.as_posix(),
+                    "titles_scanned": 0,
+                    "hits": [],
+                },
+                indent=2,
+            ))
+        else:
+            sys.stderr.write(msg + "\n")
+        return 2
     titles = collect_titles(OV, allowlist, dirs)
     files = tracked_files()
     repo_stems = committed_stems(files)

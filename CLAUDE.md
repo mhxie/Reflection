@@ -87,7 +87,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 
 ## Agent Teams
 
-Agent definitions live in `.claude/agents/`; portable role metadata lives in `harness/agents.toml`; model profiles live in `harness/models.toml`. Team: Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Scout, Reader, Meeting, Librarian. For dispatch routing, see `protocols/orchestrator.md`.
+Agent definitions live in `.claude/agents/`; portable role metadata lives in `harness/agents.toml`; model profiles live in `harness/models.toml`. Team (12): Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Scout, Reader, Meeting, Librarian, Privacy-Reviewer. For dispatch routing, see `protocols/orchestrator.md`.
 
 ## Runtime Portability
 
@@ -109,4 +109,3 @@ Detailed specifications loaded on demand by agents that need them:
 - `protocols/session-log.md` — session event log format
 - `sources/readwise.md`, `sources/scholar.md`, `sources/local-papers.md` — external corpus queries
 - `scripts/` — trust.py, lint.py, semantic.py, session_log.py
-- `personal/examples.md` — real write-back title examples (gitignored)
