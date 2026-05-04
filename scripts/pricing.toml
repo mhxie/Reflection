@@ -1,0 +1,152 @@
+# Provider pricing catalog.
+#
+# Track only TWO classes per provider: flagship (top reasoning) and
+# standard (everyday capable). The harness uses this catalog plus
+# observed quality on `~/.cache/atelier/llm_calls/<date>.jsonl` to
+# pick Pareto-optimal (performance / cost) models for each tier.
+# When the same provider exposes more than two classes, pick the
+# representative pair; ultra-cheap or ultra-niche variants live in
+# `notes` rather than as additional rows.
+#
+# Prices in USD per 1M tokens. Re-verify when `verified_at` is
+# older than ~30 days, when a provider announces a price change,
+# or when a promotional discount expires.
+#
+# Schema (per [providers.<id>]):
+#   verified_at           ISO date the prices were last confirmed
+#   long_context_premium  false | "<threshold> -> <multiplier>x"
+#                         (e.g., "200K -> 2x" for Gemini)
+#
+# Schema (per [providers.<id>.flagship] and [providers.<id>.standard]):
+#   model           provider's own model id (matches direct_api binding)
+#   input           per-1M-token input price (USD)
+#   output          per-1M-token output price (USD)
+#   cache_hit       per-1M-token price for cache-hit input (USD)
+#   context_window  max input tokens (approx)
+#   notes           free-text caveats, discounts, tokenizer quirks
+#
+# Blended cost = (3*input + 1*output) / 4
+# Assumes the 3:1 input:output token ratio observed in agent
+# workloads. Used by `scripts/pricing.py` for ranking and cost
+# estimation against the invocation log.
+
+[providers.anthropic]
+verified_at = "2026-05-03"
+long_context_premium = false
+
+[providers.anthropic.flagship]
+model = "claude-opus-4-7"
+input = 5.00
+output = 25.00
+cache_hit = 0.50
+context_window = 1000000
+notes = "tokenizer uses up to 35% more tokens; effective blended ~$13.50"
+
+[providers.anthropic.standard]
+model = "claude-sonnet-4-6"
+input = 3.00
+output = 15.00
+cache_hit = 0.30
+context_window = 1000000
+notes = "flat pricing across full 1M window; rare among 1M-context models"
+
+[providers.openai]
+verified_at = "2026-05-03"
+long_context_premium = false
+
+[providers.openai.flagship]
+model = "gpt-5.5-pro"
+input = 30.00
+output = 180.00
+cache_hit = 3.00
+context_window = 1000000
+notes = "niche-only at this price; reserve for tasks where Pro reasoning is decisively required"
+
+[providers.openai.standard]
+model = "gpt-5.5"
+input = 5.00
+output = 30.00
+cache_hit = 0.50
+context_window = 1000000
+
+[providers.google]
+verified_at = "2026-05-03"
+long_context_premium = "200K -> 2x"
+
+[providers.google.flagship]
+model = "gemini-3.1-pro"
+input = 2.00
+output = 12.00
+cache_hit = 0.20
+context_window = 1000000
+notes = "doubles to $4 input / $18 output above 200K input tokens; effective blended ~$7.50 for long-context workloads"
+
+[providers.google.standard]
+model = "gemini-3-flash"
+input = 0.50
+output = 3.00
+cache_hit = 0.05
+context_window = 1000000
+notes = "Gemini 3.1 Flash-Lite at $0.25/$1.50 (blended $0.56) is the ultra-cheap variant; use 3 Flash as the representative standard"
+
+[providers.deepseek]
+verified_at = "2026-05-03"
+long_context_premium = false
+
+[providers.deepseek.flagship]
+model = "deepseek-v4-pro"
+input = 0.435
+output = 0.87
+cache_hit = 0.003625
+context_window = 1000000
+notes = "75% promotional discount in effect; expires 2026-05-31 15:59 UTC. Standard prices: input=1.74, output=3.48, cache=0.0145, blended $2.18"
+
+[providers.deepseek.standard]
+model = "deepseek-v4-flash"
+input = 0.14
+output = 0.28
+cache_hit = 0.0028
+context_window = 1000000
+notes = "rock-bottom blended at $0.175/M; thinking off by default"
+
+[providers.zhipu]
+verified_at = "2026-05-03"
+long_context_premium = false
+
+[providers.zhipu.flagship]
+model = "glm-5"
+input = 1.00
+output = 3.20
+cache_hit = 0.20
+context_window = 200000
+
+[providers.zhipu.standard]
+model = "glm-4.6"
+input = 0.60
+output = 2.20
+cache_hit = 0.11
+context_window = 200000
+
+[providers.alibaba]
+verified_at = "2026-05-03"
+long_context_premium = false
+
+[providers.alibaba.flagship]
+model = "qwen3-max"
+input = 0.78
+output = 3.90
+cache_hit = 0.156
+context_window = 262000
+notes = "no separate standard tier currently tracked"
+
+[providers.moonshot]
+verified_at = "2026-05-03"
+long_context_premium = false
+
+[providers.moonshot.flagship]
+model = "kimi-k2-6"
+input = 0.74
+output = 3.49
+cache_hit = 0.14
+context_window = 256000
+notes = "no separate standard tier currently tracked"

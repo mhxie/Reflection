@@ -83,7 +83,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 | `/promote` | Create L4 wiki entry from L2 sources |
 | `/prm` | Audit relationship health and support system robustness |
 | `/civ` | Civ-style life-management dashboard |
-| `/dine` | Recommend 3 restaurants (Intent A); track workplace catering deliveries against a weekly menu PDF (Intent B) |
+| `/dine` | Recommend 3 restaurants (Intent A); track workplace catering deliveries against a weekly menu PDF (Intent B); log a meal you just ate, parsing receipt images if provided (Intent C) |
 
 ## Agent Teams
 

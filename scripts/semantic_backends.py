@@ -317,7 +317,15 @@ def chunk_markdown(text: str) -> List[str]:
 # ---------------------------------------------------------------------------
 
 def _derive_tier(path: str) -> str:
-    """Derive knowledge tier from path prefix."""
+    """Derive knowledge tier from path prefix.
+
+    Indexed paths are stored vault-relative (e.g., `wiki/Foo.md`). Pre-rename
+    indexes used to store them with a `zk/` prefix (e.g., `zk/wiki/Foo.md`);
+    we still see those for installs that have not rebuilt the index since
+    the rename. Strip a leading `zk/` if present, then look up the tier by
+    the next path component. After every legacy index has been rebuilt
+    against vault-relative paths, the `zk` special-case can be removed.
+    """
     parts = path.split("/")
     if len(parts) < 2:
         return "L2"

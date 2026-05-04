@@ -17,12 +17,16 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-OV = (REPO_ROOT / "zk").resolve()
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
+
+OV = vault_root()
 SKIP_DIRS = {"secure", "personal", "cache", ".obsidian", ".trash", "raw", "assets"}
 
 LINK_RE = re.compile(r"(!?\[)([^\]]*)(\]\()<?([^)>#]+)(#[^)>]*)?>?(\))")

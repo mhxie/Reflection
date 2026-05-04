@@ -31,9 +31,10 @@ Exit code: 0 always (audit is advisory; user decides what to consolidate).
 
 Design notes:
   - Stdlib only, mirrors scripts/privacy_check.py and scripts/lint.py style.
-  - Reads $OV from env (defaults to "zk"). Never hardcodes user paths,
-    domain names from the user's vault, or filename stems. Domain names
-    are discovered by walking $OV/.
+  - Reads $OV via _paths.vault_root(); exits with a clear error if $OV is
+    unset (no silent fallback to a relative directory). Never hardcodes
+    user paths, domain names from the user's vault, or filename stems.
+    Domain names are discovered by walking $OV/.
   - Heuristics, not perfect detectors. Each category documents its
     false-positive direction so the human reader can calibrate.
 """
@@ -401,7 +402,7 @@ def _rel(path: Path) -> str:
     `auto/raw/Tesla...` is friendlier than the absolute Drive path.
     """
     try:
-        return "zk/" + path.relative_to(OV).as_posix()
+        return "$OV/" + path.relative_to(OV).as_posix()
     except ValueError:
         return path.as_posix()
 

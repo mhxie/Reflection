@@ -788,22 +788,44 @@ def check_atelier_skill() -> list[Finding]:
 
 
 def check_scripts_zk_paths() -> list[Finding]:
-    """Flag hardcoded `Path("zk/...")` literals in scripts/.
+    """Flag hardcoded `"zk"` literals (path or string-default) in scripts/.
 
     Vault-rooted paths must go through `scripts/_paths.vault_root()` so
     they fail loud when $OV is unset and never silently create stray
-    relative `zk/` directories. The only allowed mention is in
-    `_paths.py` itself, which documents the antipattern.
+    relative `zk/` directories. Two patterns are flagged:
+
+      - `Path("zk/...")` literal (the original failure mode)
+      - bare-string `"zk"` or `["zk"]` defaults (the failure mode that
+        bit semantic.py — wrapped in `walk_markdown` it became a relative
+        path resolved against the script's cwd)
+
+    The only allowed mentions are in `_paths.py` (the helper's own
+    docstring explains the antipattern) and `harness_lint.py` (this
+    check's own remediation message).
     """
     findings: list[Finding] = []
     scripts_dir = ROOT / "scripts"
     if not scripts_dir.is_dir():
         return findings
-    # Files that legitimately mention the antipattern in docs/message text:
-    #   _paths.py    : its docstring explains why the helper exists
-    #   harness_lint.py (this file): the check's own remediation message
     skip = {"_paths.py", "harness_lint.py"}
-    pattern = re.compile(r'Path\("zk/')
+    # Patterns covering the four common forms of the antipattern:
+    #   (1) Path("zk/...")         — Path constructor with literal
+    #   (2) = "zk"                 — bare-string assignment (excludes
+    #       `==` comparisons via the `=` in the lookbehind class)
+    #   (3) ["zk"]                 — list/dict literal
+    #   (4) / "zk"                 — operator-form path construction
+    #       (e.g., `(REPO_ROOT / "zk").resolve()`); this is the form
+    #       that lived for months in fission/relink/wikilink_to_md and
+    #       6 oneoff/ scripts before the lint caught it.
+    patterns = [
+        re.compile(r'Path\("zk/'),
+        re.compile(r'(?<![\w.=])= "zk"(?![\w/])'),
+        re.compile(r'\["zk"\]'),
+        re.compile(r'/ "zk"(?![\w/])'),
+    ]
+    # Only top-level scripts/; `scripts/oneoff/` is gitignored (one-off
+    # migration scripts that hardcode private vault content) and excluded
+    # from steady-state lint coverage by convention.
     for path in sorted(scripts_dir.glob("*.py")):
         if path.name in skip:
             continue
@@ -812,13 +834,13 @@ def check_scripts_zk_paths() -> list[Finding]:
         except OSError:
             continue
         for lineno, line in enumerate(text.splitlines(), 1):
-            if pattern.search(line):
+            if any(p.search(line) for p in patterns):
                 findings.append(
                     Finding(
                         "ERROR",
                         "scripts-hardcoded-zk",
                         f"{rel(path)}:{lineno}",
-                        "use vault_root() from _paths instead of a hardcoded relative zk literal",
+                        "use vault_root() from _paths instead of a hardcoded zk literal",
                     )
                 )
     return findings

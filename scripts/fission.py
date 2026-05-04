@@ -28,7 +28,10 @@ from pathlib import Path
 from typing import Callable, Optional, Union
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-OV = (REPO_ROOT / "zk").resolve()
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
+
+OV = vault_root()
 
 
 def axis_first_letter(path: Path) -> str:

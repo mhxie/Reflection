@@ -6,8 +6,10 @@ Provider-neutral registry files for the Atelier runtime layer.
 |---|---|
 | `commands.toml` | Portable workflow names mapped to `.claude/commands/*.md` sources and Codex prompts. |
 | `agents.toml` | Portable role names mapped to `.claude/agents/*.md` sources and model profiles. |
-| `models.toml` | Role-level model profiles for Claude Code and Codex. |
+| `models.toml` | Role-level model profiles (committed schema: tier names, rationale, invocation pattern, agent assignments). Provider/model bindings live in gitignored `profile/models.toml` and merge at runtime. |
 | `capabilities.toml` | Runtime-neutral capability names and the Codex-side tool that implements each. The Claude Code mapping lives in `.claude/agents/*.md` `tools:` frontmatter (single source of truth). |
+
+Provider pricing data lives at `scripts/pricing.toml`, not here. It is offline reference data consumed only by `scripts/pricing.py` for cost estimation and future Pareto-optimal model selection: nothing on the dispatch path loads it, so it stays out of the runtime contract.
 
 Use the helper CLI instead of scraping TOML directly:
 

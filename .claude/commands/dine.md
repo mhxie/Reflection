@@ -1,8 +1,9 @@
 ## Purpose
 
-Two intents (auto-detected from args):
-- **A. Restaurant Recommendation** (default): pick 3 restaurant candidates based on user-supplied context, historical preferences, and credit-burn opportunities. Read-only on catalog docs; new captures route through `/reflect` Dining Pulse.
+Three intents (auto-detected from args):
+- **A. Restaurant Recommendation** (default): pick 3 restaurant candidates based on user-supplied context, historical preferences, and credit-burn opportunities. Read-only on catalog docs under this intent.
 - **B. Workplace Catering Tracker**: parse a weekly catering PDF dropped into `$OV/<slug>/catering/`, choose health-aware picks for the user's attendance days, and surface a confirmed table for the user to record themselves (the system does not write to daily notes).
+- **C. Meal Log Capture** (ad-hoc): log a meal the user just ate. Parses receipt images (HEIC/JPG/PNG/PDF) when provided, cross-references catalogs for missing slots, asks ONE compact question for what cannot be derived, shows a draft row + side-effect plan, and appends to the dining log on confirm. Co-equal capture path with `/reflect` Dining Pulse.
 
 ## Quick start
 
@@ -18,18 +19,36 @@ Intent B examples (first arg = workplace slug; the folder `$OV/<slug>/catering/`
 - `/dine <slug> all` → all 5 weekdays (override)
 - `/dine <slug> M/T/Th` → custom attendance set (override; any day-code combination works)
 
+Intent C examples (logging a meal you just ate):
+- `/dine log 今天午饭吃的 Cuanyue Malatang 两人 $49.32` → free-text meal report
+- `/dine 今天晚饭吃的是 /path/to/receipt.heic` → receipt image (HEIC auto-converted before Read)
+- `/dine 昨天 X 餐厅 dinner $85` → dated free text (respects late-sleep rule)
+- `/dine log /path/to/receipt.pdf` → receipt PDF outside any catering folder
+
 If args present, parse them as initial filters; only ask for slots not derivable.
 
 ## Step 0: Intent detection
 
-Parse args. Route to **Intent B** if any of:
+Parse args. Precedence: **B → C → A** (most specific match wins; ambiguous → ask user one line before routing).
+
+Route to **Intent B** if any of:
 - First arg matches an existing folder `$OV/<arg>/catering/` (workplace slug)
 - Any arg is a `.pdf` path under a `$OV/*/catering/` folder
 - Args contain the literal token `catering`
 
+Else route to **Intent C** if any of:
+- Leading subcommand `log` (e.g., `/dine log <freetext>`)
+- Args contain past-tense / reporting markers: `记录` / `log` / `吃了` / `吃的` / `刚吃完` / "今天X吃的" / "昨天Y" / "just had"
+- An image path (`.heic` / `.jpg` / `.jpeg` / `.png`) is provided
+- A `.pdf` path is provided **outside** any `$OV/*/catering/` folder
+- Free text mentions a specific restaurant + amount/party (e.g., `<name> 两人 $49.32`) without a forward-looking verb
+
+Do NOT route to C if the message is forward-looking: contains `推荐` / `去哪吃` / `想吃` / `what should I eat` / `where to eat` / `今晚吃什么` → fall through to A.
+
 Otherwise route to **Intent A** (continue to Step 1 below).
 
 For Intent B, jump to the "Intent B: Workplace Catering Tracker" section near the bottom and skip Steps 1-5.
+For Intent C, jump to the "Intent C: Meal Log Capture" section near the bottom and skip Steps 1-5.
 
 ## Step 1: Gather context
 
@@ -169,11 +188,91 @@ For each attendance day, output one line in the format:
   picks:  N   (date list)
 ```
 
+## Intent C: Meal Log Capture
+
+Append a row to the user's meal log file under `$OV/travel/` (filename specified in `profile/diet.md` § Catalog files; gitignored config). Co-equal capture path with `/reflect` Dining Pulse.
+
+### C.1 Resolve source material
+
+Three input shapes:
+- **Image receipt** (`.heic` / `.jpg` / `.jpeg` / `.png`): if HEIC or file size > 256KB, convert first via `sips -s format jpeg -Z 900 <src> --out /tmp/<basename>.jpg`, then `Read` the JPEG. `sips` is macOS-native; do not assume ImageMagick.
+- **PDF receipt** (outside any `catering/` folder): `Read` directly.
+- **Free text only**: parse the text for restaurant name, party size, total, and any other slots the user volunteered.
+
+For images / PDFs, extract: restaurant name, items + spicy markers, subtotal / tax / tip / total, payment method (Apple Pay / Visa last-4 / gift card / cash), date + time, party size if shown.
+
+### C.2 Cross-check catalogs (parallel reads)
+
+Read `profile/diet.md` § Catalog files first to resolve the three filenames below; if `profile/diet.md` is missing or the section is empty, skip the catalog lookups and note that in the closing line.
+
+- `Grep` the city catalog file under `$OV/travel/` for the restaurant → derive `类型`, `City`, `⭐` if listed.
+- `Grep` the dining log file under `$OV/travel/` for the restaurant → first-time-or-not flag (used in 必点·备注 line if first time).
+- `Grep` the gift-card catalog file under `$OV/finance/` for the restaurant → if listed, expect a Credit slot of `Gift Card (no UR)` unless receipt says otherwise.
+- If any catalog file is missing, skip silently and note in the closing line.
+
+### C.3 Auto-derive what you can
+
+| Slot | Derivation |
+|---|---|
+| **Date** | Default today; respect CLAUDE.md late-sleep rule (before 03:00 → previous calendar day). User free text override wins. |
+| **City** | Catalog match → use; else infer from restaurant address on receipt; else ask. |
+| **类型** | Catalog match → use; else infer from restaurant name (湘菜/川菜/etc.); else ask. |
+| **⭐** | Catalog match only; else blank. |
+| **Platform** | Receipt "Dine IN" → `W dine-in`; "Pickup/To-Go" → `W pickup`; OpenTable / Resy / DoorDash from booking source if visible; else ask. |
+| **Credit** | Payment method → CSR (Visa) means `CSR #1 (+<UR estimate> @3x dining)` where UR estimate = round(subtotal × 3); Apple Pay → `Apple Pay (card 待 confirm)`; gift card → `Gift Card (no UR)`. |
+| **健康 flags** | Heuristic from dish names. Cheatsheet: 粉蒸肉/红烧肉/扣肉/猪手 → `肥肉多`; 油炸/酥/脆皮 → `油炸`; 麻辣/水煮/干锅 → `重辣` / `油重`; 凉拌/清炒/白灼 → `清淡`; 全肉无蔬菜 → `蔬菜0` / `protein-heavy`; 1 蔬 + 2 肉 → `蔬菜少 (1/3)`; 米粉/麻辣烫 → `钠重`. Combine with `·`. Always show derivation to user in confirm prompt so they can correct. |
+
+Required slots that cannot be derived: ask the user in **ONE compact prompt** (not a 6-question waterfall). Required = 评分 (1-10), 再去 (Y/N/Maybe), and any of {City / 类型 / Platform} that the auto-derive could not fill. Optional 1-line note at the end.
+
+Example compact prompt:
+> `City? · 评分 1-10? · 再去 Y/N/Maybe? · Platform (W dine-in / W pickup / OT / R / DD)? · 1 句备注?`
+
+### C.4 Side-effect plan
+
+Before writing, plan side effects. Each is opt-in via the confirm prompt (see C.5):
+
+| Side effect | Trigger | Action |
+|---|---|---|
+| Meal log append | Always | Append row to the meal log file (under `$OV/travel/`, filename per `profile/diet.md`); bump `Last updated:` to today. |
+| Gift card update | Receipt shows gift-card balance line OR user volunteers balance | Update existing row in the gift-card catalog file (under `$OV/finance/`, filename per `profile/diet.md`): Balance + Last updated + Source; or insert new row if first time. |
+| Perks Ledger nudge | Credit slot maps to a tracked cycle credit (CSR dining 3x UR, OpenTable H1/H2, Resy quarterly, Sapphire Tables) | Suggest update; cite which row's `Cycle subtotal` would change by +$<amount>. Do NOT auto-write; surface as a one-liner for the user to apply manually. |
+| Catalog promotion flag | 评分 ≥ 8 AND 再去 = Y AND restaurant not currently in the relevant city catalog file (per `profile/diet.md`) | One-line suggestion at the end: `→ 考虑 promote 到 <city catalog name> (评分 N + 再去 Y, 还没在 catalog)`. Do NOT write. |
+| Daily note | (never) | Daily notes are user-authored. Do NOT auto-create even if today's note is missing. |
+
+### C.5 Confirm gate (non-negotiable)
+
+Show the user in this exact shape:
+
+```
+Draft row (meal log):
+| <Date> | <Restaurant> | <City> | <类型> | <⭐> | <评分> | <再去> | <健康> | <Platform> | <Credit> | <必点·备注> |
+
+Side effects:
+  1. Append row to meal log + bump Last updated
+  2. <gift card update if any>
+  3. <perks ledger nudge if any>
+  4. <catalog promotion flag if any>
+
+OK to apply 1-N? (yes / partial: "1,2" / no / edit: tell me what to change)
+```
+
+User says `yes` → apply all. Partial → apply only the listed numbers. `no` → do nothing. `edit` → patch and re-confirm. **Never silent-append.**
+
+### C.6 Write
+
+For the meal log: use `Edit` to insert the new row at the correct date position (the table is roughly chronological; insert before the next-newer-date row, or append at the end if today is the newest). Bump `Last updated:` line. For the gift-card catalog: same `Edit` pattern.
+
+For Perks Ledger: do NOT write — surface the one-liner only.
+
+### C.7 Report
+
+One line:
+> `Logged: <Restaurant> <Date> 评 <N>/10. <one optional flag, e.g., "Gift card balance now $X" or "→ promote candidate" or "Perks Ledger: CSR #1 dining +$Y to apply manually">.`
+
 ## Rules
 
 Intent A:
-- **Read-only on catalog docs**: do NOT modify the regional dining catalog or the credit-perks catalog from `/dine`
-- **Reading from the dining log is fine**; new captures only via `/reflect` Dining Pulse or explicit user "记录今天 X"
+- **Read-only on catalog docs (under Intent A)**: do NOT modify the regional dining catalog or the credit-perks catalog when handling a recommendation request. The dining log is also read-only under Intent A — appends route through Intent C (or `/reflect` Dining Pulse).
 - **0 candidates after hard filter**: relax most-restrictive constraint by 1 step, retry; surface 1-2 closest matches with flag "relaxed: <constraint>"
 - **Always show credit-burn opportunity** if relevant (any perk-program H1/H2 cycle ≤ 60d deadline + unused, per the live perks ledger under `$OV/finance/`). Even if credit餐厅 doesn't match exact mood, surface as 4th line with format: `💡 Credit-burn alt: <restaurant> ($<amount> <half>, deadline <MM/DD>)`
 - **Match user language**: Chinese-dominant if cuisine is Chinese; English if Western
@@ -186,3 +285,13 @@ Intent B:
 - **Does not touch the dining log**: workplace catering is excluded by design (low signal density per memory)
 - **Per-day skip on parse failure**: if any one day's section fails to parse, skip that day with a logged warning; do not abort the whole batch
 - **No web search**: menu data comes from the PDF only
+
+Intent C:
+- **Confirmation gate is non-negotiable**: never silent-append. Always show the draft row + side-effect plan and wait for user `yes` / partial / no / edit.
+- **One compact prompt for missing slots**: do NOT waterfall 6 questions. Group required-and-underivable slots into a single line.
+- **HEIC + large image handling**: if the input image is HEIC or > 256KB, convert via `sips -s format jpeg -Z 900 <src> --out /tmp/<basename>.jpg` first, then `Read` the JPEG. Do not assume ImageMagick.
+- **Read-only on daily notes**: do NOT auto-create today's daily note even if it's missing. Daily notes are user-authored.
+- **Read-only on Perks Ledger**: surface the cycle-credit nudge as a one-liner; never auto-write to the ledger.
+- **Match user language**: Chinese-dominant for Chinese cuisine; English otherwise.
+- **No web search**: restaurant data comes from local catalogs and the user-provided receipt only.
+- **Tight output**: draft row + side-effect list + one-line confirm prompt. No preamble.

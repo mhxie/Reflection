@@ -27,12 +27,16 @@ import argparse
 import re
 import sys
 from collections import defaultdict
+import sys
 from datetime import date
 from pathlib import Path
 from typing import Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-OV = (REPO_ROOT / "zk").resolve()
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
+
+OV = vault_root()
 
 # Mirrors zk/.gitignore semantics: dirs that never contain Reflect-bound or
 # GitHub-bound markdown.

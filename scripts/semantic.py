@@ -41,6 +41,9 @@ from pathlib import Path
 from typing import Iterator, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
+
 # Lance index is machine-local (rebuild is ~7s on MPS, not worth syncing binaries).
 _LANCE_NEW = Path.home() / ".cache" / "atelier" / "lance"
 # Reads fall back to the pre-rename location so existing installs keep
@@ -67,9 +70,15 @@ def _resolve_lance_dir(prefer_new: bool = False) -> Path:
 # Module-level binding kept for backwards-compat with callers that read it
 # directly (e.g. db_path string interpolation). For read-side code paths.
 LANCE_DIR = _resolve_lance_dir()
-DEFAULT_PATH = "zk"
-# Directories excluded from indexing (ephemeral caches, not worth embedding)
-INDEX_EXCLUDE = {"zk/cache"}
+# Default scan root is the vault ($OV). Resolved lazily at use sites
+# via vault_root() so `--help` and other no-vault probes work without
+# $OV set; only commands that actually walk the vault (query, index)
+# require $OV.
+DEFAULT_PATH: str | None = None
+# Subdirectories under the vault excluded from indexing (ephemeral caches,
+# not worth embedding). Trailing slash constrains matching to directories
+# (e.g., excludes `$OV/cache/**` but not `$OV/cached_*.md` siblings).
+INDEX_EXCLUDE = {"cache/"}
 
 
 def in_real_mode() -> bool:
@@ -113,10 +122,20 @@ def walk_markdown(
     before: Optional[datetime],
     exclude: Optional[set] = None,
 ) -> Iterator[Path]:
-    """Yield .md files under the given paths, filtered by mtime window."""
+    """Yield .md files under the given paths, filtered by mtime window.
+
+    Path resolution: absolute paths are used as-is; relative paths are
+    resolved against the vault root ($OV), not the repo root, so a bare
+    `--path wiki` scans `$OV/wiki/`.
+
+    Exclusion: each `exclude` entry is matched as a path-prefix against
+    the file's path relative to its walk root (e.g., `INDEX_EXCLUDE =
+    {"cache"}` excludes `$OV/cache/**`).
+    """
+    vault = vault_root()
     seen: set = set()
     for p in paths:
-        root = (REPO_ROOT / p) if not Path(p).is_absolute() else Path(p)
+        root = Path(p) if Path(p).is_absolute() else (vault / p)
         if not root.exists():
             warn(f"path not found, skipping: {p}")
             continue
@@ -128,10 +147,9 @@ def walk_markdown(
             if f in seen:
                 continue
             seen.add(f)
-            # Check exclusion list against relative path
             if exclude:
                 try:
-                    rel = str(f.relative_to(REPO_ROOT))
+                    rel = str(f.relative_to(root))
                 except ValueError:
                     rel = str(f)
                 if any(rel.startswith(ex) for ex in exclude):
@@ -172,19 +190,23 @@ def stub_query(args: argparse.Namespace) -> int:
         warn("query tokenized to empty; no results")
         return 0
 
-    paths = args.path or [DEFAULT_PATH]
+    # Resolve $OV early; fail fast before any walk work.
+    default_path = str(vault_root())
+
+    paths = args.path or [default_path]
     after = parse_date(args.after, "--after")
     before = parse_date(args.before, "--before")
 
     if args.lang != "auto":
         warn(f"--lang {args.lang} is a no-op in stub mode")
 
+    vault = vault_root()
     results: List[Tuple[str, float, List[str]]] = []
     for md in walk_markdown(paths, after, before):
         score, matched = lexical_score(md, tokens)
         if score > 0:
             try:
-                rel = md.relative_to(REPO_ROOT)
+                rel = md.relative_to(vault)
             except ValueError:
                 rel = md
             results.append((str(rel), score, matched))
@@ -252,13 +274,16 @@ def real_query(args: argparse.Namespace) -> int:
         warn("empty query; no results")
         return 0
 
+    # Resolve $OV early; fail fast before loading the embedder.
+    default_path = str(vault_root())
+
     sources = set(args.sources.split(","))
     retriever = _build_retriever()
 
     # Build filters from CLI args
     filters = {}
-    paths = args.path or [DEFAULT_PATH]
-    if paths != [DEFAULT_PATH]:
+    paths = args.path or [default_path]
+    if paths != [default_path]:
         filters["path_prefix"] = paths
 
     after_dt = parse_date(args.after, "--after")
@@ -314,16 +339,17 @@ def real_index(args: argparse.Namespace) -> int:
         warn("--rebuild: clearing existing index...")
         retriever.store.clear()
 
-    warn(f"scanning markdown files under {DEFAULT_PATH}/ (excluding {INDEX_EXCLUDE})...")
-    files = list(walk_markdown([DEFAULT_PATH], after=None, before=None, exclude=INDEX_EXCLUDE))
+    vault = vault_root()
+    warn(f"scanning markdown files under {vault}/ (excluding {INDEX_EXCLUDE})...")
+    files = list(walk_markdown([str(vault)], after=None, before=None, exclude=INDEX_EXCLUDE))
     warn(f"found {len(files)} files to scan")
 
     t0 = time.time()
     if args.rebuild:
-        total = retriever.index_files(files, REPO_ROOT, append_only=True)
+        total = retriever.index_files(files, vault, append_only=True)
         warn(f"full rebuild: {total} chunks in {time.time() - t0:.1f}s")
     else:
-        added, skipped, removed = retriever.index_incremental(files, REPO_ROOT)
+        added, skipped, removed = retriever.index_incremental(files, vault)
         warn(f"incremental: {added} added, {skipped} unchanged, {removed} removed in {time.time() - t0:.1f}s")
 
     stats = retriever.stats()
