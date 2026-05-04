@@ -5,17 +5,15 @@
 # invoke, which agents the orchestrator should expect to dispatch, and which
 # profile files to pre-read.
 #
-# Source-of-truth status (Wave 1A): `.claude/commands/hi.md` "Routing &
-# Dispatch" / "Intent Routing" prose is the active source; the rows in this
-# file are descriptive metadata that mirrors that prose by hand. Wave 1B will
-# add `scripts/atelier.py intent <text>` and a `/hi --explain` flag; once
-# those land, `/hi` will read this file directly and the prose table will be
-# regenerated from here. Neither the subcommand nor the flag exists today —
-# until they ship, keep the prose and this file aligned by hand.
+# Source of truth: this file. `.claude/commands/hi.md` references rows here
+# by intent name; the prose does not duplicate trigger phrases or agent
+# lists. To add or change a routing rule, edit this file and update only
+# the prose pointer / per-mode procedural section in hi.md.
 #
-# Codex parity: once Wave 1B lands, Codex will discover the routing table by
-# `python3 scripts/atelier.py intent "<text>"` rather than parsing prose.
-# That subcommand is not yet available.
+# Discoverability: Codex and other tools read this TOML directly; no helper
+# subcommand. The orchestrator surfaces the matched intent inline on every
+# `/hi` dispatch (see hi.md "Always-on Routing Announcement"); there is no
+# opt-in flag.
 #
 # Schema:
 #   patterns                  list of trigger phrases / format markers (case
@@ -33,8 +31,9 @@
 #   pattern                   coordination pattern (one of:
 #                             "orchestrator-subagent", "generator-verifier",
 #                             "agent-team", "shared-state", "solo")
-#   expected_subagent_count   int hint surfaced by /hi --explain. 1 if a
-#                             single agent; otherwise typical-case count.
+#   expected_subagent_count   int hint for review tooling and dispatch-shape
+#                             reasoning. 1 if a single agent; otherwise the
+#                             typical-case count.
 #   parallel                  bool; whether the agents dispatch in parallel
 #                             (informational; the actual dispatch shape is
 #                             still the orchestrator's call)
@@ -45,6 +44,12 @@
 # specific tool names). Coordination pattern is annotation; lint validates
 # the value set, not behavior.
 
+# Capture also matches on input shape, not only literal phrases: a date-prefixed
+# factual narrative without analytical question (e.g., `5/4 早上去了 X, 中午
+#吃了 Y`) routes here even though no `patterns` substring matches. The
+# orchestrator decides on shape via the routing prose in `.claude/commands/hi.md`
+# → "Always-on Routing Announcement" / "Semantic match". Keep `patterns` for
+# explicit phrases; do not add structural placeholders here.
 [intents.capture]
 patterns = [
     "记一下",
@@ -53,7 +58,6 @@ patterns = [
     "just write down",
     "just save this",
     "save this",
-    "date-stamped narrative",
 ]
 mode = "capture-fast-path"
 agents = ["scribe"]
@@ -63,6 +67,10 @@ pattern = "solo"
 expected_subagent_count = 1
 parallel = false
 
+# Reading routes to the "Read & Discuss" sub-flow (hi.md). Initial dispatch is
+# Reader + Researcher; Reviewer + Challenger fire later as a write-back gate
+# (not the routing announcement chain). `agents` here = the initial dispatch
+# only, matching what the routing announcement claims is happening.
 [intents.reading]
 patterns = [
     "http://",
@@ -73,11 +81,11 @@ patterns = [
     "let's read",
 ]
 mode = "read-and-discuss"
-agents = ["reader", "researcher", "scout", "thinker", "reviewer", "challenger"]
+agents = ["reader", "researcher"]
 profile_reads = ["identity.md"]
 priority = 40
 pattern = "agent-team"
-expected_subagent_count = 6
+expected_subagent_count = 2
 parallel = true
 
 [intents.meeting]

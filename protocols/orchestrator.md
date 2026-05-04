@@ -22,7 +22,7 @@ The atelier uses five coordination patterns — annotated on every agent (`harne
 | Shared-state | Agents read and write a common store rather than passing context turn-by-turn. | Currently unused; reserved for future cross-agent coordination (e.g., Forgetter, cross-session findings). |
 | Solo | Single-agent dispatch with no coordination. | Scribe verbatim capture (`mechanical_capture` profile). |
 
-The `pattern` field is annotation only. The orchestrator's actual dispatch behavior is governed by the existing Dual + Shadow Dispatch table (see § Dual + Shadow Dispatch below) and the agent collaboration matrix; `pattern` is descriptive metadata that lets reviewers and lint reason about dispatch shape without re-deriving it from prose. Wave 1B will introduce a `/hi --explain` flag that surfaces the same shape to the user; until then, the field is consumed only by review tooling.
+The `pattern` field is annotation only. The orchestrator's actual dispatch behavior is governed by the existing Dual + Shadow Dispatch table (see § Dual + Shadow Dispatch below) and the agent collaboration matrix; `pattern` is descriptive metadata that lets reviewers and lint reason about dispatch shape without re-deriving it from prose. User-facing visibility of routing decisions for `/hi` is provided by the always-on dispatch announcement (canonical instructions in `.claude/commands/hi.md` → "Always-on Routing Announcement"); the `pattern` field itself is consumed only by review tooling.
 
 ## Session Startup Checks
 

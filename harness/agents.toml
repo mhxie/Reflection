@@ -41,7 +41,6 @@ used_by = [
     "commands.introspect",
     "commands.prm",
     "intents.meeting",
-    "intents.reading",
     "intents.reflection",
 ]
 
@@ -135,7 +134,6 @@ used_by = [
     "commands.prm",
     "commands.promote",
     "commands.system-review",
-    "intents.reading",
     "intents.reflection",
 ]
 
@@ -148,7 +146,6 @@ codex_prompt = "Emulate the Scout role using `.claude/agents/scout.md` and the r
 pattern = "agent-team"
 used_by = [
     "commands.hi",
-    "intents.reading",
     "intents.reflection",
 ]
 
@@ -174,7 +171,6 @@ codex_prompt = "Emulate the Thinker role using `.claude/agents/thinker.md` and t
 pattern = "orchestrator-subagent"
 used_by = [
     "commands.hi",
-    "intents.reading",
 ]
 
 [agents.privacy-reviewer]

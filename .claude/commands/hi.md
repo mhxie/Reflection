@@ -6,17 +6,25 @@ Your reflection system. Uses a two-step decision tree with `AskUserQuestion` for
 
 ### Intent Routing (when user types `/hi <context>`)
 
-Detect intent from `<context>`, skip the Step 1 menu, route directly:
+Routing rules live in `harness/intents.toml` (canonical). Read that file at session start to know the dispatch shape per intent: trigger phrases (`patterns`), the dispatch sub-mode (`mode`), the agents the orchestrator is expected to dispatch (`agents`), and the matching priority. Do not duplicate those fields here; when adding or changing a routing rule, edit the TOML and let this file reference it.
 
-| Intent | Trigger words / format | Action |
-|---|---|---|
-| Capture (fast path) | "记一下", "记录", "log this", "just write down", or pure factual events with no question/discussion (e.g., "5/4 早上去了 X, 中午吃了 Y") | Dispatch Scribe directly with the right operation; skip the coaching flow. See Capture Fast Path below. |
-| Reading | article URL, `[[Note Title]]`, "read/discuss" | Read & Discuss with input as article |
-| Meeting | "meeting", "standup", "1:1", "meeting notes" | Dispatch Meeting agent |
-| Talk/transcript | "seminar", "talk", "transcript", "podcast", "video", or large transcript paste | Read & Discuss (Reader preprocesses transcript) |
-| Reflection | anything else (e.g., "/hi I had a tough day") | Daily Reflection with input as context |
+Each intent's `mode` field maps to a sub-mode procedure documented below (e.g., `capture-fast-path` → "Capture Fast Path"; `read-and-discuss` and `transcript-read` → the Read & Discuss sub-flow under "If Read"; `meeting-process` → the Meeting flow under "If Act" / "Process Meeting"; `daily-reflection` → the "Daily Reflection" section that begins after the Step menus). Detect the intent from `<context>`, skip the Step 1 menu, and route directly into the matching sub-mode. If no `<context>` is given, fall through to the Weekly Cue Check, then the Step 1 menu.
 
-If no `<context>`, fall through to Weekly Cue Check, then Step 1 menu.
+### Always-on Routing Announcement
+
+Before any agent dispatch under `/hi`, surface a one-line acknowledgment of the routing decision so the user can see the matched intent and the dispatch chain. This is in-band observability: the orchestrator never opts in or out, the user never has to ask. Drift becomes visible because the user reads the announcement on every turn.
+
+Format: `Routing as intents.<name> → <comma-separated agent list>` (use the `agents` list from the matched row in `harness/intents.toml`).
+
+Fallback case. The `intents.reflection` row (priority 0, empty `patterns`) is the catch-all. When it matches because nothing more specific did, mark that explicitly so a "deliberate reflection" (the user said "let's reflect") and a "nothing matched, falling back to reflection" look different to the user:
+
+`No specific intent matched; routing as default reflection → <agents from intents.reflection>`
+
+(Read the agent list from `intents.reflection.agents` — never hardcode it here, or this file drifts from the canonical TOML.)
+
+When the user explicitly invoked the reflection mode (e.g., chose Reflect from the Step 1 menu, or said "let's reflect"), use the standard form (`Routing as intents.reflection → ...`) instead. The fallback marker is only for the implicit-match case.
+
+Semantic match. Some intents fire on user input shape rather than literal phrase — e.g., a date-prefixed factual narrative without analytical question (`/hi 5/4 早上去了 X, 中午吃了 Y`) routes to `intents.capture` even though no literal pattern matches. When the orchestrator decides on shape rather than phrase, the announcement still uses the matched intent name; the matching logic is documented in the per-intent sub-mode section below.
 
 ### Capture Fast Path
 
