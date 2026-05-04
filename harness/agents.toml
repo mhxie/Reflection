@@ -23,6 +23,15 @@
 # `pattern` is annotation only — orchestrator dispatch behavior is governed
 # by harness/models.toml `[profiles.*].invocation` (single / dual / shadow).
 #
+# No-branching contract: `pattern` is documentation. No code path in
+# `scripts/`, no agent prompt, and no orchestrator instruction may branch on
+# this field's value (e.g., `if pattern == "agent-team": auto_parallelize()`).
+# To add behavior keyed on coordination shape, propose a separate field with
+# explicit semantics; do not extend `pattern` with new values to enable a
+# runtime check. The 5-value enum is intentionally a closed set; expansion
+# requires a separate wave with explicit governance. Lint validates the value
+# is in the allowed set; behavioral coupling is forbidden by convention.
+#
 # `used_by` lists intents (`intents.<name>` from `harness/intents.toml`) and
 # commands (`commands.<name>` from `harness/commands.toml`) that dispatch
 # the agent. Empty `used_by` is an orphan signal (lint WARN). Keep this

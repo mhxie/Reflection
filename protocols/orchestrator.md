@@ -24,6 +24,8 @@ The atelier uses five coordination patterns — annotated on every agent (`harne
 
 The `pattern` field is annotation only. The orchestrator's actual dispatch behavior is governed by the existing Dual + Shadow Dispatch table (see § Dual + Shadow Dispatch below) and the agent collaboration matrix; `pattern` is descriptive metadata that lets reviewers and lint reason about dispatch shape without re-deriving it from prose. User-facing visibility of routing decisions for `/hi` is provided by the always-on dispatch announcement (canonical instructions in `.claude/commands/hi.md` → "Always-on Routing Announcement"); the `pattern` field itself is consumed only by review tooling.
 
+No-branching contract: `pattern` is documentation. No code path in `scripts/`, no agent prompt, and no orchestrator instruction may branch on this field's value (e.g., `if pattern == "agent-team": auto_parallelize()`). To add behavior keyed on coordination shape, propose a separate field with explicit semantics; do not extend `pattern` with new values to enable a runtime check. The 5-value enum is intentionally a closed set; expansion requires a separate wave with explicit governance. Lint validates the value is in the allowed set; behavioral coupling is forbidden by convention. A future audit could grep `scripts/`, `.claude/`, and `protocols/` for `pattern == "..."` if the contract slips, but for now prose is sufficient.
+
 ## Session Startup Checks
 
 Before launching agents, the orchestrator performs these checks at session start:

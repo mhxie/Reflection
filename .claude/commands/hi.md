@@ -8,7 +8,7 @@ Your reflection system. Uses a two-step decision tree with `AskUserQuestion` for
 
 Routing rules live in `harness/intents.toml` (canonical). Read that file at session start to know the dispatch shape per intent: trigger phrases (`patterns`), the dispatch sub-mode (`mode`), the agents the orchestrator is expected to dispatch (`agents`), and the matching priority. Do not duplicate those fields here; when adding or changing a routing rule, edit the TOML and let this file reference it.
 
-Each intent's `mode` field maps to a sub-mode procedure documented below (e.g., `capture-fast-path` → "Capture Fast Path"; `read-and-discuss` and `transcript-read` → the Read & Discuss sub-flow under "If Read"; `meeting-process` → the Meeting flow under "If Act" / "Process Meeting"; `daily-reflection` → the "Daily Reflection" section that begins after the Step menus). Detect the intent from `<context>`, skip the Step 1 menu, and route directly into the matching sub-mode. If no `<context>` is given, fall through to the Weekly Cue Check, then the Step 1 menu.
+Each intent's `mode` field maps to a procedure: see the "Sub-mode procedures" table below for the canonical mapping (inline section names + paths to external command files). Detect the intent from `<context>`, skip the Step 1 menu, and route directly into the matching sub-mode. If no `<context>` is given, fall through to the Weekly Cue Check, then the Step 1 menu.
 
 ### Always-on Routing Announcement
 
@@ -25,6 +25,34 @@ Fallback case. The `intents.reflection` row (priority 0, empty `patterns`) is th
 When the user explicitly invoked the reflection mode (e.g., chose Reflect from the Step 1 menu, or said "let's reflect"), use the standard form (`Routing as intents.reflection → ...`) instead. The fallback marker is only for the implicit-match case.
 
 Semantic match. Some intents fire on user input shape rather than literal phrase — e.g., a date-prefixed factual narrative without analytical question (`/hi 5/4 早上去了 X, 中午吃了 Y`) routes to `intents.capture` even though no literal pattern matches. When the orchestrator decides on shape rather than phrase, the announcement still uses the matched intent name; the matching logic is documented in the per-intent sub-mode section below.
+
+### Sub-mode procedures
+
+<!-- sub-mode-procedures-map -->
+
+Once an intent matches, the orchestrator's next step is to read and follow the procedure mapped from the intent's `mode` field. This is what makes the dual path real (`/<name>` direct OR `/hi <natural-language>` both execute the same procedure). For modes pointing at an external procedure file, read the file and execute it as if the user had typed `/<name>` directly. The procedure file's prose is the authority on dispatch shape, write-back, and any approval gates. For inline modes, follow the named section below in this file.
+
+| `mode` | Procedure |
+|---|---|
+| `capture-fast-path` | inline: "Capture Fast Path" section below |
+| `read-and-discuss` | inline: "If Read" / "Read & Discuss" section below |
+| `transcript-read` | inline: "If Read" / Reader auto-preprocesses transcripts |
+| `meeting-process` | inline: "If Act" / "Process Meeting" section below |
+| `daily-reflection` | inline: "Daily Reflection" section below |
+| `decay-scan` | dispatch the Forgetter agent (`.claude/agents/forgetter.md`) with the user-specified `scope_path`; default scope is `$OV/drafts/`. Forgetter writes the decay report and returns a path. |
+| `weekly-review` | `.claude/commands/weekly.md` |
+| `goal-review` | `.claude/commands/review.md` |
+| `decision-journal` | `.claude/commands/decision.md` |
+| `energy-audit` | `.claude/commands/energy-audit.md` |
+| `open-exploration` | `.claude/commands/explore.md` |
+| `curate-inbox` | `.claude/commands/curate.md` |
+| `promote` | `.claude/commands/promote.md` |
+| `lint` | `.claude/commands/lint.md` (script-driven; no agent dispatch) |
+| `introspect` | `.claude/commands/introspect.md` |
+
+<!-- /sub-mode-procedures-map -->
+
+The `<!-- sub-mode-procedures-map -->` markers above bound the table that `scripts/harness_lint.py` uses to verify every intent's `mode` is reachable. Adding a new intent row to `harness/intents.toml` requires adding the corresponding row inside these markers; the lint flags drift.
 
 ### Capture Fast Path
 

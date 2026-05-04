@@ -18,6 +18,9 @@ Claude Code and Codex:
      resolves to an agent in `harness/agents.toml`; pattern values in
      both registries are drawn from the allowed set; `agents.<name>.used_by`
      is consistent with the intents/commands walk; orphans flagged.
+ 10. Every `intents.<name>.mode` is reachable from the Sub-mode procedures
+     map in `.claude/commands/hi.md`; every `intents.<name>.profile_reads`
+     filename exists at `profile/<name>`.
 
 Exit code: 0 if no ERROR-level findings, 1 if any ERROR-level finding.
 argparse returns 2 on CLI usage errors.
@@ -1125,6 +1128,136 @@ def check_intents_registry(
     return findings
 
 
+def check_intents_mode_mapping(
+    intents: dict[str, dict[str, Any]],
+) -> list[Finding]:
+    """Verify every `intents.<name>.mode` is reachable from `.claude/commands/hi.md`.
+
+    The orchestrator only knows what to do with a matched intent if `hi.md`
+    documents the procedure for that mode (either an inline section or a path
+    to an external command file). Without this check, a new intent row could
+    land with no executable instruction — the dual-path drift problem
+    (advertised but unreachable).
+
+    Implementation: parse the block delimited by `<!-- sub-mode-procedures-map -->`
+    and `<!-- /sub-mode-procedures-map -->` markers in `hi.md`, extract every
+    table cell wrapped in backticks, and verify each `intents.*.mode` value
+    appears as a literal token. Marker-bounded so the check is robust to other
+    files re-using the table format.
+    """
+    findings: list[Finding] = []
+    if not intents:
+        return findings
+
+    hi_path = ROOT / ".claude" / "commands" / "hi.md"
+    if not hi_path.exists():
+        return [
+            Finding(
+                "ERROR",
+                "intents-mode-hi-missing",
+                rel(hi_path),
+                "`.claude/commands/hi.md` is missing; cannot verify intent mode mappings",
+            )
+        ]
+    text = _read(hi_path)
+    block_re = re.compile(
+        r"<!--\s*sub-mode-procedures-map\s*-->(.*?)<!--\s*/sub-mode-procedures-map\s*-->",
+        re.DOTALL,
+    )
+    block_match = block_re.search(text)
+    if not block_match:
+        return [
+            Finding(
+                "ERROR",
+                "intents-mode-map-block-missing",
+                rel(hi_path),
+                "missing `<!-- sub-mode-procedures-map -->` ... `<!-- /sub-mode-procedures-map -->` block in hi.md",
+            )
+        ]
+    block_text = block_match.group(1)
+    # Tokens are anything wrapped in backticks within the table block.
+    backtick_re = re.compile(r"`([^`\n]+)`")
+    documented_modes = {m.strip() for m in backtick_re.findall(block_text)}
+
+    for intent_name, entry in sorted(intents.items()):
+        if not isinstance(entry, dict):
+            continue
+        mode = entry.get("mode")
+        if not isinstance(mode, str) or not mode.strip():
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "intents-mode-missing",
+                    "harness/intents.toml",
+                    f"intent `{intent_name}` has no `mode` field",
+                )
+            )
+            continue
+        if mode not in documented_modes:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "intents-mode-unmapped",
+                    "harness/intents.toml",
+                    f"intent `{intent_name}` mode=`{mode}` not in `.claude/commands/hi.md` Sub-mode procedures map",
+                )
+            )
+
+    return findings
+
+
+def check_intents_profile_reads(
+    intents: dict[str, dict[str, Any]],
+) -> list[Finding]:
+    """Verify every `profile_reads` filename exists at `profile/<name>`.
+
+    A renamed `profile/identity.md` would silently degrade routing context —
+    the orchestrator's pre-read step would fail open. ERROR rather than WARN
+    because silent degradation of a routing precondition is harder to debug
+    than a noisy false positive on a fresh clone.
+    """
+    findings: list[Finding] = []
+    if not intents:
+        return findings
+    profile_dir = ROOT / "profile"
+    for intent_name, entry in sorted(intents.items()):
+        if not isinstance(entry, dict):
+            continue
+        reads = entry.get("profile_reads", []) or []
+        if not isinstance(reads, list):
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "intents-profile-reads-shape",
+                    "harness/intents.toml",
+                    f"intent `{intent_name}` `profile_reads` must be a list",
+                )
+            )
+            continue
+        for fname in reads:
+            if not isinstance(fname, str):
+                findings.append(
+                    Finding(
+                        "ERROR",
+                        "intents-profile-reads-shape",
+                        "harness/intents.toml",
+                        f"intent `{intent_name}` `profile_reads` has non-string entry `{fname!r}`",
+                    )
+                )
+                continue
+            target = profile_dir / fname
+            if not target.exists():
+                findings.append(
+                    Finding(
+                        "ERROR",
+                        "intents-profile-reads-missing",
+                        "harness/intents.toml",
+                        f"intent `{intent_name}` references `profile/{fname}` which does not exist",
+                    )
+                )
+    return findings
+
+
 def check_agent_pattern_and_used_by(
     intents: dict[str, dict[str, Any]],
     commands: dict[str, str],
@@ -1326,6 +1459,8 @@ def run_lints() -> list[Finding]:
     harness_agents_raw, _ = _load_toml(ROOT / "harness" / "agents.toml")
     harness_agents_data = (harness_agents_raw or {}).get("agents", {}) or {}
     findings.extend(check_intents_registry(intents, agents, harness_agents_data))
+    findings.extend(check_intents_mode_mapping(intents))
+    findings.extend(check_intents_profile_reads(intents))
     findings.extend(check_agent_pattern_and_used_by(intents, commands))
     findings.sort(key=lambda f: (SEVERITY_ORDER.get(f.severity, 99), f.code, f.where, f.message))
     return findings

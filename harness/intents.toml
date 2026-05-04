@@ -43,6 +43,14 @@
 # that encode current-model assumptions (e.g., model ids, token budgets,
 # specific tool names). Coordination pattern is annotation; lint validates
 # the value set, not behavior.
+#
+# No-branching contract on `pattern`: this field is documentation. No code
+# path in `scripts/`, no agent prompt, and no orchestrator instruction may
+# branch on its value (e.g., `if pattern == "agent-team": auto_parallelize()`).
+# To add behavior keyed on coordination shape, propose a separate field with
+# explicit semantics; do not extend `pattern` with new values to enable a
+# runtime check. The 5-value enum is intentionally a closed set; expansion
+# requires a separate wave with explicit governance.
 
 # Capture also matches on input shape, not only literal phrases: a date-prefixed
 # factual narrative without analytical question (e.g., `5/4 早上去了 X, 中午
@@ -71,14 +79,24 @@ parallel = false
 # Reader + Researcher; Reviewer + Challenger fire later as a write-back gate
 # (not the routing announcement chain). `agents` here = the initial dispatch
 # only, matching what the routing announcement claims is happening.
+#
+# Pattern note: do NOT add bare `"read"` here. Substring matching means a bare
+# `"read"` snags compound phrases that belong to lower-priority intents:
+# `"curate readwise"`, `"curate my reading"`, `"readwise triage"`, `"open
+# threads"` (intents.curate, intents.explore). Use phrase-shaped variants
+# (`"read this"`, `"read it"`, `"let's read"`, `"read with"`) so the reading
+# intent fires on natural-language reading triggers without stealing other
+# intents' phrases.
 [intents.reading]
 patterns = [
     "http://",
     "https://",
     "[[",
-    "read",
-    "discuss",
     "let's read",
+    "read this",
+    "read it",
+    "read with",
+    "discuss",
 ]
 mode = "read-and-discuss"
 agents = ["reader", "researcher"]
