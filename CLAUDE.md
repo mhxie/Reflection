@@ -88,7 +88,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 
 ## Agent Teams
 
-Agent definitions live in `.claude/agents/`; portable role metadata lives in `harness/agents.toml`; model profiles live in `harness/models.toml`. Team (13): Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Scout, Reader, Meeting, Librarian, Privacy-Reviewer, Scribe. For dispatch routing, see `protocols/orchestrator.md`.
+Agent definitions live in `.claude/agents/`; portable role metadata lives in `harness/agents.toml`; model profiles live in `harness/models.toml`. Team (14): Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Scout, Reader, Meeting, Librarian, Privacy-Reviewer, Forgetter, Scribe. For dispatch routing, see `protocols/orchestrator.md`.
 
 ## Runtime Portability
 

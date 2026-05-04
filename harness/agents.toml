@@ -68,6 +68,17 @@ used_by = [
     "commands.system-review",
 ]
 
+[agents.forgetter]
+source = ".claude/agents/forgetter.md"
+model_profile = "cross_validation"
+status = "portable-adapted"
+description = "Active decay scanner over $OV/: redundant / time-stale / contradicted / low-signal. Proposes; never deletes. Filesystem-output via $OV/agent-findings/. Le cercle archetype: The Conservator."
+codex_prompt = "Emulate the Forgetter role using `.claude/agents/forgetter.md` and the runtime adapter protocol. Dispatched as the cross_validation tier (cheap; bindings in profile/models.toml). Hard contract: propose, never delete; write to `$OV/agent-findings/decay-<ts>.md`, return path only."
+pattern = "generator-verifier"
+used_by = [
+    "intents.forget",
+]
+
 [agents.librarian]
 source = ".claude/agents/librarian.md"
 model_profile = "cross_validation"

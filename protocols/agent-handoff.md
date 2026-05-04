@@ -10,7 +10,7 @@ Every agent output that feeds another agent MUST include a metadata block:
 ---handoff---
 from: <agent name>
 to: <agent name>
-type: research-brief | reader-brief | scout-brief | synthesis | review-check | system-review-request | challenge-set | perspective | recommendation | note-operation | meeting-notes | evolution-report
+type: research-brief | reader-brief | scout-brief | synthesis | review-check | system-review-request | challenge-set | perspective | recommendation | note-operation | meeting-notes | evolution-report | decay-report
 confidence: high | medium | low
 gaps: <comma-separated list of what's missing>
 context_tokens: <approximate token count of payload>
@@ -151,6 +151,41 @@ Required fields:
 - `estimated_size`: Approximate byte size of `proposed_content`. If >15KB, must include a split plan.
 - `content_integrity`: (required for compact/merge, omit for create/replace) `{verbatim_preserved: boolean, structures_preserved: boolean, images_preserved: boolean, checklist_passed: boolean}` — self-assessment that the Content Preservation Checklist was run
 - `rationale`: Why this operation was recommended
+
+## Contract: Forgetter → Orchestrator
+
+**Type:** `decay-report`
+
+Forgetter writes a decay report to disk and returns only the path on success; on Write failure it returns the full categorized findings inline so a completed sweep is never lost. Two envelope shapes apply by `mode`:
+
+**Success envelope** (`mode: full | partial`):
+
+Required fields:
+- `from`: `forgetter`
+- `to`: `orchestrator`
+- `type`: `decay-report`
+- `report_path`: absolute path under `$OV/agent-findings/decay-<YYYYMMDD-HHMMSS>.md` (where the agent wrote the report)
+- `mode`: `full` (sweep ran to completion) | `partial` (sweep early-terminated on `max_candidates` or `time_budget_s`)
+- `summary`: `{redundant: N, time_stale: N, contradicted: N, low_signal: N}` — counts per category
+
+The orchestrator surfaces `report_path` to the user; the user reads the report directly. Forgetter does NOT echo report contents inline in the success case — filesystem-output is the contract.
+
+**Failed-write envelope** (`mode: failed-write`):
+
+When the report `Write` to `$OV/agent-findings/decay-<TS>.md` fails (disk full, permission denied, parent directory unwritable), Forgetter MUST return the accumulated findings inline rather than silently dropping the sweep:
+
+Required fields:
+- `from`: `forgetter`
+- `to`: `orchestrator`
+- `type`: `decay-report`
+- `mode`: `failed-write`
+- `write_error`: short string describing the failure
+- `summary`: same shape as success envelope
+- `findings_inline`: full categorized findings with the same per-category fields as the on-disk report, structured by category. The orchestrator surfaces these to the user even though no path was written, and may attempt a retry.
+
+`report_path` is omitted in the failed-write case (no file exists).
+
+**Cross-reference:** the agent-side spec is `.claude/agents/forgetter.md` → "Return Value" and "Failure Modes to Avoid".
 
 ## Contract: Meeting → Orchestrator
 

@@ -22,7 +22,7 @@ The system's narrative register draws from the impressionist atelier (master + s
 | session log | **bench notes** | `$OV/sessions/*.md` |
 | promote (L2 → L4) | **exhibit** / **mount** on the cimaise | `/promote` |
 
-## Le cercle — 13 specialist operators
+## Le cercle — 14 specialist operators
 
 Each agent maps to an impressionist-period archetype. **Dispatch keys are unchanged** (`researcher`, `synthesizer`, etc.); archetype names are for narration only.
 
@@ -40,6 +40,7 @@ Each agent maps to an impressionist-period archetype. **Dispatch keys are unchan
 | `meeting` | The Stenographer | takes the bench notes verbatim |
 | `evolver` | The Master of the Atelier | system meta — runs the atelier itself |
 | `privacy-reviewer` | The Steward | keeps confidences from the public exhibition |
+| `forgetter` | The Conservator | preserves the œuvre by removing decay, not by hoarding |
 | `scribe` | The Typewriter | records what is dictated, no editorial hand |
 
 ## Mode

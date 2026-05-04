@@ -123,6 +123,27 @@ pattern = "agent-team"
 expected_subagent_count = 2
 parallel = true
 
+# Forget routes to a Forgetter decay sweep over a bounded scope. Default
+# scope is $OV/drafts/ unless the user names a different path. Forgetter
+# proposes; never deletes. See .claude/agents/forgetter.md.
+[intents.forget]
+patterns = [
+    "forget",
+    "decay",
+    "scan for decay",
+    "what should I forget",
+    "clean up notes",
+    "prune",
+    "scan my drafts",
+]
+mode = "decay-scan"
+agents = ["forgetter"]
+profile_reads = []
+priority = 25
+pattern = "generator-verifier"
+expected_subagent_count = 1
+parallel = false
+
 # Fallback: matches anything not picked up by a higher-priority intent.
 # Empty patterns + priority 0 makes this the catch-all.
 [intents.reflection]

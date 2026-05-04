@@ -19,7 +19,7 @@ The atelier uses five coordination patterns — annotated on every agent (`harne
 | Orchestrator-subagent | Lead agent dispatches bounded subtasks to specialist subagents and synthesizes their returns. | Researcher / Curator / Synthesizer dispatched from `/hi` reflection mode. |
 | Generator-verifier | A generator drafts; a verifier (or pair) checks the output as a gate before commit. | Reviewer + Challenger gating Curator output; privacy-reviewer dual-pair in `/system-review` Step 1c. |
 | Agent-team | Multiple persistent autonomous workers — often multi-instance and parallel — share a hub but act independently. | Reader hub (multi-lens), Scout multi-direction (2-5 instances). |
-| Shared-state | Agents read and write a common store rather than passing context turn-by-turn. | Currently unused; reserved for future cross-agent coordination (e.g., Forgetter, cross-session findings). |
+| Shared-state | Agents read and write a common store rather than passing context turn-by-turn. | Currently unused; reserved for future cross-agent coordination (e.g., a shared TrustRank store, cross-session findings cache). |
 | Solo | Single-agent dispatch with no coordination. | Scribe verbatim capture (`mechanical_capture` profile). |
 
 The `pattern` field is annotation only. The orchestrator's actual dispatch behavior is governed by the existing Dual + Shadow Dispatch table (see § Dual + Shadow Dispatch below) and the agent collaboration matrix; `pattern` is descriptive metadata that lets reviewers and lint reason about dispatch shape without re-deriving it from prose. User-facing visibility of routing decisions for `/hi` is provided by the always-on dispatch announcement (canonical instructions in `.claude/commands/hi.md` → "Always-on Routing Announcement"); the `pattern` field itself is consumed only by review tooling.
@@ -184,6 +184,16 @@ The user can request these actions during or after any session:
 | "Add a new framework for X" | Create framework file | Evolver |
 | "Change how [command] works" | Modify command | Evolver |
 
+### Decay Operations (→ Forgetter)
+Bounded decay sweeps over `$OV/`. Forgetter never deletes; it writes a decay report to `$OV/agent-findings/decay-<ts>.md` and returns only the path. The orchestrator surfaces the report; the user reads it and decides. Every dispatch must specify `scope_path` (one directory under `$OV/`); `max_candidates` defaults to 20 and `time_budget_s` defaults to 300. See `.claude/agents/forgetter.md`.
+
+| User Says | Action | Agent |
+|-----------|--------|-------|
+| "Scan my drafts for decay" | Dispatch Forgetter with `scope_path: $OV/drafts/`. Surface the decay report path. | Forgetter |
+| "What can I prune in my notes about X?" | Dispatch Forgetter with `scope_path` set to the topic-relevant directory (typically `$OV/drafts/` or `$OV/research/`). Surface report. | Forgetter |
+| "Are any of my wiki entries contradicted by newer notes?" | Dispatch Forgetter with `scope_path: $OV/wiki/`. Forgetter only flags Contradicted on L4; report routes Contradicted items to Challenger to probe before any rewrite. | Forgetter → Challenger |
+| "Find redundant notes I should compact" | Dispatch Forgetter with the user's `scope_path` of choice (or ask). Redundant items in the report route to Curator after user approval. | Forgetter → Curator |
+
 ### Capture Operations (→ Scribe)
 Cheap-tier verbatim recording. Dispatched on the `mechanical_capture` profile. The orchestrator MUST NOT transcribe raw user content itself — that burns `core_intelligence` on mechanical I/O. See `.claude/agents/scribe.md` for operation contracts.
 
@@ -218,7 +228,10 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Review → Librarian** | Reviewer flags weak grounding in a topic area | Reviewer → Librarian recommends resources to fill the gap | Closes knowledge gaps |
 | **Thinker → Challenger** | Thinker applies a framework | Challenger questions whether the framework fits | Prevents lazy framework application |
 | **Librarian → Researcher** | Librarian recommends a resource | Researcher checks if user already has notes on it | Avoids recommending what user already knows |
-| **Researcher → Curator** | Researcher finds many overlapping notes on same topic | Researcher flags → Curator proposes compaction | Proactive note hygiene |
+| **Researcher → Curator** (focused-session default) | Researcher finds many overlapping notes during a focused session about ONE topic; user wants a quick compaction suggestion ("compact my notes on X") | Researcher flags → Curator proposes compaction on the specific overlap set | Proactive note hygiene with low ceremony — the right call when the user is already mid-flow on the topic |
+| **Researcher → Forgetter** (corpus-sweep escalation) | User is doing a corpus cleanup / sweep session and wants systematic decay analysis on a broader scope ("find what I should forget", "scan my drafts for decay"), OR Researcher finds 3+ overlapping notes and the user explicitly asks to widen the lens beyond the current topic | Researcher's overlap signal (or the user's sweep intent) → orchestrator dispatches Forgetter with `scope_path` set to the topic or working directory → Forgetter writes decay report citing all four categories with evidence → orchestrator surfaces report path → user decides on per-item Curator compaction or other action | Bounded, evidence-cited sweep across categories beyond redundancy; the right call when the user wants thoroughness over speed |
+| **Forgetter → Curator** | Forgetter's decay report flags Redundant items | Orchestrator surfaces report → user approves redundant set → Curator drafts compaction → orchestrator writes after approval | Decay analysis becomes note hygiene; verbatim claim preservation enforced at Curator gate |
+| **Forgetter → Challenger** | Forgetter's decay report flags Contradicted items in `$OV/wiki/` | Orchestrator surfaces report → Challenger probes whether contradiction is genuine → if confirmed, Curator rewrites the wiki entry (claim update + Revision Log row) | Wiki entries get a verifier pair before mutation; Forgetter detects, Challenger probes, Curator rewrites |
 | **Meeting → Curator** | User approves meeting notes for saving | Meeting output → Curator drafts local note → orchestrator writes after approval | Turns transcript into permanent note |
 | **Reader → Synthesizer** | Multiple Reader lenses complete | Synthesizer combines all lens briefs into unified report | Multi-dimensional reading analysis |
 | **Reader → Challenger** | Reader surfaces a claim worth questioning | Challenger probes the claim against user's existing beliefs | Deepens engagement with the text |
@@ -313,7 +326,7 @@ During any session, actively look for these signals and chain agents:
 |--------|--------|
 | Challenger surfaces a contradiction with an old note | Offer: "Want to update [[Note]]?" → Curator |
 | Reviewer scores < 7 on a dimension | Flag to Evolver for system improvement |
-| Researcher finds 3+ notes on same topic | Suggest: "These could be compacted" → Curator |
+| Researcher finds 3+ notes on same topic | **Default (focused session):** suggest "These could be compacted" → Curator on the overlap set. **Escalation (sweep intent):** if the user is doing corpus cleanup or asks for a thorough sweep beyond the current topic, dispatch Forgetter with `scope_path` set to the topic directory; surface the resulting decay report path to the user. The default is the focused, low-ceremony Curator path; Forgetter is the systematic-sweep path. |
 | Thinker applies a framework | Route to Challenger for cross-validation |
 | Librarian recommends resources | Route to Researcher to check existing notes |
 | Any session scores low on surprise | Next session: Researcher should search older/deeper notes |
