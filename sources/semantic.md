@@ -63,7 +63,7 @@ JSON (`--format json`): a list of objects with `path`, `score`, `matched_tokens`
 | Searching for a concept that might be phrased many ways | `semantic.py query "<concept>"` |
 | `/explore` — surfacing forgotten connections | `semantic.py query` with a broad concept from today's context |
 | `/introspect` — finding curiosity vectors that aren't named as goals | `semantic.py query` after lexical grep passes |
-| `/reflect` forgotten-connection step | `semantic.py query` with a concept from the current conversation |
+| `/hi` forgotten-connection step | `semantic.py query` with a concept from the current conversation |
 | `/energy-audit` — searching for affective states | `semantic.py query "tired exhausted drained"` |
 | `/decision` — adjacent prior thinking | `semantic.py query` alongside lexical grep |
 

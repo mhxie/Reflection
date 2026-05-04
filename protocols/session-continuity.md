@@ -50,7 +50,7 @@ Sessions leave artifacts that future sessions can read:
 
 | Command | Recommended Frequency | Why |
 |---------|---------------------|-----|
-| `/project:reflect` | Daily or every 2-3 days | Maintains awareness of current thinking |
+| `/project:hi` | Daily or every 2-3 days | Maintains awareness of current thinking |
 | `/project:weekly` | Weekly (Sunday or Monday) | Energy and attention patterns need a week of data |
 | `/project:review` | Quarterly (full) / Monthly (light pulse via `/weekly`) | Full review is quarterly; light pulse is monthly. See `.claude/commands/review.md` → Cadence. |
 | `/project:decision` | As needed | When facing a real decision |

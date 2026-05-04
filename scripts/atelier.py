@@ -7,8 +7,8 @@ a documented custom project slash-command format, so this helper gives Codex a
 stable command discovery surface:
 
     python3 scripts/atelier.py commands
-    python3 scripts/atelier.py prompt reflect
-    python3 scripts/atelier.py source reflect
+    python3 scripts/atelier.py prompt hi
+    python3 scripts/atelier.py source hi
     python3 scripts/atelier.py agents
     python3 scripts/atelier.py agent-prompt researcher
 """
@@ -63,6 +63,24 @@ def require_command(commands: dict[str, dict[str, Any]], name: str) -> dict[str,
         raise SystemExit(f"atelier: unknown command `{name}`. Known commands: {known}") from None
     if not isinstance(command, dict):
         raise SystemExit(f"atelier: command `{name}` is not a table")
+    # Resolve aliases: `status = "alias"` with `alias_of = "<target>"` redirects
+    # source/codex_prompt lookups to the target entry. The alias's own row
+    # remains visible in `commands` listings as a documentation breadcrumb.
+    if command.get("status") == "alias":
+        target_name = command.get("alias_of")
+        if not isinstance(target_name, str) or not target_name:
+            raise SystemExit(f"atelier: command `{name}` is `status = \"alias\"` but missing `alias_of`")
+        if target_name == name:
+            raise SystemExit(f"atelier: command `{name}` aliases itself")
+        try:
+            target = commands[target_name]
+        except KeyError:
+            raise SystemExit(f"atelier: command `{name}` aliases unknown command `{target_name}`") from None
+        if not isinstance(target, dict):
+            raise SystemExit(f"atelier: alias target `{target_name}` is not a table")
+        if target.get("status") == "alias":
+            raise SystemExit(f"atelier: alias chains are not allowed (`{name}` -> `{target_name}` -> alias)")
+        return target
     return command
 
 
@@ -339,8 +357,8 @@ def build_parser() -> argparse.ArgumentParser:
               python3 scripts/atelier.py status
               python3 scripts/atelier.py commands
               python3 scripts/atelier.py commands --category session --json
-              python3 scripts/atelier.py prompt reflect -- "I had a tough day"
-              python3 scripts/atelier.py run reflect "I had a tough day"
+              python3 scripts/atelier.py prompt hi -- "I had a tough day"
+              python3 scripts/atelier.py run hi "I had a tough day"
               python3 scripts/atelier.py run lint --exec
               python3 scripts/atelier.py source lint --path-only
               python3 scripts/atelier.py agents

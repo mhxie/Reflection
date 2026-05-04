@@ -5,7 +5,7 @@ system. The core idea is to separate four concerns:
 
 | Concern | Owned by | Example |
 |---|---|---|
-| Workflow | `protocols/`, command specs | `/reflect`, `/weekly`, `/review` |
+| Workflow | `protocols/`, command specs | `/hi`, `/weekly`, `/review` |
 | Role | `harness/agents.toml`, agent specs | Researcher, Synthesizer, Reviewer |
 | Capability | `harness/capabilities.toml` | `semantic_query`, `write_local_file`, `web_search` |
 | Runtime and model | adapters, local CLI config + `profile/models.toml` (gitignored) | one runtime per call, model bound per profile |

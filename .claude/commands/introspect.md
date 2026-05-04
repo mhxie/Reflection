@@ -157,7 +157,7 @@ Present divergences to the user — these are the interesting findings.
 
 After writing profile files, emit a session log:
 1. `Bash: uv run scripts/session_log.py --type introspect --duration <minutes>`
-2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
+2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `hi.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
 ### Step 7: Report
 
@@ -166,4 +166,4 @@ Tell the user what you found:
 - Key themes identified
 - **Taste and curiosity discoveries** (the new part)
 - Any divergences between layers
-- Suggest running `/reflect` to start using the profile
+- Suggest running `/hi` to start using the profile

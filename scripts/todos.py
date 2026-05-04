@@ -12,7 +12,7 @@ States (markdown markers, GTD only):
 
 Reflection-bullet closure marker (no checkbox in reflection bullets):
   Items prefixed with "DONE <date>: " or "DONE: " are excluded from open scans.
-  /reflect's wrap-up writes this prefix when the user confirms closure mid-session.
+  /hi's wrap-up writes this prefix when the user confirms closure mid-session.
 
 Inline metadata (optional, anywhere on the item line):
   due:YYYY-MM-DD   priority:Pn (P0-P3)   area:#tag
@@ -29,7 +29,7 @@ Subcommands:
   list --json                       structured output
   stale [--days 30]                 items >=N days no movement
   closure-candidates [--days 14]    flag items with closure language nearby
-  digest [--days 7]                 concise output for /reflect Step 0
+  digest [--days 7]                 concise output for /hi Step 0
 
 Paths are project-relative. Run from repo root.
 """
@@ -464,7 +464,7 @@ def cmd_closure_candidates(args: argparse.Namespace) -> int:
 
 
 def cmd_digest(args: argparse.Namespace) -> int:
-    """Concise output for /reflect Step 0."""
+    """Concise output for /hi Step 0."""
     last_ref = find_last_reflection()
     todos = collect_open_todos(load_age=True)
     cands = detect_closure_candidates(todos, since_days=args.days)
@@ -540,7 +540,7 @@ def main(argv: list[str] | None = None) -> int:
     p_close.set_defaults(func=cmd_closure_candidates)
 
     p_digest = sub.add_parser(
-        "digest", help="Concise digest for /reflect Step 0."
+        "digest", help="Concise digest for /hi Step 0."
     )
     p_digest.add_argument("--days", type=int, default=7)
     p_digest.set_defaults(func=cmd_digest)

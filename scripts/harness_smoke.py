@@ -71,10 +71,10 @@ def check_filtered_json() -> None:
 
 
 def check_prompts_and_sources() -> None:
-    prompt = run(["scripts/atelier.py", "prompt", "reflect", "--", "smoke context"])
-    expect(".claude/commands/reflect.md" in prompt, "reflect prompt missing source path")
-    expect("AGENTS.md" in prompt, "reflect prompt missing AGENTS.md instruction")
-    expect("smoke context" in prompt, "reflect prompt missing context")
+    prompt = run(["scripts/atelier.py", "prompt", "hi", "--", "smoke context"])
+    expect(".claude/commands/hi.md" in prompt, "hi prompt missing source path")
+    expect("AGENTS.md" in prompt, "hi prompt missing AGENTS.md instruction")
+    expect("smoke context" in prompt, "hi prompt missing context")
 
     agent_prompt = run(["scripts/atelier.py", "agent-prompt", "reviewer", "--", "smoke review"])
     expect(".claude/agents/reviewer.md" in agent_prompt, "reviewer prompt missing source path")
@@ -88,8 +88,8 @@ def check_prompts_and_sources() -> None:
 
 
 def check_run_dry() -> None:
-    prompt = run(["scripts/atelier.py", "run", "reflect", "smoke context", "--print"])
-    expect(".claude/commands/reflect.md" in prompt, "run --print prompt missing source path")
+    prompt = run(["scripts/atelier.py", "run", "hi", "smoke context", "--print"])
+    expect(".claude/commands/hi.md" in prompt, "run --print prompt missing source path")
     expect("AGENTS.md" in prompt, "run --print prompt missing AGENTS.md instruction")
     expect("smoke context" in prompt, "run --print prompt missing context")
 

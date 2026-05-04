@@ -179,7 +179,7 @@ Fix any issues they surface before writing the output file.
 
 After writing the PRM audit file, emit a session log:
 1. `Bash: uv run scripts/session_log.py --type prm --duration <minutes>`
-2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
+2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `hi.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
 ## Wrap Up
 

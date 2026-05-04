@@ -70,25 +70,25 @@ High-frequency operations. Lift these directly instead of re-deriving from `prot
 | Source spec for a command | `python3 scripts/atelier.py source <name>` |
 | Run a workflow | `python3 scripts/atelier.py run <name>` |
 
-For project slash commands such as `/reflect`, `/review`, `/weekly`, and
+For project slash commands such as `/hi`, `/review`, `/weekly`, and
 `/lint`, read the corresponding `.claude/commands/<name>.md` file and run the
-workflow under this adaptation table.
+workflow under this adaptation table. (`/reflect` is an alias for `/hi`.)
 
 To discover command specs from Codex:
 
 ```bash
 python3 scripts/atelier.py status
 python3 scripts/atelier.py commands
-python3 scripts/atelier.py prompt reflect
-python3 scripts/atelier.py source reflect --path-only
+python3 scripts/atelier.py prompt hi
+python3 scripts/atelier.py source hi --path-only
 ```
 
 To launch a workflow directly (Codex parity for Claude Code's slash commands):
 
 ```bash
-python3 scripts/atelier.py run reflect            # interactive TUI (fresh session)
+python3 scripts/atelier.py run hi                 # interactive TUI (fresh session)
 python3 scripts/atelier.py run lint --exec        # non-interactive
-python3 scripts/atelier.py run reflect "context"
+python3 scripts/atelier.py run hi "context"
 python3 scripts/atelier.py run promote --resume   # continue last session (resume_friendly only)
 python3 scripts/atelier.py run promote --fork     # branch from last session without mutating it
 ```

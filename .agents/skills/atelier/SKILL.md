@@ -1,6 +1,6 @@
 ---
 name: atelier
-description: Use when working in the Atelier repo, especially to run Atelier workflows such as /reflect, /weekly, /review, /introspect, /lint, /promote, or to adapt Claude Code command specs for Codex.
+description: Use when working in the Atelier repo, especially to run Atelier workflows such as /hi (universal entry; /reflect alias), /weekly, /review, /introspect, /lint, /promote, or to adapt Claude Code command specs for Codex.
 ---
 
 # Atelier

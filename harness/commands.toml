@@ -4,13 +4,28 @@
 # Codex uses this manifest plus `scripts/atelier.py prompt <command>` to
 # discover the same workflows without depending on undocumented custom slash
 # command behavior.
+#
+# Alias convention: when a command is renamed, the new name owns the primary
+# entry (full source / description / codex_prompt). The old name keeps a
+# minimal block with `alias_of = "<new-name>"` and `status = "alias"`. The
+# alias's `source` points to a short shim file under `.claude/commands/` so
+# that `scripts/atelier.py source <old>` and `prompt <old>` keep working as
+# muscle-memory grace; runtimes should resolve the alias and run the target.
+
+[commands.hi]
+source = ".claude/commands/hi.md"
+category = "session"
+status = "portable-adapted"
+description = "Universal entry point — intent router for reflection, planning, action, reading, learning, capture, and more."
+codex_prompt = "Run the /hi workflow using `.claude/commands/hi.md` and the runtime adapter protocol."
 
 [commands.reflect]
 source = ".claude/commands/reflect.md"
 category = "session"
-status = "portable-adapted"
-description = "Primary menu for reflection, planning, action, reading, and learning sessions."
-codex_prompt = "Run the /reflect workflow using `.claude/commands/reflect.md` and the runtime adapter protocol."
+status = "alias"
+alias_of = "hi"
+description = "Alias of /hi."
+codex_prompt = "Run the /hi workflow using `.claude/commands/hi.md` and the runtime adapter protocol."
 
 [commands.weekly]
 source = ".claude/commands/weekly.md"

@@ -654,7 +654,9 @@ def check_commands(commands: dict[str, str]) -> list[Finding]:
                 )
             )
         prompt = str(entry.get("codex_prompt", ""))
-        if source and str(source) not in prompt:
+        if entry.get("status") == "alias":
+            pass  # alias prompts intentionally reference the target's source, not their own
+        elif source and str(source) not in prompt:
             findings.append(
                 Finding(
                     "WARN",
@@ -763,7 +765,7 @@ def check_atelier_skill() -> list[Finding]:
             Finding("ERROR", "skill-name", rel(path), "skill frontmatter must set `name: atelier`")
         )
     description = fields.get("description", "")
-    if not description or "/reflect" not in description:
+    if not description or "/hi" not in description:
         findings.append(
             Finding(
                 "ERROR",

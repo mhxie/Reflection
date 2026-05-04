@@ -83,12 +83,12 @@ On approval:
 
 ### 5. Bridge to Reading (optional)
 
-If the user wants to read something now, transition to `/reflect → Read` with the selected item.
+If the user wants to read something now, transition to `/hi → Read` with the selected item.
 
 ## Integration Points
 
 - **`/weekly`** — (planned) pulls `#digest` tagged items from Readwise as a "Reading Digest" section
-- **`/reflect → Read`** — (planned) surfaces `#deep-read` tagged items as reading suggestions
+- **`/hi → Read`** — (planned) surfaces `#deep-read` tagged items as reading suggestions
 - **`profile/reader_persona.md`** — if it exists, the triage agent can reference it for taste calibration alongside goals
 
 ## Adding New Sources

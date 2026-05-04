@@ -82,24 +82,24 @@ Claude Code:
 ```bash
 claude                # open Claude Code in the project
 /introspect           # build profile/ from $OV/daily-notes/ — required before most session commands
-/reflect              # session menu
+/hi                   # universal entry point — session menu (`/reflect` is an alias)
 ```
 
 Codex (functional but less exercised than Claude Code):
 
 ```bash
-python3 scripts/atelier.py run reflect            # fresh Codex TUI on /reflect
+python3 scripts/atelier.py run hi                 # fresh Codex TUI on /hi
 python3 scripts/atelier.py run lint --exec        # one-shot, no TUI
 python3 scripts/atelier.py run promote --resume   # continue most recent session
 ```
 
 Codex reads `AGENTS.md`, picks up the repo-scoped skill under `.agents/skills/`, then adapts `.claude/commands/*.md` through `protocols/runtime-adapters.md`. Several Claude-specific affordances (notably `AskUserQuestion` interactive menus) are emulated rather than native under Codex.
 
-Reflection-type commands (`/reflect`, `/weekly`, `/review`, `/decision`, etc.) default to fresh sessions because reusing a prior session pollutes the new reflection. Continuation-friendly commands (`/promote`) are marked `resume_friendly = true` in `harness/commands.toml`.
+Reflection-type commands (`/hi`, `/weekly`, `/review`, `/decision`, etc.) default to fresh sessions because reusing a prior session pollutes the new reflection. Continuation-friendly commands (`/promote`) are marked `resume_friendly = true` in `harness/commands.toml`.
 
 ## Sessions
 
-Type `/reflect` to get a menu of everything you can do:
+Type `/hi` to get a menu of everything you can do:
 
 | Mode | What happens |
 |------|-------------|
@@ -184,7 +184,7 @@ Key design choices:
 
 ## Vocabulary
 
-The system has a narrative register from the impressionist atelier — *le cercle* (the agents), *the Painter* (you), *the œuvre* (your accumulating body of work), *impression* / *étude* / *tableau* / *série* / *sitting* / *sketch* / *commission*. The register lives in conversation and identity. **Operational keys are unchanged**: slash commands stay `/reflect`, `/promote`, `/lint`, etc.; agent dispatch keys stay `researcher`, `synthesizer`, …; file paths under `$OV/` stay as documented above. Full glossary: `CLAUDE.md` § Vocabulary and `protocols/atelier.md`.
+The system has a narrative register from the impressionist atelier — *le cercle* (the agents), *the Painter* (you), *the œuvre* (your accumulating body of work), *impression* / *étude* / *tableau* / *série* / *sitting* / *sketch* / *commission*. The register lives in conversation and identity. **Operational keys are unchanged**: slash commands stay `/hi`, `/promote`, `/lint`, etc.; agent dispatch keys stay `researcher`, `synthesizer`, …; file paths under `$OV/` stay as documented above. Full glossary: `CLAUDE.md` § Vocabulary and `protocols/atelier.md`.
 
 ## License
 

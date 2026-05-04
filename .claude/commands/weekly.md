@@ -2,13 +2,13 @@
 
 Run a structured weekly review covering the past 7 days. Deeper than daily reflection, lighter than a full goal review.
 
-Daily `/reflect` does not run every day. `/weekly` is also the catch-all for any signals that didn't make it into a daily reflection — Apple Health, support pulse, dining, health-cadence checks, key events. Treat it as the weekly checkpoint, not just a synthesis of dailies.
+Daily `/hi` does not run every day. `/weekly` is also the catch-all for any signals that didn't make it into a daily reflection — Apple Health, support pulse, dining, health-cadence checks, key events. Treat it as the weekly checkpoint, not just a synthesis of dailies.
 
 ## Run Cue
 
 When to invoke:
 - **Default**: weekly, on Sunday evening or Monday morning local time.
-- **Soft cue / Hard floor**: the orchestrator surfaces a cue inside `/reflect` based on weekly staleness. See `.claude/commands/reflect.md` → "Weekly Cue Check" for the authoritative thresholds and routing logic. This file does not duplicate them, so the cue can be tuned in one place.
+- **Soft cue / Hard floor**: the orchestrator surfaces a cue inside `/hi` based on weekly staleness. See `.claude/commands/hi.md` → "Weekly Cue Check" for the authoritative thresholds and routing logic. This file does not duplicate them, so the cue can be tuned in one place.
 - **Manual**: user can invoke directly anytime.
 
 ## Prerequisites
@@ -49,7 +49,7 @@ The data feeds directly into Energy Audit (sleep / RHR / HRV → recovery; steps
 
 **Do not invent data. If user doesn't recall, mark `(none surfaced)` and move on.** Backfill is best-effort.
 
-Daily `/reflect` may not run every day. Detect missing days from the past 7 by checking `$OV/reflections/`:
+Daily `/hi` may not run every day. Detect missing days from the past 7 by checking `$OV/reflections/`:
 
 ```
 # macOS/BSD date syntax; Linux: replace `date -v-${d}d +%Y-%m-%d` with `date -d "${d} days ago" +%Y-%m-%d`
@@ -59,10 +59,10 @@ Bash: for d in $(seq 0 6); do date_str=$(date -v-${d}d +%Y-%m-%d); ls "$OV"/refl
 Read the daily notes for any missing days (`$OV/daily-notes/<date>.md`) so context is loaded, then prompt the user with 3 light **week-level** questions (do not force per-day reconstruction):
 
 1. **Support pulse (week)**: 这 7 天里, 有哪些有意义的互动 (1:1 / 家人 / 朋友 / 同事) 没记到 daily reflection 里? 谁? 什么类型 (E / I / Inf / A)? 有没有新连接?
-2. **Dining (week)**: 这 7 天有去新餐厅 / 重访旧餐厅没记到 dining log 的吗? (餐厅 + **就餐日期 YYYY-MM-DD** + 评分 + **再去? Y/N/Maybe** + 健康 flag + 必点 + Credit used). Backfill spans multiple days, so the Date column must hold the actual visit date — not the session date — otherwise the date-keyed dining log and credit-cycle tracking break. 评分 + 再去 are mandatory per the `/reflect` Dining Pulse rule; do not append a row without both.
+2. **Dining (week)**: 这 7 天有去新餐厅 / 重访旧餐厅没记到 dining log 的吗? (餐厅 + **就餐日期 YYYY-MM-DD** + 评分 + **再去? Y/N/Maybe** + 健康 flag + 必点 + Credit used). Backfill spans multiple days, so the Date column must hold the actual visit date — not the session date — otherwise the date-keyed dining log and credit-cycle tracking break. 评分 + 再去 are mandatory per the `/hi` Dining Pulse rule; do not append a row without both.
 3. **Signals**: 这 7 天有哪些值得标记的事 (wins / drains / health observations / 决策 / 突发) 没进入 reflection 流?
 
-Captured items fold into `## Missed-Day Backfill` (Support pulse / Dining / Signals sub-bullets); significant drains or wins may also surface in `## Energy Map`. Dining items additionally append to the dining log per the `/reflect` Dining Pulse rule.
+Captured items fold into `## Missed-Day Backfill` (Support pulse / Dining / Signals sub-bullets); significant drains or wins may also surface in `## Energy Map`. Dining items additionally append to the dining log per the `/hi` Dining Pulse rule.
 
 ### 3. Health Follow-Up Due
 
@@ -133,7 +133,7 @@ Based on the review:
 - 未提供: <fields user couldn't pull>
 
 ## Missed-Day Backfill
-- Days without `/reflect`: <list of YYYY-MM-DD>
+- Days without `/hi`: <list of YYYY-MM-DD>
 - **Support pulse (week)**: <people / type / new connection / direction>
 - **Dining (week)**: <restaurants / scores / 健康 flags / 必点>
 - **Signals**: <wins / drains / health obs / decisions surfaced retroactively>
@@ -187,7 +187,7 @@ Based on the review:
 
 After writing the weekly review file, emit a session log:
 1. `Bash: uv run scripts/session_log.py --type weekly --duration <minutes>`
-2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
+2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `hi.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
 ## Wrap Up
 

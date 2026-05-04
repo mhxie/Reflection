@@ -43,18 +43,18 @@ Inspired by the general lesson: a behavioral workaround for an older model in a 
 
 | Rule | Location | Current Value | Re-test When |
 |------|----------|--------------|-------------|
-| Reflections loaded at session start | session-continuity.md, reflect.md | Last 3 | Context window doubles |
-| Daily notes loaded | reflect.md, session-continuity.md | Last 3-7 | Context window doubles |
-| Profile token estimate | reflect.md, session-continuity.md | 3-5K identity, 5-10K directions | Profile format changes significantly |
-| Agent prompt + protocols budget | reflect.md, session-continuity.md | ~2K | Agent definitions grow beyond budget |
-| Session log excerpt budget | reflect.md, session-continuity.md | ~500-1K | Session logs grow in scope |
+| Reflections loaded at session start | session-continuity.md, hi.md | Last 3 | Context window doubles |
+| Daily notes loaded | hi.md, session-continuity.md | Last 3-7 | Context window doubles |
+| Profile token estimate | hi.md, session-continuity.md | 3-5K identity, 5-10K directions | Profile format changes significantly |
+| Agent prompt + protocols budget | hi.md, session-continuity.md | ~2K | Agent definitions grow beyond budget |
+| Session log excerpt budget | hi.md, session-continuity.md | ~500-1K | Session logs grow in scope |
 
 ### Temporal Thresholds
 
 | Rule | Location | Current Value | Re-test When |
 |------|----------|--------------|-------------|
-| Profile staleness warning | CLAUDE.md, reflect.md, review.md | 7 days | User data shows profiles change faster/slower |
-| Semantic search recency window | reflect.md | 7 days for recent, 3+ months for forgotten | Embedding index makes recency less important |
+| Profile staleness warning | CLAUDE.md, hi.md, review.md | 7 days | User data shows profiles change faster/slower |
+| Semantic search recency window | hi.md | 7 days for recent, 3+ months for forgotten | Embedding index makes recency less important |
 | L2 staleness thresholds | staleness.py | dormant=45d, stale=90d, promote=180d+2refs | First real corpus ages past 90 days; tune with actual archival decisions |
 | Meta-reflection trigger | evolver.md (principle 8 pruning trigger) | Every 5 sessions | Session volume data |
 

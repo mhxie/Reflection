@@ -71,14 +71,14 @@ Launch agents based on command type:
 
 | Command | Agents Launched |
 |---------|----------------|
-| `/project:reflect` | Researcher + Challenger + 2-5× Scout (parallel) |
+| `/project:hi` | Researcher + Challenger + 2-5× Scout (parallel) |
 | `/project:review` | Researcher (then Synthesizer) |
 | `/project:weekly` | Researcher |
 | `/project:decision` | Researcher + Thinker (parallel) |
 | `/project:explore` | Researcher |
 | `/project:energy-audit` | Researcher (include amenity floor check) |
 | `/project:prm` | Researcher (daily-note scanning for DL0-1 mentions) + Challenger (vulnerability probing) |
-| Read mode (via `/reflect`) | Reader (1-4 instances by lens) + Researcher + Scout + Thinker (parallel) |
+| Read mode (via `/hi`) | Reader (1-4 instances by lens) + Researcher + Scout + Thinker (parallel) |
 | Work meeting transcript | Meeting (Executive mode — action items + decisions) |
 | `/project:curate` | Ad-hoc agent (goal-aware Readwise triage — see `commands/curate.md`) |
 

@@ -18,7 +18,7 @@ The system's narrative register draws from the impressionist atelier (master + s
 | long-running theme | **série** | (e.g., Monet's haystacks across years) |
 | archive | **carnets** | `$OV/archive/` |
 | Readwise inbox | **rough drawer** | `$OV/readwise/` |
-| session | **sitting** | (a `/reflect` invocation) |
+| session | **sitting** | (a `/hi` invocation) |
 | session log | **bench notes** | `$OV/sessions/*.md` |
 | promote (L2 → L4) | **exhibit** / **mount** on the cimaise | `/promote` |
 

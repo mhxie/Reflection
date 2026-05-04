@@ -123,14 +123,14 @@ After discussing, write a review file:
 
 After writing the review file, emit a session log:
 1. `Bash: uv run scripts/session_log.py --type review --duration <minutes>`
-2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
+2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `hi.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
 ## Wrap Up
 
 The review file in `$OV/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them. Tell the user the review has been saved and where to find it.
 
 Suggest follow-ups:
-- `/reflect` for daily check-ins between reviews
+- `/hi` for daily check-ins between reviews
 - `/weekly` for lighter weekly check-ins
 - `/decision` if any goal needs a decision about continuing or stopping
 

@@ -30,7 +30,7 @@ Map the issue to its source:
 | Missed goals | Profile coverage | `.claude/commands/introspect.md` |
 | Wrong questions | Challenger taxonomy | `.claude/agents/challenger.md` |
 | Irrelevant frameworks | Thinker selection | `.claude/agents/thinker.md` |
-| Session feels flat | Command flow | `.claude/commands/reflect.md` |
+| Session feels flat | Command flow | `.claude/commands/hi.md` |
 | System inconsistency | Protocol drift | `protocols/*.md` |
 | Wrong tone | Persona rules | `CLAUDE.md` |
 | Stale harness assumption | Model/API/context assumptions | `protocols/harness-assumptions.md` |

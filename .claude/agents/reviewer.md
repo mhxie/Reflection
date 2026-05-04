@@ -51,7 +51,7 @@ Read all changed files in **full** (not just the diff). Walk the global consiste
 - [ ] No circular dispatch (agent A triggers B triggers A)
 - [ ] Protocol references in agent files point to existing protocols
 - [ ] Framework count claims match actual `frameworks/*.md` file count
-- [ ] New capabilities are reachable from `/reflect` menu
+- [ ] New capabilities are reachable from `/hi` menu
 - [ ] Coaching style rules in CLAUDE.md are reflected in agent behavior definitions
 
 Then score the same 4 dimensions as Diff mode (contract integrity, wiring correctness, bug absence, claim fidelity) but at global scope - judging the whole system after the change lands, not just the patch. Apply the Adversarial Mandate (below).

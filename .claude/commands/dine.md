@@ -3,7 +3,7 @@
 Three intents (auto-detected from args):
 - **A. Restaurant Recommendation** (default): pick 3 restaurant candidates based on user-supplied context, historical preferences, and credit-burn opportunities. Read-only on catalog docs under this intent.
 - **B. Workplace Catering Tracker**: parse a weekly catering PDF dropped into `$OV/<slug>/catering/`, choose health-aware picks for the user's attendance days, and surface a confirmed table for the user to record themselves (the system does not write to daily notes).
-- **C. Meal Log Capture** (ad-hoc): log a meal the user just ate. Parses receipt images (HEIC/JPG/PNG/PDF) when provided, cross-references catalogs for missing slots, asks ONE compact question for what cannot be derived, shows a draft row + side-effect plan, and appends to the dining log on confirm. Co-equal capture path with `/reflect` Dining Pulse.
+- **C. Meal Log Capture** (ad-hoc): log a meal the user just ate. Parses receipt images (HEIC/JPG/PNG/PDF) when provided, cross-references catalogs for missing slots, asks ONE compact question for what cannot be derived, shows a draft row + side-effect plan, and appends to the dining log on confirm. Co-equal capture path with `/hi` Dining Pulse.
 
 ## Quick start
 
@@ -190,7 +190,7 @@ For each attendance day, output one line in the format:
 
 ## Intent C: Meal Log Capture
 
-Append a row to the user's meal log file under `$OV/travel/` (filename specified in `profile/diet.md` § Catalog files; gitignored config). Co-equal capture path with `/reflect` Dining Pulse.
+Append a row to the user's meal log file under `$OV/travel/` (filename specified in `profile/diet.md` § Catalog files; gitignored config). Co-equal capture path with `/hi` Dining Pulse.
 
 ### C.1 Resolve source material
 
@@ -272,7 +272,7 @@ One line:
 ## Rules
 
 Intent A:
-- **Read-only on catalog docs (under Intent A)**: do NOT modify the regional dining catalog or the credit-perks catalog when handling a recommendation request. The dining log is also read-only under Intent A — appends route through Intent C (or `/reflect` Dining Pulse).
+- **Read-only on catalog docs (under Intent A)**: do NOT modify the regional dining catalog or the credit-perks catalog when handling a recommendation request. The dining log is also read-only under Intent A — appends route through Intent C (or `/hi` Dining Pulse).
 - **0 candidates after hard filter**: relax most-restrictive constraint by 1 step, retry; surface 1-2 closest matches with flag "relaxed: <constraint>"
 - **Always show credit-burn opportunity** if relevant (any perk-program H1/H2 cycle ≤ 60d deadline + unused, per the live perks ledger under `$OV/finance/`). Even if credit餐厅 doesn't match exact mood, surface as 4th line with format: `💡 Credit-burn alt: <restaurant> ($<amount> <half>, deadline <MM/DD>)`
 - **Match user language**: Chinese-dominant if cuisine is Chinese; English if Western
