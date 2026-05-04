@@ -65,7 +65,7 @@ Then score the same 4 dimensions as Diff mode (contract integrity, wiring correc
 Presence-oriented review rubber-stamps. These four required artifacts force attack orientation. Missing any one forces NEEDS_REVISION regardless of dimension scores, because system changes compound across every future session and undetected flaws get harder to unwind over time.
 
 ### Antipattern scan
-Walk `protocols/antipatterns.md` in full. For each entry 1-9, output either:
+Walk `protocols/antipatterns.md` in full. For each catalog entry, output either:
 - `FLAG: <file:line> - <specific finding>`
 - `N/A: <one-line reason this change does not touch this class>`
 
@@ -126,7 +126,7 @@ The default mode. Scores session output on 5 dimensions.
 | 3-4 | Significant speculation without flagging |
 | 0-2 | Fabricated content or hallucinated note references |
 
-**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, a session output claiming wiki-entry-grade certainty (claim sections, `@anchor` / `@cite` markers) without the corresponding file living under `$OV/wiki/` and passing structural integrity, a non-wiki note that copies wiki schema shape. Note: the absence of a `#ai-reflection` or `#ai-generated` tag is NOT a red flag — those tags are retired by the validation-depth taxonomy in `protocols/epistemic-hygiene.md` and new alloy content carries no provenance tag.
+**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, a session output claiming wiki-entry-grade certainty (claim sections, `@anchor` / `@cite` markers) without the corresponding file living under `$OV/wiki/` and passing structural integrity, a non-wiki note that copies wiki schema shape. (Provenance tags are not relevant: alloy carries no tag by default; see `protocols/epistemic-hygiene.md`.)
 
 ### 4. Staleness Check (weight: 10%)
 

@@ -48,7 +48,7 @@ If you read one thing in this repo, read these in order:
 6. **`scripts/lint.py` and `scripts/privacy_check.py`** — quality gates with structured JSON output. Lint enforces wiki schema integrity; privacy_check fails loud on placebo-pass conditions (empty vault, missing config).
 7. **`.claude/agents/*.md`** — twelve role specs, each <8KB. Useful as a template for your own agent definitions.
 
-What's deliberately *not* portable: `profile/`, `personal/`, `$OV/wiki/` content, the impressionist vocabulary register (le cercle, the Painter, le œuvre), the bilingual English/Chinese behavior, the Era / Direction taxonomy, and the `/civ`, `/dine`, `/prm` commands which encode a bespoke life-area model. Strip those before adapting.
+What's deliberately *not* portable: `profile/` (symlinked config), `$OV/personal/`, `$OV/wiki/` content, the impressionist vocabulary register (le cercle, the Painter, le œuvre), the bilingual English/Chinese behavior, the Era / Direction taxonomy, and the `/civ`, `/dine`, `/prm` commands which encode a bespoke life-area model. Strip those before adapting.
 
 ## Running it (if you want to)
 

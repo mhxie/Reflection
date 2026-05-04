@@ -46,7 +46,7 @@ Then check:
 - [ ] Is this the simplest fix? (Prefer small targeted edits over rewrites)
 - [ ] Can I test this? (What would success look like next session?)
 - [ ] Success criterion stated in verifiable form, not vibes? Name the concrete signal in the next session that tells us this worked (e.g., "user accepted default interpretation without correction on the next 3 multi-step dispatches"), not a feeling ("sessions feel smoother"). See `protocols/orchestrator.md` → "Criteria-First Dispatch".
-- [ ] Antipattern self-check (Tier 2+ only): walk `protocols/antipatterns.md` and for each entry 1-9 mark FLAG or N/A-with-reason in your evolution report. This makes antipatterns visible before the Reviewer scans independently; it does not replace the Reviewer's pass.
+- [ ] Antipattern self-check (Tier 2+ only): walk `protocols/antipatterns.md` and for each catalog entry mark FLAG or N/A-with-reason in your evolution report. This makes antipatterns visible before the Reviewer scans independently; it does not replace the Reviewer's pass.
 
 ### 4. Act (Implement)
 - Make the change
@@ -76,7 +76,7 @@ Then check:
 
 ### Agents (`.claude/agents/*.md`)
 - Tighten prompts — remove ambiguity, add decision tables
-- Adjust models — use Sonnet for mechanical tasks, Opus for creative ones
+- Adjust tier assignments — use the cross_validation tier for mechanical tasks, core_intelligence for creative ones (see `harness/models.toml`)
 - Add/remove/merge roles as team needs change
 - Update tool lists when new tool capabilities appear
 
@@ -113,7 +113,7 @@ CLAUDE.md is the costliest file: loaded into every conversation and every subage
 4. Compound improvements. Each change should make the next session slightly better.
 5. Self-discipline propagation. When adding a new rule, ensure agents can enforce it, not just know about it.
 6. User is final judge. Propose significant changes, don't silently deploy.
-7. No personal details in tracked files. Examples in commands, protocols, and agent definitions must be generic. Rich personal examples go in `personal/examples.md` (gitignored).
+7. No personal details in tracked files. Examples in commands, protocols, and agent definitions must be generic. Rich personal examples go in `profile/examples.md` (gitignored).
 8. Subtract before adding. The system's default failure mode is monotonic growth. Before adding any rule: (a) is this already covered by an agent definition, command file, or protocol? (b) can an existing rule be generalized to cover this case? (c) will removing something else make this addition unnecessary? Pruning trigger: if `ls protocols/ | wc -l` exceeds 3x `ls $OV/sessions/ | wc -l`, the Evolver's first action must be a pruning review, not new work, because complexity that outpaces usage is dead weight.
 9. CLAUDE.md is the costliest file: inherited by every subagent. Every line costs N tokens times N agents per session. Rules belong in the most specific location: agent-specific rules in agent definitions, command-specific in command files, domain knowledge in protocols. CLAUDE.md holds only rules that every agent needs on every turn. Target: under 8KB.
 10. Position over formatting. Put critical rules at the top of files (primacy effect) and explain why they matter. Bold and ALL CAPS have no semantic weight for the model; they add tokens without improving instruction adherence. Use clear natural language and headers for structure.

@@ -19,6 +19,8 @@ Executable tooling for the Atelier knowledge layer. All scripts are stdlib-only 
 | `todos.py` | Aggregate open TODOs from `$OV/gtd/` and reflection Next Action sections; computes priority from `due:` / `priority:` / age; flags closure candidates from daily-note language; powers `/reflect` Step 0 digest | ops | stdlib |
 | `session_log.py` | Session event log skeleton generator — handles late-sleep date rule and collision auto-increment | E | stdlib |
 | `review.sh` | External reviewer wrapper (codex + gemini in parallel) for system-evolution diffs | ops | `codex`, `gemini` CLIs |
+| `chat_completion.py` | Stdlib-only OpenAI-compatible chat completion invoker. Stateless (one-shot) by default; `--session FILE` for multi-turn (history replayed each call). Reads provider config from a profile (schema in `harness/models.toml`, bindings in gitignored `profile/models.toml`) or direct flags. Backs the cross_validation and external_review tiers; switching providers is a binding edit, not a script change. Every call (success and error) logs one JSONL line to `~/.cache/atelier/llm_calls/<date>.jsonl` for after-the-fact quality / latency / reasoning audit; pass `--no-log` to skip on sensitive prompts | ops | stdlib |
+| `shadow.sh` | Fires a sampled, backgrounded shadow `chat_completion.py` call for the `core_intelligence` tier. Sample rate via `$ATELIER_SHADOW_RATE` (default 10%). Returns immediately; the shadow leg is logged for quality comparison without blocking the primary path | ops | stdlib |
 
 ## Portable Harness
 

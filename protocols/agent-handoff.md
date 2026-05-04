@@ -64,28 +64,19 @@ Required fields:
 
 **Type:** `review-check`
 
-Required fields:
-- `citations`: `{score: 0-10, issues: []}`
-- `goal_coverage`: `{score: 0-10, missing_categories: []}`
-- `honesty`: `{score: 0-10, flags: []}`
-- `staleness`: `{score: 0-10, warnings: []}`
-- `mode`: `"session"` | `"system"` — selects the verdict enum below
+Required fields (envelope shape only; numeric thresholds are canonical in `.claude/agents/reviewer.md` → Scoring, do not duplicate here):
+
+- `mode`: `"session"` | `"system"` (selects which dimension set + verdict enum applies)
 - `overall`: `{score: 0-10, verdict: <see mode>, summary: ""}`
   - `mode: "session"` verdicts: `"APPROVED" | "APPROVED_WITH_NOTES" | "NEEDS_REVISION" | "REJECTED"`
-  - `mode: "system"` verdicts: `"APPROVED" | "NEEDS_REVISION" | "REJECTED"` (no notes-only verdict; canonical rubric in reviewer.md → Scoring)
+  - `mode: "system"` verdicts: `"APPROVED" | "NEEDS_REVISION" | "REJECTED"` (no notes-only verdict; the artifact-presence floor in reviewer.md routes single-dim flaws into the fix path instead)
 
-Session-mode score thresholds (aligned with quality-gates.md and reviewer.md):
-- 8-10: `APPROVED` — deliver to user
-- 6-7.9: `APPROVED_WITH_NOTES` — deliver with caveats
-- 4-5.9: `NEEDS_REVISION` — triggers revision loop (max 2 rounds)
-- 0-3.9: `REJECTED` — start over or deliver with major caveats
+Dimension fields by mode:
 
-System-mode score thresholds (canonical: reviewer.md → Scoring → System Review):
-- Overall < 4 → `REJECTED`
-- Any dim <6 OR artifact missing → `NEEDS_REVISION`
-- Overall >= 8.5, all dims >=6, artifacts present → `APPROVED`
+- **Session mode** (4 dims): `citations`, `goal_coverage`, `honesty`, `staleness`. Each `{score: 0-10, issues: []}` (or `missing_categories` / `flags` / `warnings` respectively).
+- **System mode** (4 dims, replacing the session set): `contract_integrity`, `wiring_correctness`, `bug_absence`, `claim_fidelity`. Each `{score: 0-10, issues: []}`.
 
-System-mode adds 4 dimension fields (replace the 4 session dims above): `contract_integrity`, `wiring_correctness`, `bug_absence`, `claim_fidelity`, each `{score: 0-10, issues: []}`.
+For score-to-verdict mapping and the artifact-presence floor, see `.claude/agents/reviewer.md` → Scoring. For the privacy-gate precedence and revision-round policy, see `protocols/quality-gates.md` → Gate 3.
 
 ## Contract: Challenger → User
 

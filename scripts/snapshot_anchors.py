@@ -47,7 +47,10 @@ import sys
 import time
 from pathlib import Path
 
-WIKI_DIR = Path("zk/wiki")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
+
+WIKI_DIR = vault_root() / "wiki"
 
 # Regex to match anchor lines with url: or gist: types
 # Captures: full line, anchor type+id, and optional readwise field

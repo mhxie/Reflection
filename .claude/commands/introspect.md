@@ -17,7 +17,7 @@ profile/
 └── expertise.md     — domain knowledge, research taste, known biases
 ```
 
-`personal/reader_persona.md` is a raw input signal, not a profile output. Built separately by `/build-persona` from Readwise data.
+`profile/reader_persona.md` is a raw input signal, not a profile output. Built separately by `/build-persona` from Readwise data.
 
 ## Pipeline
 
@@ -67,7 +67,7 @@ This step goes beyond mechanical extraction. Look for:
 - Reading saves that cluster around an unnamed theme
 - Questions you keep asking but haven't formalized
 
-**If `personal/reader_persona.md` exists**, read it as a secondary signal — it shows what you save (behavioral), not what you think about (intentional). Note divergences between Readwise patterns and local-note patterns.
+**If `profile/reader_persona.md` exists**, read it as a secondary signal — it shows what you save (behavioral), not what you think about (intentional). Note divergences between Readwise patterns and local-note patterns.
 
 ### Step 4: Synthesize Profile Files
 

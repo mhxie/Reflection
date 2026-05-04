@@ -12,8 +12,8 @@ Intent A examples:
 - `/dine 朋友 4 人 川菜 dinner` → use as filters, ask remaining
 - `/dine SF burn credit` → location SF + flag credit-burn priority
 
-Intent B examples (first arg = workplace slug; the folder `$OV/<slug>/catering/` must exist; personal policy lives in gitignored `personal/diet.md`):
-- `/dine <slug>` → find latest PDF in `$OV/<slug>/catering/` covering this week, pick per `personal/diet.md` attendance pattern
+Intent B examples (first arg = workplace slug; the folder `$OV/<slug>/catering/` must exist; personal policy lives in gitignored `profile/diet.md`):
+- `/dine <slug>` → find latest PDF in `$OV/<slug>/catering/` covering this week, pick per `profile/diet.md` attendance pattern
 - `/dine <slug> <pdf-path>` → explicit PDF
 - `/dine <slug> all` → all 5 weekdays (override)
 - `/dine <slug> M/T/Th` → custom attendance set (override; any day-code combination works)
@@ -42,7 +42,7 @@ For missing slots, ask via `AskUserQuestion` or sequential 1-line prompts (which
 | **Meal** | Lunch / Dinner / Brunch / Late night | Y |
 | **Time budget** | Quick (<30min) / Standard (1-2h) / Leisurely (2h+) | Y |
 | Mood / cuisine | Surprise / 中餐 / 不要中餐 / 重辣 / 清淡 / Comfort / 探索新 / Special occasion / 老人友好 | N (default any) |
-| **Health filter** | options enumerated in `personal/diet.md` ("Health filter input options" section) plus `no preference` | N (default no preference) |
+| **Health filter** | options enumerated in `profile/diet.md` ("Health filter input options" section) plus `no preference` | N (default no preference) |
 | Budget cap | $20 / $50 / $100 / $150+ / no cap | N |
 | Avoid recent | Last 30 / 60 / 90 days | N (default 30) |
 
@@ -54,6 +54,7 @@ The user's vault holds these catalogs under `$OV/travel/` and `$OV/finance/`. Di
 - Dining log (history with 评分 + 再去 + recency), under `$OV/travel/`
 - Credit-perks dining catalog (Cycle Tracking + city catalogs), under `$OV/travel/`
 - Perks ledger (current cycle credit status, for burn signal), under `$OV/finance/`
+- Restaurant gift cards (prepaid balances per restaurant, for soft "use it" signal), under `$OV/finance/`
 - For LA / NYC / other city: use the credit-perks catalog city section + the corresponding city Michelin guide under `$OV/archive/practical/travel/`
 
 **Missing-file fallback:** if any of these is absent, skip it silently and note the gap in the closing line ("scored without [missing source]"). The recommendation still produces; the user can decide whether to recreate the catalog.
@@ -87,7 +88,7 @@ The user's vault holds these catalogs under `$OV/travel/` and `$OV/finance/`. Di
 | **Credit-burn priority** (Exclusive Tables restaurant + relevant cycle has unused credit AND ≤ 60d to deadline) | **+5** |
 | Michelin star match + mood = "Special occasion" | +4 |
 | Old-favorite revisit (rotation 评 ≥ 2 + last visit > 60d) | +2 |
-| **Health filter active** | apply scoring rules from `personal/diet.md` "Health-filter scoring rules" section (recent-visit penalties, clean-style bonuses, cumulative-load adjustments) |
+| **Health filter active** | apply scoring rules from `profile/diet.md` "Health-filter scoring rules" section (recent-visit penalties, clean-style bonuses, cumulative-load adjustments) |
 
 ## Step 4: Output
 
@@ -128,17 +129,17 @@ Read the PDF (`Read` tool). Extract per-day sections (Mon/Tue/Wed/Thu/Fri). Each
 
 ### B.3 Determine attendance days
 
-Read attendance pattern from `personal/diet.md` (the section matching the resolved `<slug>`, key: `Attendance days`). Override via the second CLI arg:
+Read attendance pattern from `profile/diet.md` (the section matching the resolved `<slug>`, key: `Attendance days`). Override via the second CLI arg:
 - `all` → all 5 weekdays present in the PDF
 - `M/T/Th`, `T/Th`, `W/F`, etc. → custom set (case-insensitive day codes; any combination)
 
-If `personal/diet.md` is absent or has no entry for `<slug>` → ask the user once, do not assume a default. Map each chosen day code to an absolute date based on the resolved week.
+If `profile/diet.md` is absent or has no entry for `<slug>` → ask the user once, do not assume a default. Map each chosen day code to an absolute date based on the resolved week.
 
 ### B.4 Pick per day (reuse Step 3 health-filter logic)
 
-Read **dietary picking priorities** and **flag taxonomy** from `personal/diet.md` (the `<slug>` section). Apply the policy verbatim — do not bake personal preferences into this committed file.
+Read **dietary picking priorities** and **flag taxonomy** from `profile/diet.md` (the `<slug>` section). Apply the policy verbatim — do not bake personal preferences into this committed file.
 
-Generic fallback when `personal/diet.md` is absent: choose ONE protein + 1-2 veg sides per day, no specific oil/protein bias, and ask the user to confirm the picks before presenting.
+Generic fallback when `profile/diet.md` is absent: choose ONE protein + 1-2 veg sides per day, no specific oil/protein bias, and ask the user to confirm the picks before presenting.
 
 The skill itself enforces only the structural shape (one row per attendance day, columns: protein + veg + sauce-note + flag). The semantic content is policy from the private file.
 
@@ -149,10 +150,10 @@ Show table (one row per attendance day; values fill from B.4):
 ```markdown
 | Date | Day | Theme | Pick | Flag |
 |---|---|---|---|---|
-| YYYY-MM-DD | <day> | <menu theme> | <protein> + <veg sides> + <sauce/dressing note> | <flag from personal/diet.md taxonomy> |
+| YYYY-MM-DD | <day> | <menu theme> | <protein> + <veg sides> + <sauce/dressing note> | <flag from profile/diet.md taxonomy> |
 ```
 
-Add a 1-2 line cross-day note if `personal/diet.md` defines cross-day rules (e.g., protein rotation, 油脂 balance). Otherwise omit.
+Add a 1-2 line cross-day note if `profile/diet.md` defines cross-day rules (e.g., protein rotation, 油脂 balance). Otherwise omit.
 
 ### B.6 Present
 

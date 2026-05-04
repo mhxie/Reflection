@@ -150,6 +150,6 @@ At the end of every output, include:
 
 - Write reflections to `$OV/reflections/YYYY-MM-DD-reflection.md`
 - Write reviews to `$OV/reflections/YYYY-MM-DD-review.md`
-- No provenance tags on new content. New session output is alloy by default; alloy requires no tag (see `protocols/epistemic-hygiene.md`). Legacy tags `#ai-reflection` and `#ai-generated` are retired for new content; treat them as historical markers only. Topic tags (e.g., `#decision`, `#exploration`, `#energy-audit`) are fine because they describe subject matter, not origin.
+- No provenance tag on new content (see `protocols/epistemic-hygiene.md`). Topic tags (e.g., `#decision`, `#exploration`, `#energy-audit`) are fine.
 - Headings must be descriptive of the session's theme (e.g., `## Constraint creates meaning`), never generic like "AI Reflection." The descriptive heading is the duplicate-detection signal.
 - Wiki entries (`$OV/wiki/*.md`) are not written by the Synthesizer. Producing a wiki entry belongs to the Curator (Phase C). If a session surfaces a claim worth promoting to the wiki layer, the Synthesizer notes it in the reflection file under a `## Promotion candidates` section and the orchestrator dispatches Curator.

@@ -91,7 +91,7 @@ File moves break standard markdown links `[X](path.md)` and image embeds `![](pa
 
 `scripts/relink.py` builds a global filename → location index across all tracked `.md`/image files, scans every `[text](path)` and `![alt](path)` reference, and rewrites broken paths to the file's current location. Since refs track filename (not path), any reorganization that doesn't rename files is fully recoverable. Use `--dry-run` first to preview changes.
 
-The wikilink converter (`scripts/wikilink_to_md.py`) only handles `[[...]]` syntax (one-time migration from wikilink format). Once links are standard markdown, `relink.py` is the steady-state tool for all subsequent moves.
+The wikilink converter (`scripts/wikilink_to_md.py`) handles `[[...]]` → standard markdown link conversion when needed. `relink.py` is the steady-state tool for all path moves once links are standard markdown.
 
 ### Tier-specific semantic restructures
 
@@ -107,10 +107,21 @@ A subdir created during fission can itself reach 32 over time and require its ow
 - **Dates**: ISO `YYYY-MM-DD` only. No `MM/DD/YYYY`, no `Thu, August 8th, 2024`.
 - **Tags**: `#kebab-case-tag`, `#中文标签`. No pure-digit tags.
 
+## Documentation hygiene (present-tense protocols)
+
+Protocols, agent specs, and shared docs describe how the system works **now**. Git is the archive for past states; restating "earlier versions used X, now retired" inside live docs creates lint debt and confuses new readers.
+
+- Write rules in present tense. State what the system does, not what it stopped doing.
+- When superseding behavior, delete the old description and its justification rather than narrating the change. The diff plus commit message is the audit trail.
+- Genuinely-deferred work belongs in a single named roadmap subsection (the pattern: `wiki-schema.md` → Open v2 Items), not as scattered "v1 only" / "Phase B" parentheticals.
+- Operational pointers to runtime artifacts the system still encounters (e.g., "`#ai-reflection` may appear on historical notes; treat as alloy") are fine because they describe runtime conditions, not system biography.
+
+This rule is enforced by `protocols/antipatterns.md` → #10 Legacy framing in living docs, scanned by the Evolver self-check and Reviewer System modes on Tier 2+ changes.
+
 ## Lint enforcement (planned)
 
 `scripts/repo_lint.py` (TBD) will check:
 - folders exceeding 30 .md files
 - images outside `images/` subdirs (under tracked tiers)
 - non-semantic image names (timestamps, hashes, "Pasted image…")
-- legacy date strings in new markdown
+- non-ISO date strings in new markdown

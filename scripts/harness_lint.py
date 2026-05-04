@@ -233,6 +233,16 @@ def check_root_files() -> list[Finding]:
 
 
 def check_models(agents: dict[str, dict[str, str]]) -> list[Finding]:
+    """Validate harness/models.toml schema + cross-check bindings if present.
+
+    harness/models.toml (committed) holds tier semantics: profile names with
+    rationale + invocation pattern, and agent->profile assignments. The
+    binding values (claude_code, codex, direct_api, direct_api_base,
+    api_env, direct_api_extras, direct_api_timeout, codex_reasoning_effort)
+    live in profile/models.toml (gitignored). When the binding file is
+    present, this check cross-validates schema integrity end-to-end; when
+    absent, only the schema half is enforced.
+    """
     findings: list[Finding] = []
     data, err = _load_toml(ROOT / "harness" / "models.toml")
     if err:
@@ -257,7 +267,9 @@ def check_models(agents: dict[str, dict[str, str]]) -> list[Finding]:
                 Finding("ERROR", "models-profile-shape", "harness/models.toml", f"profile `{profile_name}` is not a table")
             )
             continue
-        for key in ("rationale", "claude_code", "codex"):
+        # Schema-side required keys: rationale + invocation pattern. The
+        # provider/model bindings live in profile/models.toml.
+        for key in ("rationale", "invocation"):
             if not profile.get(key):
                 findings.append(
                     Finding(
@@ -267,6 +279,36 @@ def check_models(agents: dict[str, dict[str, str]]) -> list[Finding]:
                         f"profile `{profile_name}` is missing `{key}`",
                     )
                 )
+        invocation = profile.get("invocation")
+        if invocation is not None and invocation not in ("single", "dual", "shadow"):
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "models-invocation-value",
+                    "harness/models.toml",
+                    f"profile `{profile_name}` has invocation=`{invocation}` (must be 'single', 'dual', or 'shadow')",
+                )
+            )
+        # Binding-shaped keys must NOT appear in the committed schema; they
+        # belong to profile/models.toml. Catches accidental leakage of
+        # provider names back into the public file.
+        leaked_binding_keys = sorted(
+            k for k in profile
+            if k in ("claude_code", "codex", "codex_reasoning_effort",
+                     "direct_api", "direct_api_base", "direct_api_extras",
+                     "direct_api_timeout", "api_env",
+                     "shadow_api", "shadow_api_base", "shadow_api_extras",
+                     "shadow_api_timeout", "shadow_api_env")
+        )
+        for k in leaked_binding_keys:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "models-binding-in-schema",
+                    "harness/models.toml",
+                    f"profile `{profile_name}` has binding key `{k}` (move to profile/models.toml)",
+                )
+            )
 
     for agent_name, fields in sorted(agents.items()):
         entry = agent_map.get(agent_name)
@@ -276,7 +318,7 @@ def check_models(agents: dict[str, dict[str, str]]) -> list[Finding]:
                     "ERROR",
                     "models-agent-missing",
                     "harness/models.toml",
-                    f"agent `{agent_name}` from {fields['path']} has no model mapping",
+                    f"agent `{agent_name}` from {fields['path']} has no profile mapping",
                 )
             )
             continue
@@ -290,17 +332,6 @@ def check_models(agents: dict[str, dict[str, str]]) -> list[Finding]:
                     f"agent `{agent_name}` references unknown profile `{profile}`",
                 )
             )
-        claude_model = entry.get("claude_code_model")
-        frontmatter_model = fields.get("model")
-        if claude_model != frontmatter_model:
-            findings.append(
-                Finding(
-                    "WARN",
-                    "models-claude-drift",
-                    fields["path"],
-                    f"frontmatter model `{frontmatter_model}` differs from harness mapping `{claude_model}`",
-                )
-            )
 
     extra_agents = sorted(set(agent_map) - set(agents))
     for agent_name in extra_agents:
@@ -309,10 +340,91 @@ def check_models(agents: dict[str, dict[str, str]]) -> list[Finding]:
                 "WARN",
                 "models-agent-extra",
                 "harness/models.toml",
-                f"model mapping exists for `{agent_name}` but no .claude agent file was found",
+                f"profile mapping exists for `{agent_name}` but no .claude agent file was found",
             )
         )
 
+    findings.extend(_check_model_bindings(agents, profiles))
+    return findings
+
+
+def _check_model_bindings(
+    agents: dict[str, dict[str, str]],
+    profiles: dict[str, Any],
+) -> list[Finding]:
+    """Cross-check profile/models.toml bindings against schema + frontmatter.
+
+    Soft check: if the bindings file is missing, return silently. Absence is
+    the expected state on fresh clones (the file is gitignored, machine-local)
+    and the smoke test asserts zero findings — emitting INFO here would break
+    that contract. When present, verify (a) every schema profile has a
+    binding entry, (b) every agent's claude_code_model matches its
+    .claude/agents/<name>.md frontmatter `model:` field.
+    """
+    findings: list[Finding] = []
+    bindings_path = ROOT / "profile" / "models.toml"
+    if not bindings_path.exists():
+        return findings
+    data, err = _load_toml(bindings_path)
+    if err:
+        return [err]
+    assert data is not None
+    binding_profiles = data.get("profiles", {}) or {}
+    binding_agents = data.get("agents", {}) or {}
+
+    for profile_name in sorted(profiles):
+        if profile_name not in binding_profiles:
+            findings.append(
+                Finding(
+                    "WARN",
+                    "models-binding-profile-missing",
+                    "profile/models.toml",
+                    f"schema profile `{profile_name}` has no binding entry",
+                )
+            )
+            continue
+
+        # Schema-declared invocation imposes binding requirements.
+        invocation = (profiles.get(profile_name) or {}).get("invocation")
+        binding = binding_profiles.get(profile_name) or {}
+        if invocation == "dual":
+            for key in ("direct_api", "direct_api_base", "api_env"):
+                if not binding.get(key):
+                    findings.append(
+                        Finding(
+                            "ERROR",
+                            "models-dual-binding-incomplete",
+                            "profile/models.toml",
+                            f"profile `{profile_name}` is invocation='dual' but binding has no `{key}`",
+                        )
+                    )
+        if invocation == "shadow":
+            for key in ("shadow_api", "shadow_api_base", "shadow_api_env"):
+                if not binding.get(key):
+                    findings.append(
+                        Finding(
+                            "ERROR",
+                            "models-shadow-binding-incomplete",
+                            "profile/models.toml",
+                            f"profile `{profile_name}` is invocation='shadow' but binding has no `{key}`",
+                        )
+                    )
+
+    for agent_name, fields in sorted(agents.items()):
+        entry = binding_agents.get(agent_name)
+        if not isinstance(entry, dict):
+            continue
+        claude_model = entry.get("claude_code_model")
+        frontmatter_model = fields.get("model")
+        if claude_model and frontmatter_model and claude_model != frontmatter_model:
+            findings.append(
+                Finding(
+                    "WARN",
+                    "models-claude-drift",
+                    fields["path"],
+                    f"frontmatter model `{frontmatter_model}` differs from binding `{claude_model}`",
+                )
+            )
     return findings
 
 
@@ -675,6 +787,43 @@ def check_atelier_skill() -> list[Finding]:
     return findings
 
 
+def check_scripts_zk_paths() -> list[Finding]:
+    """Flag hardcoded `Path("zk/...")` literals in scripts/.
+
+    Vault-rooted paths must go through `scripts/_paths.vault_root()` so
+    they fail loud when $OV is unset and never silently create stray
+    relative `zk/` directories. The only allowed mention is in
+    `_paths.py` itself, which documents the antipattern.
+    """
+    findings: list[Finding] = []
+    scripts_dir = ROOT / "scripts"
+    if not scripts_dir.is_dir():
+        return findings
+    # Files that legitimately mention the antipattern in docs/message text:
+    #   _paths.py    : its docstring explains why the helper exists
+    #   harness_lint.py (this file): the check's own remediation message
+    skip = {"_paths.py", "harness_lint.py"}
+    pattern = re.compile(r'Path\("zk/')
+    for path in sorted(scripts_dir.glob("*.py")):
+        if path.name in skip:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if pattern.search(line):
+                findings.append(
+                    Finding(
+                        "ERROR",
+                        "scripts-hardcoded-zk",
+                        f"{rel(path)}:{lineno}",
+                        "use vault_root() from _paths instead of a hardcoded relative zk literal",
+                    )
+                )
+    return findings
+
+
 def run_lints() -> list[Finding]:
     findings: list[Finding] = []
     findings.extend(check_root_files())
@@ -688,6 +837,7 @@ def run_lints() -> list[Finding]:
     findings.extend(check_commands(commands))
     findings.extend(check_harness_readme())
     findings.extend(check_atelier_skill())
+    findings.extend(check_scripts_zk_paths())
     findings.sort(key=lambda f: (SEVERITY_ORDER.get(f.severity, 99), f.code, f.where, f.message))
     return findings
 

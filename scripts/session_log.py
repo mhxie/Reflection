@@ -8,9 +8,9 @@ via the Write or Edit tool after this script creates the skeleton.
 
 Usage:
     scripts/session_log.py --type reflection --duration 25
-    scripts/session_log.py --type decision --duration 40 --model opus
+    scripts/session_log.py --type decision --duration 40 --model <model-id>
 
-Creates: zk/sessions/YYYY-MM-DD-<type>.md (auto-increments on collision).
+Creates: $OV/sessions/YYYY-MM-DD-<type>.md (auto-increments on collision).
 Prints the created file path to stdout for the orchestrator to use.
 
 Exit code: 0 on success, 1 on error.
@@ -23,7 +23,10 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
-SESSIONS_DIR = Path("zk/sessions")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _paths import vault_root, fmt  # type: ignore[import-not-found]  # noqa: E402
+
+SESSIONS_DIR = vault_root() / "sessions"
 
 VALID_TYPES = {
     "reflection",
@@ -120,7 +123,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--model",
-        default="opus",
+        default="",
         help="Orchestrator model used.",
     )
     args = parser.parse_args(argv)
@@ -146,7 +149,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     path.write_text(content, encoding="utf-8")
-    sys.stdout.write(path.as_posix() + "\n")
+    sys.stdout.write(fmt(path) + "\n")
     return 0
 
 

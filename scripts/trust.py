@@ -58,7 +58,10 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
-WIKI_DIR = Path("zk/wiki")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
+
+WIKI_DIR = vault_root() / "wiki"
 DAMPING = 0.85
 FLOOR = 0.1
 MAX_ITER = 200
@@ -614,12 +617,17 @@ def load_wiki(as_of: date, only: Path | None = None) -> list[WikiNote]:
         if not only.exists():
             sys.stderr.write(f"trust.py: no such file: {only}\n")
             sys.exit(2)
-        if WIKI_DIR not in only.parents:
+        # WIKI_DIR is absolute ($OV/wiki); resolve `only` to absolute too,
+        # otherwise the documented relative form (--note zk/wiki/foo.md
+        # via the project's zk symlink) would be rejected because
+        # `only.parents` would compare relative-to-absolute.
+        only_abs = only.resolve()
+        if WIKI_DIR not in only_abs.parents:
             sys.stderr.write(
                 f"trust.py: {only} is not under {WIKI_DIR} (structural integrity item 1)\n"
             )
             sys.exit(2)
-        return [parse_wiki_note(only, as_of)]
+        return [parse_wiki_note(only_abs, as_of)]
 
     if not WIKI_DIR.exists():
         sys.stderr.write(f"trust.py: {WIKI_DIR} does not exist\n")

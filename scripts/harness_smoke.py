@@ -54,7 +54,7 @@ def check_status() -> None:
     registries = payload["registries"]
     expect(registries["commands"] >= 10, "expected at least 10 portable commands")
     expect(registries["agents"] >= 10, "expected at least 10 portable agents")
-    expect(registries["model_profiles"] >= 5, "expected model profiles")
+    expect(registries["model_profiles"] >= 3, "expected model profiles")
     expect(registries["capabilities"] >= 5, "expected capabilities")
     expect(payload["roots"]["AGENTS.md"]["exists"], "AGENTS.md missing from status")
     expect(payload["roots"]["CLAUDE.md"]["exists"], "CLAUDE.md missing from status")
@@ -65,8 +65,8 @@ def check_filtered_json() -> None:
     expect("lint" in commands, "ops commands should include lint")
     expect(commands["lint"]["source"] == ".claude/commands/lint.md", "lint source drift")
 
-    agents = json.loads(run(["scripts/atelier.py", "agents", "--profile", "deep_reflection", "--json"]))
-    expect("researcher" in agents, "deep_reflection agents should include researcher")
+    agents = json.loads(run(["scripts/atelier.py", "agents", "--profile", "core_intelligence", "--json"]))
+    expect("researcher" in agents, "core_intelligence agents should include researcher")
     expect(agents["researcher"]["source"] == ".claude/agents/researcher.md", "researcher source drift")
 
 

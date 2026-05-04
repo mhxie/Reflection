@@ -119,7 +119,7 @@ Normal-scan JSON shape:
 }
 ```
 
-Any non-empty `hits` array is an ERROR: each entry is a private identifier (filename stem, wikilink target, or slug from `personal/private_slugs.txt`) that appears as literal text in a tracked file. Present each hit verbatim with its file and line number. Remediation:
+Any non-empty `hits` array is an ERROR: each entry is a private identifier (filename stem, wikilink target, or slug from `profile/private_slugs.txt`) that appears as literal text in a tracked file. Present each hit verbatim with its file and line number. Remediation:
 
 - Replace the private title with a generic placeholder (e.g., `Sample Wiki Entry`, `Topic A`).
 - Or, if the exposure is deliberate (e.g., the title is fully public and appears as an illustrative example), add the stem to `scripts/privacy_allowlist.txt` and document the rationale in the commit message.

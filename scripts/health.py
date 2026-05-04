@@ -25,7 +25,10 @@ from datetime import date as Date, timedelta
 from pathlib import Path
 from typing import Any
 
-DAILY_DIR = Path("zk/health/daily")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
+
+DAILY_DIR = vault_root() / "health" / "daily"
 
 NUMERIC_FIELDS = {"weight_kg", "sleep_min", "steps", "resting_hr", "hrv_ms", "mindfulness_min"}
 STRING_FIELDS = {"bedtime", "wake", "note", "date"}

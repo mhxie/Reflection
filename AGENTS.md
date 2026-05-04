@@ -10,9 +10,12 @@ agents collectively are **le cercle**. For the full vocabulary and the
 
 Codex can also discover the repo-scoped `atelier` skill in `.agents/skills/atelier/`.
 
-Before user-facing reflection work, read `CLAUDE.md` for the domain rules, then
-use `protocols/runtime-adapters.md` to translate Claude-specific command syntax
-into the current runtime.
+Before user-facing reflection work, read `CLAUDE.md` for the domain rules. The
+operational Claude-to-Codex tool mapping lives in this file (§ Codex
+Adaptation, below). The conceptual contract (workflow / role / capability /
+runtime separation, model and capability profiles) lives in
+`protocols/runtime-adapters.md`; consult it when adding a new role, command,
+or runtime, not for routine command execution.
 
 ## Critical Rules
 

@@ -42,13 +42,15 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-OV = Path(os.environ.get("OV", "zk"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
+
+OV = vault_root()
 
 # Top-level directories that are NOT Drive->zk ingestion targets.
 # These are still working-tier (L2 per CLAUDE.md) but they hold

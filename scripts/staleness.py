@@ -39,17 +39,22 @@ import sys
 from datetime import date, timedelta
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
+
+_OV = vault_root()
+
 # L2 directories to scan (daily-notes excluded: capture stream, not working
 # knowledge). health excluded: longitudinal records, different lifecycle.
 L2_DIRS = [
-    Path("zk/agent-findings"),
-    Path("zk/drafts"),
-    Path("zk/gtd"),
-    Path("zk/preprints"),
-    Path("zk/reflections"),
+    _OV / "agent-findings",
+    _OV / "drafts",
+    _OV / "gtd",
+    _OV / "preprints",
+    _OV / "reflections",
 ]
 
-WIKI_DIR = Path("zk/wiki")
+WIKI_DIR = _OV / "wiki"
 
 # Thresholds (staleness score units, roughly "days-equivalent").
 STALE_THRESHOLD = 90
@@ -174,12 +179,12 @@ def scan(
     if WIKI_DIR.exists():
         corpus.extend(WIKI_DIR.glob("*.md"))
 
-    reflections_dir = Path("zk/reflections")
+    reflections_dir = _OV / "reflections"
     if reflections_dir.exists():
         corpus.extend(reflections_dir.glob("*.md"))
 
     # Last 30 days of daily notes for recency-weighted reference counting.
-    daily_dir = Path("zk/daily-notes")
+    daily_dir = _OV / "daily-notes"
     if daily_dir.exists():
         for i in range(30):
             d = today - timedelta(days=i)

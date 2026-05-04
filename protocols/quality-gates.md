@@ -46,50 +46,29 @@ Defines checkpoints that must pass before output reaches the user. Each gate has
 
 **When:** After Reviewer scores, before presenting to user.
 
-Session and system reviews use different thresholds. System reviews are stricter because system changes compound across every future session while session reviews affect only one output. Canonical rubric lives in `.claude/agents/reviewer.md` (Scoring); this gate cites the verdicts, it does not define them.
+**Verdict thresholds (canonical):** `.claude/agents/reviewer.md` → Scoring. Both Session Review and System Review verdict tables (the score bands and the artifact-presence floor) live there. Do not restate the numbers in this file: when reviewer.md changes, this gate inherits automatically.
 
-### Session Review (reflection and reading output)
+Mode invariants enforced here (not in reviewer.md):
 
-| Overall Score | Action |
-|--------------|--------|
-| 8-10 | APPROVED: deliver to user |
-| 6-7.9 | APPROVED_WITH_NOTES: deliver with caveats |
-| 4-5.9 | NEEDS_REVISION: send back to Synthesizer with specific fixes (max 2 rounds) |
-| 0-3.9 | REJECTED: start over or deliver with major caveats |
-
-### System Review (Diff + Holistic modes)
-
-Apply rows top-to-bottom; first match wins. NEEDS_REVISION is the catch-all default.
-
-| Condition | Action |
-|-----------|--------|
-| Overall < 4 (catastrophic) | REJECTED: redesign |
-| Overall >= 8.5 AND no dimension <6 AND all required artifacts present | APPROVED: orchestrator may commit |
-| Otherwise (any dim <6, any artifact missing, or overall 4-8.4) | NEEDS_REVISION: fix and re-run |
-
-No APPROVED_WITH_NOTES for system reviews. See `.claude/agents/reviewer.md` -> Scoring for why weighted passes with a low single dimension conceal real flaws.
-
-The privacy gate (`/system-review` Phase 1b, mirrored from `/lint` Phase 0c) precedes scoring; non-empty `scripts/privacy_check.py` hits force NEEDS_REVISION before dispatch, regardless of any score the reviewers would otherwise emit.
-
-**Gate keeper:** Reviewer
-**Max revision rounds:** Session = 2 (after 2 failed revisions, deliver with all caveats). System = unlimited (Evolver may escalate to user after 2 rounds without progress).
+- The privacy gate (`/system-review` Phase 1b, mirrored from `/lint` Phase 0c) precedes scoring. Non-empty `scripts/privacy_check.py` hits force `NEEDS_REVISION` before dispatch, regardless of any score the reviewers would otherwise emit.
+- **Gate keeper:** Reviewer.
+- **Max revision rounds:** Session = 2 (after 2 failed revisions, deliver with all caveats). System = unlimited (Evolver may escalate to user after 2 rounds without progress).
 
 ## Gate 4: Note Operations (Compact/Merge)
 
 **When:** After Curator produces a proposal, before presenting to user.
 
-| Check | Pass Criteria | Fail Action |
-|-------|--------------|-------------|
-| Source snapshots | All source notes snapshotted to `$OV/cache/<operation>-<slug>.md` at dispatch time (local copy from `$OV/`) | Abort — do not draft from un-snapshotted sources |
-| Media count match | Output image count = snapshot media count | Block — re-scan snapshot files, restore missing media |
-| Size limit | Each output note < 15KB | Split into numbered parts before presenting |
-| Verbatim preservation | Chinese text, interview memos, raw observations preserved word-for-word | Block — diff against snapshot files to find paraphrased content |
-| Voice separation | External quotes (forum posts, others' experiences) clearly attributed | Block — add attribution markers |
-| Factual accuracy | No conflation of different people's experiences or event sequences | Block — cross-check against snapshot files |
-| Structured data | Pipelines, timelines, tracking tables preserved exactly | Block — copy from snapshot file |
+The `note-operation` envelope (canonical fields: `protocols/agent-handoff.md` → Curator → Orchestrator) carries a `content_integrity` self-assessment plus the underlying invariants (`snapshot_paths` exist, `media_inventory == media_output_count`, `estimated_size < 15KB`, `external_content_flagged` attribution). This gate verifies those invariants; it does not redefine them.
 
-**Gate keeper:** Orchestrator (verifies Curator's self-assessment in `content_integrity` field)
-**Max retries:** 1 (if still failing, present to user with explicit warnings about what's missing)
+| Verification | How | Fail action |
+|---|---|---|
+| Snapshot existence | Stat each `snapshot_paths` entry on disk | Abort: do not draft from un-snapshotted sources |
+| Media count parity | Compare `media_inventory` vs `media_output_count`; require reconciliation in `changes_summary` if they differ | Block: re-scan snapshot files, restore missing media |
+| Size limit | If `estimated_size >= 15KB`, require a split plan before user-facing presentation | Block: split into numbered parts before presenting |
+| Content integrity attestation | Spot-check `content_integrity.verbatim_preserved` against snapshot diff (Chinese text, memos, raw observations); confirm external voices are attributed; confirm structured blocks (tables, pipelines, timelines) are byte-equal to source | Block: diff against snapshot to find paraphrased content; add attribution markers; copy structured blocks from snapshot |
+
+**Gate keeper:** Orchestrator (verifies Curator's `content_integrity` self-assessment; Curator does not self-clear).
+**Max retries:** 1 (if still failing, present to user with explicit warnings about what is missing).
 
 ## Gate 5: Profile Validation (/introspect)
 

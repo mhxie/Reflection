@@ -72,3 +72,8 @@ The diff includes changes unrelated to the success criterion the Evolver or user
 A script, hook, or check runs but does not catch the thing it claims to catch.
 - Detect: the guard has no known-failing input in its own test or history; its logic silently passes on missing, empty, or malformed input.
 - Remediate: add a known-bad input case, or a fail-loud branch for empty/missing input.
+
+### 10. Legacy framing in living docs
+Narrates a past system state inside a forward-living doc instead of describing current behavior. Protocols, agent specs, and shared docs answer "how does the system work?", not "how did it used to work?". Git is the archive for that.
+- Detect: the diff introduces (or leaves untouched while editing nearby lines) phrasings such as "earlier version", "previously", "no longer", "legacy ... retired", "deprecated", "formerly", or version-only carve-outs ("in v1 we ...", "for v1") in `protocols/`, `.claude/agents/`, `harness/`, `CLAUDE.md`, `AGENTS.md`, or `README.md`.
+- Remediate: state the current rule in present tense and delete the historical narration. Genuinely-deferred work goes in a single dedicated roadmap subsection (the pattern: `wiki-schema.md` → Open v2 Items), not as scattered "v1 only" parentheticals. Operational pointers to runtime artifacts the system still encounters (e.g., "`#ai-reflection` may appear on historical notes; treat as alloy") are not legacy framing because they describe a runtime condition, not system biography.

@@ -52,6 +52,7 @@ from pathlib import Path
 
 # trust.py lives next to this file and is importable as a library.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
 from trust import (  # noqa: E402
     BARE_CITE_RE,
     FENCE_CLOSE_RE,
@@ -63,7 +64,7 @@ from trust import (  # noqa: E402
 )
 
 VOCABULARY_PATH = Path(__file__).resolve().parent / "wiki_vocabulary.txt"
-WIKI_CN_DIR = Path("zk/wiki-cn")
+WIKI_CN_DIR = vault_root() / "wiki-cn"
 
 SEVERITY_ORDER = {"ERROR": 0, "WARN": 1, "INFO": 2}
 

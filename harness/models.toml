@@ -1,113 +1,108 @@
-# Model profile registry.
+# Model profile registry — three tiers (committed, schema only).
 #
-# Provider-specific names stay here so agent and workflow docs can refer to
-# stable role profiles instead of fixed model choices.
+# This file defines tier semantics: profile names, rationale, dispatch
+# pattern, and per-agent assignments. The actual provider/model bindings
+# (which model id, which endpoint URL, which env var) live in the
+# gitignored `profile/models.toml`. Loaders merge the two at runtime:
+# schema from here, bindings from there.
+#
+# 1. core_intelligence  Deep cognition: vault reading, synthesis,
+#                       challenge, framework reasoning, system evolution,
+#                       multi-lens deep reading. Single-model invocation.
+# 2. cross_validation   Low-cognitive-load tasks where cross-provider
+#                       agreement is the trust signal: mechanical review,
+#                       note operations, web research, meeting extraction,
+#                       recommendations, privacy scanning. Dual dispatch
+#                       wired for privacy-reviewer in /system-review
+#                       Step 1c; other tier members run single today
+#                       and may opt into dual at their dispatch sites.
+# 3. external_review    External reviewers for /system-review.
+#                       Independent voices outside the project's harness,
+#                       dual-invoked across two non-Anthropic providers
+#                       for genuine cross-provider review. No agent maps
+#                       to this profile; invoked by `bash scripts/review.sh`
+#                       and the /system-review command.
+#
+# Profile-key schema (binding values live in profile/models.toml):
+#   rationale              required, free-text justification
+#   invocation             required, "single" | "dual" | "shadow"
+#   claude_code            Claude Code-side model id (binding)
+#   codex                  Codex-side model id (binding)
+#   codex_reasoning_effort "high" | "low" — Codex-only reasoning effort
+#   direct_api             direct OpenAI-compatible model id
+#   direct_api_base        full endpoint URL — host + path
+#   direct_api_extras      inline table merged into request body for
+#                          provider-specific extensions
+#   direct_api_timeout     seconds; per-call timeout override (use for
+#                          reasoning-heavy tiers where TTFT exceeds the
+#                          120s default)
+#   api_env                env var holding the API key (Authorization:
+#                          Bearer is assumed)
+#   shadow_api             shadow leg's model id (used by --shadow-of)
+#   shadow_api_base        shadow leg's endpoint URL
+#   shadow_api_extras      shadow leg's request-body extras
+#   shadow_api_timeout     shadow leg's per-call timeout
+#   shadow_api_env         shadow leg's API key env var
+#
+# Invocation patterns:
+#   "single"  Only the Anthropic side runs.
+#   "dual"    Both Anthropic + direct_api legs run in parallel; consumer
+#             reconciles outputs (cross-validation voting). Required: a
+#             direct_api binding to pair with.
+#   "shadow"  Anthropic side is the primary (its output is used).
+#             Sampled fraction also fires a shadow_api leg in the
+#             background for logging-only quality comparison. Sampling
+#             rate via $ATELIER_SHADOW_RATE (default 10%, see
+#             scripts/shadow.sh). Required: a shadow_api binding.
+#
+# Helper scripts that read api_env / shadow_api_env MUST exit-skip
+# cleanly when unset (a missing key downgrades dual to single or
+# silently disables the shadow leg).
 
-[profiles.deep_reflection]
-rationale = "Broad vault reading, pattern discovery, and ambiguous personal context."
-claude_code = "opus"
-codex = "openai/gpt-5.5"
+[profiles.core_intelligence]
+rationale = "Tier 1: deep cognition. Vault reading, pattern discovery, synthesis, framework reasoning, challenger questions, system-evolution review, multi-lens deep reading. Primary leg is the trust source; a sampled fraction of calls also fires a shadow leg for logging-only quality comparison (see scripts/shadow.sh and protocols/orchestrator.md → Dual + Shadow Dispatch). Default sample rate 10% via $ATELIER_SHADOW_RATE."
+invocation = "shadow"
 
-[profiles.synthesis]
-rationale = "Combine multiple briefs into a grounded, user-facing reflection."
-claude_code = "opus"
-codex = "openai/gpt-5.5"
+[profiles.cross_validation]
+rationale = "Tier 2: low-cognitive-load tasks where cross-provider agreement is the trust signal. Mechanical review, note operations, web research, meeting extraction, recommendations, privacy scanning. Dual-dispatch capability is wired today for privacy-reviewer in /system-review Step 1c (Anthropic Sonnet leg + direct-api leg via scripts/chat_completion.py). The other tier members (reviewer, curator, scout, meeting, librarian) are eligible to opt into the same pattern at their dispatch sites; until they do, those agents run as single Anthropic dispatches. Where dual is honored, disagreement surfaces as a flag, not a silent average."
+invocation = "dual"
 
-[profiles.reflective_challenge]
-rationale = "Generate probing questions with emotional nuance and assumption tests."
-claude_code = "opus"
-codex = "openai/gpt-5.5"
-
-[profiles.framework_reasoning]
-rationale = "Apply thinking frameworks without overfitting to the user's notes."
-claude_code = "opus"
-codex = "openai/gpt-5.5"
-
-[profiles.system_evolution]
-rationale = "Reason across repo-wide harness changes and protocol consistency."
-claude_code = "opus"
-codex = "openai/gpt-5.5"
-
-[profiles.mechanical_review]
-rationale = "Checklist-heavy review, scorecards, and structured verification."
-claude_code = "sonnet"
-codex = "openai/gpt-5.4"
-
-[profiles.note_operations]
-rationale = "Structured note operations with strict preservation and approval gates."
-claude_code = "sonnet"
-codex = "openai/gpt-5.4"
-
-[profiles.web_research]
-rationale = "External context gathering and source triage."
-claude_code = "sonnet"
-codex = "openai/gpt-5.4"
-
-[profiles.deep_reading]
-rationale = "Close reading through critical, structural, practical, and dialectical lenses."
-claude_code = "opus"
-codex = "openai/gpt-5.5"
-
-[profiles.meeting_extraction]
-rationale = "Extract action items, decisions, owners, and next steps from transcripts."
-claude_code = "sonnet"
-codex = "openai/gpt-5.4"
-
-[profiles.recommendations]
-rationale = "Curate resources with bilingual summaries and fit filtering."
-claude_code = "sonnet"
-codex = "openai/gpt-5.4"
-
-[profiles.privacy_scan]
-rationale = "Cheap, fast scan for semantic privacy leaks in committed diffs. Dispatched in pairs as independent voices, so reliability comes from redundancy not depth. Codex side currently maps to gpt-5.4 (cheapest documented tier in this harness); if a smaller variant becomes available, swap in via the assumption registry audit."
-claude_code = "haiku"
-codex = "openai/gpt-5.4"
+[profiles.external_review]
+rationale = "Tier 3: external reviewers for /system-review. Independent voices outside the project's primary inference path, dual-invoked across two providers for genuine cross-provider review. No agent maps to this profile; invoked by `bash scripts/review.sh` and the /system-review command. The claude_code binding is a fallback only — running this tier on the primary provider defeats its purpose (cross-provider independence)."
+invocation = "dual"
 
 [agents.researcher]
-profile = "deep_reflection"
-claude_code_model = "opus"
+profile = "core_intelligence"
 
 [agents.synthesizer]
-profile = "synthesis"
-claude_code_model = "opus"
-
-[agents.reviewer]
-profile = "mechanical_review"
-claude_code_model = "sonnet"
+profile = "core_intelligence"
 
 [agents.challenger]
-profile = "reflective_challenge"
-claude_code_model = "opus"
+profile = "core_intelligence"
 
 [agents.thinker]
-profile = "framework_reasoning"
-claude_code_model = "opus"
+profile = "core_intelligence"
 
 [agents.evolver]
-profile = "system_evolution"
-claude_code_model = "opus"
-
-[agents.curator]
-profile = "note_operations"
-claude_code_model = "sonnet"
-
-[agents.scout]
-profile = "web_research"
-claude_code_model = "sonnet"
+profile = "core_intelligence"
 
 [agents.reader]
-profile = "deep_reading"
-claude_code_model = "opus"
+profile = "core_intelligence"
+
+[agents.reviewer]
+profile = "cross_validation"
+
+[agents.curator]
+profile = "cross_validation"
+
+[agents.scout]
+profile = "cross_validation"
 
 [agents.meeting]
-profile = "meeting_extraction"
-claude_code_model = "sonnet"
+profile = "cross_validation"
 
 [agents.librarian]
-profile = "recommendations"
-claude_code_model = "sonnet"
+profile = "cross_validation"
 
 [agents.privacy-reviewer]
-profile = "privacy_scan"
-claude_code_model = "haiku"
-
+profile = "cross_validation"

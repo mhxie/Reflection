@@ -45,9 +45,13 @@ from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-GTD_DIR = Path("zk/gtd")
-REFLECTIONS_DIR = Path("zk/reflections")
-DAILY_NOTES_DIR = Path("zk/daily-notes")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
+
+_OV = vault_root()
+GTD_DIR = _OV / "gtd"
+REFLECTIONS_DIR = _OV / "reflections"
+DAILY_NOTES_DIR = _OV / "daily-notes"
 
 CHECKBOX_RE = re.compile(r"^\s*[+\-*]\s*\[([ xX~/])\]\s+(.*)$")
 LIST_ITEM_RE = re.compile(r"^(\s*)(?:[-*+]\s+|\d+\.\s+)(.*)$")

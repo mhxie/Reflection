@@ -76,11 +76,11 @@ model: <orchestrator model used>
 
 **Anomalies:** Empty search results after retries, user course corrections ("actually, let's talk about X instead"), degraded mode activations (e.g., semantic.py fallback to lexical), filesystem write failures.
 
-**Harness Assumptions Exercised:** References to `protocols/harness-assumptions.md` registry items that were load-bearing. Examples: "Researcher model=Opus (model-assignment)", "Profile stale >7d warning triggered (temporal-threshold)", "Loaded last 3 reflections (token-budget)".
+**Harness Assumptions Exercised:** References to `protocols/harness-assumptions.md` registry items that were load-bearing. Examples: "Researcher tier=core_intelligence (model-assignment)", "Profile stale >7d warning triggered (temporal-threshold)", "Loaded last 3 reflections (token-budget)".
 
 ## Queryability
 
-Session logs are plain markdown with structured headings. No special tooling needed for v1.
+Session logs are plain markdown with structured headings. No special tooling required.
 
 | Intent | Query |
 |--------|-------|

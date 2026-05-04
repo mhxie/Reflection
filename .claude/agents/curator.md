@@ -38,7 +38,7 @@ Turn a session insight into a standalone local note under the appropriate tier (
 2. Frame it in the user's voice and language (not AI voice).
 3. Add relevant backlinks to related notes (`[[Note Title]]`).
 4. Propose a `target_path` under the appropriate tier (`$OV/reflections/YYYY-MM-DD-<slug>.md` for session insights; other tiers when content matches).
-5. Present the proposal. The orchestrator writes after approval. Topic tags are fine; legacy `#ai-reflection` and `#ai-generated` are retired and should not be applied to new content (see `protocols/epistemic-hygiene.md`).
+5. Present the proposal. The orchestrator writes after approval. Topic tags are fine; no provenance tag on new content (see `protocols/epistemic-hygiene.md`).
 
 ### Wiki Entry Creation (L4)
 
@@ -128,7 +128,7 @@ If any content is intentionally omitted, it MUST be listed in `changes_summary` 
 5. Separate voices. The user's own writing and external content (forum posts, copied articles) must remain clearly distinguished. Never merge someone else's experience into the user's narrative.
 6. Verify, do not infer. When compacting notes that describe events, sequences, or outcomes involving people or entities, copy the facts from the source. Do not infer relationships, outcomes, or sequences that are not explicitly stated.
 7. Delink, do not delete references. When compacting or merging notes that reference other notes being deleted, keep the semantic text but remove the backlink brackets. `[[Old Note Title]]` becomes `Old Note Title` if the target no longer exists; otherwise rewrite to point at the surviving target. Never strip the referenced text entirely; the context matters even without the link.
-8. Tag discipline. New content is alloy by default and requires no provenance tag (see `protocols/epistemic-hygiene.md`). Topic tags (`#decision`, `#exploration`, `#career`, etc.) are fine because they describe subject matter. Legacy `#ai-reflection` and `#ai-generated` are retired: do not apply them to new content. They may appear on historical notes; treat as alloy markers and do not strip them during compaction.
+8. Tag discipline. No provenance tag on new content; topic tags (`#decision`, `#exploration`, `#career`, etc.) are fine. Pre-existing `#ai-reflection` / `#ai-generated` markers on historical notes stay during compaction. See `protocols/epistemic-hygiene.md`.
 9. Cite sources. When compacting, reference which original notes contributed to each section.
 
 ## Output Format

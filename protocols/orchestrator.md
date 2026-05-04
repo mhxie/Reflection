@@ -5,7 +5,7 @@ The orchestrator (main agent) is the user's interface to the team. It collects r
 ## Role
 
 You are the reflection team's orchestrator. You:
-1. **Collect** — gather outputs from all agents (Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Reader, Meeting, Scout, Librarian, Privacy-Reviewer)
+1. **Collect** — gather outputs from le cercle (registry of record: `harness/agents.toml`)
 2. **Present** — give the user a clear, unified view of findings
 3. **Dispatch** — when the user asks for an action, route it to the right agent
 4. **Facilitate** — manage the conversation flow, not dominate it
@@ -40,6 +40,24 @@ Concrete transform, "Compact these notes" becomes: "Success = N notes in `$OV/` 
 All note writes are local file writes under `$OV/`. The orchestrator (not the Curator) owns the `Write`/`Edit` tools. The Curator drafts proposals; the orchestrator writes after user approval. Every proposal carries a `target_path` under `$OV/` and the orchestrator either creates the file (`Write`) or applies a surgical change (`Edit`).
 
 Daily notes (`$OV/daily-notes/YYYY-MM-DD.md`) are user-authored. The system reads them; it does not modify them. Curator dispatches that target a daily-note path are refused.
+
+## Dual + Shadow Dispatch (per profile invocation pattern)
+
+Every agent maps to a model profile (see `harness/models.toml` `[agents.*]` and the `[profiles.*].invocation` field). The orchestrator's dispatch behavior is governed by that profile:
+
+| Profile | Invocation | Orchestrator behavior |
+|---|---|---|
+| `core_intelligence` | `shadow` | Dispatch the Anthropic agent normally. After the dispatch is queued (same assistant message), also dispatch one `Bash` call to `scripts/shadow.sh <profile>` with the same prompt on stdin. The wrapper samples at $ATELIER_SHADOW_RATE (default 10%) and backgrounds the API call when sampled — it returns immediately, so this never blocks. Logs land in `~/.cache/atelier/llm_calls/<date>.jsonl` with `shadow_of: core_intelligence` for later quality comparison. |
+| `cross_validation` | `dual` | Dispatch BOTH legs in parallel (one assistant message, two tool calls): (a) `Agent` tool with the agent's `subagent_type` and prompt; (b) `Bash` tool calling `python3 scripts/chat_completion.py --profile cross_validation --max-tokens 16384 --prompt -` with the same user-level prompt on stdin. Reconcile per call-site (the privacy-reviewer pattern in `/system-review` Step 1c is the canonical example). For agents whose output is free-form (Curator, Scout, Meeting, Librarian), use the direct-api leg as a logged second opinion rather than a strict reconciliation gate; surface disagreement in the synthesis. |
+| `external_review` | `dual` | Used only by `/system-review` via `bash scripts/review.sh` — codex CLI + direct-api leg in parallel. Not applicable to agent dispatch. |
+
+Both legs share the same prompt context; agents whose work depends on tool calls (vault reads, file writes) cannot be perfectly mirrored — the direct-api leg sees the prompt only. Treat the secondary as a cross-check on the verdict / framing, not on the tool-driven output.
+
+**Why dual for `cross_validation`**: two same-provider samples have correlated failure modes (training lineage, tokenizer, RLHF). Two different-provider voices catch each other's hallucinations. The cost is real but bounded: cross_validation is the cheap tier, and most calls are short.
+
+**Why shadow (10%) for `core_intelligence`**: the high-cognition tier is too expensive to dual on every call, but a sampled stream of paired calls accumulates the data needed to recalibrate the tier mapping over time. If the shadow leg consistently matches or beats the primary on quality, the binding could be flipped — and the data is what justifies that decision.
+
+**Sampling rate override**: `ATELIER_SHADOW_RATE=0` disables shadow entirely; `=100` shadows every call (useful for short calibration sprints).
 
 ## Session Flow
 
@@ -223,16 +241,7 @@ Four reviewer types, scaled by change complexity. The orchestrator selects the r
 
 #### Holistic Review Checklist
 
-The Internal Holistic reviewer reads all changed files in full (not just the diff) and checks:
-
-- [ ] Agent counts consistent across CLAUDE.md, README.md, orchestrator.md
-- [ ] All agents referenced in workflows have corresponding `.claude/agents/*.md` files
-- [ ] Handoff contracts in `protocols/agent-handoff.md` cover all agent-to-agent flows
-- [ ] No circular dispatch (agent A triggers B triggers A)
-- [ ] Protocol references in agent files point to existing protocols
-- [ ] Framework count claims match actual `frameworks/*.md` file count
-- [ ] Coaching style rules in CLAUDE.md are reflected in agent behavior definitions
-- [ ] New capabilities are reachable from `/reflect` menu
+The Internal Holistic reviewer reads all changed files in full (not just the diff). The list of global-consistency invariants checked is canonical in `.claude/agents/reviewer.md` → System Holistic Review Mode. The orchestrator does not redefine those checks here; it dispatches and verifies completion.
 
 #### External Reviewer Invocation
 

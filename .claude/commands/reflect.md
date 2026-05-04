@@ -357,7 +357,7 @@ Lightweight capture of dining experiences for personal preference learning + fut
 - 餐厅名 (中/英文均可)
 - 评分 1-10 (8+ = top, 6-7 = good, 4-5 = ok, ≤3 = avoid)
 - 再去? (Y / N / Maybe)
-- **健康 flags** (per-visit, 依赖所点菜): use the taxonomy enumerated in `personal/diet.md` ("Full health-flag taxonomy" section). Multiple flags joined by `·`, blank = unobserved. Restaurant ordering 是健康管理重要部分, 不能省
+- **健康 flags** (per-visit, 依赖所点菜): use the taxonomy enumerated in `profile/diet.md` ("Full health-flag taxonomy" section). Multiple flags joined by `·`, blank = unobserved. Restaurant ordering 是健康管理重要部分, 不能省
 - 1-2 句话: 必点菜, 服务/ambiance, 同行
 - 推断 from context (else 1-line confirm): City / 类型 / Platform (OT/R/W/DD) / Credit used
 
@@ -422,11 +422,11 @@ After the interactive session, write a reflection file:
 ## Dining
 | Restaurant | Score (/10) | 再去 | 健康 flags | 必点·备注 |
 |---|---|---|---|---|
-| [Name] | [1-10] | Y/N/Maybe | [flag(s) per personal/diet.md taxonomy] | [必点 + 1 line] |
+| [Name] | [1-10] | Y/N/Maybe | [flag(s) per profile/diet.md taxonomy] | [必点 + 1 line] |
 
 - Captured to: the dining log (count of new rows appended)
 - Cross-doc updates triggered: [regional rotation add? perks ledger update? perk-program ✓?]
-- 健康 trend: [if multiple recent entries flag the heavy-load flags from `personal/diet.md` → surface as health observation in Next Action]
+- 健康 trend: [if multiple recent entries flag the heavy-load flags from `profile/diet.md` → surface as health observation in Next Action]
 - (omit table entirely if no dining captured)
 
 ## Session Meta

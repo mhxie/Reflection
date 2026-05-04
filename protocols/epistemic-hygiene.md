@@ -6,7 +6,7 @@ How atelier distinguishes well-validated thinking from raw or alloyed thinking, 
 
 **The criterion for reasoning priority is validation depth, not origin.** Whether a thought was first written by a human or first uttered by an LLM is the wrong axis. The right axis is: how much friction has this thought survived?
 
-Earlier versions of this system used an `#ai-reflection` / `#ai-generated` / untagged-as-human three-way tag. That model is retired. It encoded a binary that does not survive the admission "I cannot imagine a world without AI assistance" — once any session touches a thought, the thought is alloyed by default. The interesting question is no longer "did a human or an AI produce this," it is "how many independent passes of friction has the claim survived, and against what."
+The system uses no provenance tag for new content. Once any session touches a thought, the thought is alloyed by default. The operative question is "how many independent passes of friction has this claim survived, and against what?" — not "human or AI authored?". (The tags `#ai-reflection` / `#ai-generated` exist on historical notes and are treated as alloy markers; do not apply them to new content.)
 
 ## The Validation-Depth Taxonomy
 
@@ -34,11 +34,11 @@ Applies to: periodic (monthly or quarterly) free-writes the user does deliberate
 
 `#solo-flight` is rare on purpose. If everything is solo-flight, the tag means nothing. If nothing is solo-flight, there is no calibration tier and drift cannot be detected.
 
-### What changes for search
+### Search policy
 
-Search **no longer excludes** notes tagged `#ai-reflection`. The old exclusion rule was a bug: it conflated "produced by AI" with "low validation," then used the conflation to hide reflection content from itself. Reflection write-backs are alloy by default and can be cited like any other note. The tag `#ai-reflection` may still appear on legacy notes; treat it as a historical alloy marker, not a reason to exclude.
+Search includes notes regardless of `#ai-reflection` or `#ai-generated` tags. These tags are alloy markers, not exclusion criteria. Reflection write-backs are alloy by default and are citable like any other note.
 
-Trust scores from the engine (Phase B), not tag-based exclusion, are the right way to weight what comes back from search. A wiki entry with a high trust score should rank above an alloy note. An alloy note with no contradicting evidence should not be hidden — it should be visible and weighted accordingly.
+Trust scores from the engine (Phase B), not tag-based filtering, weight what comes back from search. Wiki entries with high trust rank above alloy notes; alloy notes with no contradicting evidence remain visible and weighted accordingly.
 
 ## The Failure Modes the Design is Bounded By
 

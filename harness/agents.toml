@@ -6,84 +6,84 @@
 
 [agents.challenger]
 source = ".claude/agents/challenger.md"
-model_profile = "reflective_challenge"
+model_profile = "core_intelligence"
 status = "portable-adapted"
 description = "Probes the painter's thoughts with sharp questions; affirms or counters in turn. Le cercle archetype: The Critic (Degas)."
 codex_prompt = "Emulate the Challenger role using `.claude/agents/challenger.md` and the runtime adapter protocol."
 
 [agents.curator]
 source = ".claude/agents/curator.md"
-model_profile = "note_operations"
+model_profile = "cross_validation"
 status = "portable-adapted"
 description = "Drafts note-content operations (compactions, merges, new notes, wiki entries) for the orchestrator to write under $OV/. Le cercle archetype: The Collector (Caillebotte)."
 codex_prompt = "Emulate the Curator role using `.claude/agents/curator.md` and the runtime adapter protocol."
 
 [agents.evolver]
 source = ".claude/agents/evolver.md"
-model_profile = "system_evolution"
+model_profile = "core_intelligence"
 status = "portable-adapted"
 description = "Improves the atelier itself: agents, commands, frameworks, methodology. Le cercle archetype: The Master of the Atelier."
 codex_prompt = "Emulate the Evolver role using `.claude/agents/evolver.md` and the runtime adapter protocol."
 
 [agents.librarian]
 source = ".claude/agents/librarian.md"
-model_profile = "recommendations"
+model_profile = "cross_validation"
 status = "portable-adapted"
 description = "Recommends readings, resources, and thinkers relevant to the painter's interests and goals. Le cercle archetype: The Cataloguer."
 codex_prompt = "Emulate the Librarian role using `.claude/agents/librarian.md` and the runtime adapter protocol."
 
 [agents.meeting]
 source = ".claude/agents/meeting.md"
-model_profile = "meeting_extraction"
+model_profile = "cross_validation"
 status = "portable-adapted"
 description = "Processes work meeting transcripts into structured notes with action items and decisions. Le cercle archetype: The Scribe."
 codex_prompt = "Emulate the Meeting role using `.claude/agents/meeting.md` and the runtime adapter protocol."
 
 [agents.reader]
 source = ".claude/agents/reader.md"
-model_profile = "deep_reading"
+model_profile = "core_intelligence"
 status = "portable-adapted"
 description = "Reads articles and notes through critical, structural, practical, and dialectical lenses. Le cercle archetype: The Reader."
 codex_prompt = "Emulate the Reader role using `.claude/agents/reader.md` and the runtime adapter protocol."
 
 [agents.researcher]
 source = ".claude/agents/researcher.md"
-model_profile = "deep_reflection"
+model_profile = "core_intelligence"
 status = "portable-adapted"
 description = "Gathers raw context from the painter's œuvre ($OV/). Le cercle archetype: The Observer (Pissarro)."
 codex_prompt = "Emulate the Researcher role using `.claude/agents/researcher.md` and the runtime adapter protocol."
 
 [agents.reviewer]
 source = ".claude/agents/reviewer.md"
-model_profile = "mechanical_review"
+model_profile = "cross_validation"
 status = "portable-adapted"
-description = "Quality-checks session outputs and system evolution changes. Le cercle archetype: The Arbiter (Manet)."
+description = "Quality-checks session outputs and system evolution changes. Cross-validation tier (see harness/models.toml profile `cross_validation`). Le cercle archetype: The Arbiter (Manet)."
 codex_prompt = "Emulate the Reviewer role using `.claude/agents/reviewer.md` and the runtime adapter protocol."
 
 [agents.scout]
 source = ".claude/agents/scout.md"
-model_profile = "web_research"
+model_profile = "cross_validation"
 status = "portable-adapted"
 description = "Gathers external context from outside the œuvre: articles, discussions, research, recent developments. Le cercle archetype: The Flâneur."
 codex_prompt = "Emulate the Scout role using `.claude/agents/scout.md` and the runtime adapter protocol."
 
 [agents.synthesizer]
 source = ".claude/agents/synthesizer.md"
-model_profile = "synthesis"
+model_profile = "core_intelligence"
 status = "portable-adapted"
 description = "Composes gathered context into structured reflections, summaries, and insights. Le cercle archetype: The Colorist (Monet)."
 codex_prompt = "Emulate the Synthesizer role using `.claude/agents/synthesizer.md` and the runtime adapter protocol."
 
 [agents.thinker]
 source = ".claude/agents/thinker.md"
-model_profile = "framework_reasoning"
+model_profile = "core_intelligence"
 status = "portable-adapted"
 description = "Applies structured thinking frameworks for outside-view reasoning. Le cercle archetype: The Structuralist (Cézanne)."
 codex_prompt = "Emulate the Thinker role using `.claude/agents/thinker.md` and the runtime adapter protocol."
 
 [agents.privacy-reviewer]
 source = ".claude/agents/privacy-reviewer.md"
-model_profile = "privacy_scan"
+model_profile = "cross_validation"
 status = "portable-adapted"
-description = "Semantic privacy scanner for committed-file diffs. Catches leaks the mechanical scripts/privacy_check.py misses; dispatched in pairs as a double-guard during /system-review Step 1c. Le cercle archetype: The Steward."
-codex_prompt = "Emulate the Privacy Reviewer role using `.claude/agents/privacy-reviewer.md` and the runtime adapter protocol. Run on the cheapest available tier; the role is dispatched twice in parallel for independent voices."
+description = "Semantic privacy scanner for committed-file diffs. Catches leaks the mechanical scripts/privacy_check.py misses. Cross-validation tier; dual-invoked across two providers during /system-review Step 1c. Le cercle archetype: The Steward."
+codex_prompt = "Emulate the Privacy Reviewer role using `.claude/agents/privacy-reviewer.md` and the runtime adapter protocol. Dispatched as the cross_validation tier (dual-invoked across two providers per harness/models.toml; bindings in profile/models.toml)."

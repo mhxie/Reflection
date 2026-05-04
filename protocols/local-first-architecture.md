@@ -79,14 +79,13 @@ atelier/                           (system root — the agent code)
 ├── .claude/commands/               # slash commands
 ├── protocols/                      # system protocols (this directory)
 ├── frameworks/                     # thinking frameworks
-├── profile/                        # self-model (identity, directions, expertise)
+├── profile/                        # gitignored config: self-model + private preferences (identity, directions, expertise, diet, reader_persona, credentials-index, private_slugs, examples, research-profile)
 ├── scripts/                        # Python tooling (trust.py, lint.py, semantic.py, ...)
-├── sources/                        # source-handling teaching docs and helpers
-│   ├── cite.py                     # academic citation helper
-│   ├── readwise.md                 # Readwise CLI teaching doc
-│   ├── scholar.md                  # Semantic Scholar teaching doc
-│   └── local-papers.md             # local papers teaching doc
-└── personal/                       # gitignored sensitive material
+└── sources/                        # source-handling teaching docs and helpers
+    ├── cite.py                     # academic citation helper
+    ├── readwise.md                 # Readwise CLI teaching doc
+    ├── scholar.md                  # Semantic Scholar teaching doc
+    └── local-papers.md             # local papers teaching doc
 
 $OV/                                (vault root — set via env var)
 ├── wiki/                           # L4 — locally certified (authoritative)
@@ -118,7 +117,7 @@ All other tiers can be written by the orchestrator after user approval. The Cura
 
 ## Migration Strategy: Opportunistic, Not Big-Bang
 
-There is no bulk migration of existing notes into the wiki layer. Older topic directories carried over from earlier knowledge systems are parked in `$OV/archive/`. The wiki layer grows organically:
+There is no bulk migration of existing notes into the wiki layer. Older topic directories that are no longer active sit in `$OV/archive/`. The wiki layer grows organically:
 
 - New wiki entries are written to `$OV/wiki/` directly (Curator drafts; orchestrator writes after approval).
 - Existing notes (`$OV/archive/` or anywhere else in L1/L2) are surfaced to L4 **only when they are about to become anchors for a new wiki claim** — at that point the user (or Curator) extracts the relevant claims, structures them per the schema, writes the wiki entry, and the original note remains in place as an L1/L2 capture record (untouched).

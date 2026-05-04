@@ -4,15 +4,15 @@ Identifies and tracks rules in the atelier system that depend on model capabilit
 
 ## Why This Exists
 
-Rules like "use Opus for creative tasks, Sonnet for mechanical tasks" or "load last 3 reflections" encode a snapshot of model capabilities at a point in time. When capabilities change (new model release, context window expansion, cost reduction, new API features), these rules may become wrong, suboptimal, or unnecessary. Without a registry, they are invisible until they cause a problem.
+Rules like "use the high tier for creative tasks, the cheap tier for mechanical tasks" or "load last 3 reflections" encode a snapshot of model capabilities at a point in time. When capabilities change (new model release, context window expansion, cost reduction, new API features), these rules may become wrong, suboptimal, or unnecessary. Without a registry, they are invisible until they cause a problem.
 
-Inspired by the "context anxiety" example from Anthropic's Managed Agents architecture: a behavioral workaround for Sonnet 4.5 became dead weight when Opus 4.5 shipped. The harness encoded a stale assumption about the model.
+Inspired by the general lesson: a behavioral workaround for an older model in a tier becomes dead weight when a stronger model ships in that tier. The harness encoded a stale assumption about the model.
 
 ## Assumption Classification
 
 | Class | Definition | Example | Staleness Signal |
 |-------|-----------|---------|-----------------|
-| **Model Assignment** | Which model runs which agent | Researcher=Opus | New model release, benchmark shift, cost change |
+| **Model Assignment** | Which tier runs which agent | Researcher=core_intelligence | New model release, benchmark shift, cost change |
 | **Token/Context Budget** | Context window sizing, loading limits | "last 3 reflections" | Context window expansion |
 | **Temporal Threshold** | Time-based triggers and warnings | "7 days stale" for profile | User behavior data |
 | **Turn Budget** | maxTurns per agent | Evolver=25 | Model efficiency changes |
@@ -22,22 +22,22 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 
 ### Model Assignments
 
-`harness/models.toml` is the source of truth for which model runs which role and *why* a profile was chosen — see the `[profiles.*.rationale]` fields. `harness_lint.py` (`models-claude-drift`) catches frontmatter↔toml drift. The table below is the audit-trigger registry only: which profile each agent uses, and what staleness signal would force a re-evaluation. To learn *why* a profile fits a role, read the rationale in `harness/models.toml`.
+`harness/models.toml` is the source of truth for **profile schema, invocation pattern, and agent assignments**. The actual provider/model **bindings** (model id, endpoint URL, env var, request extras) live in the gitignored `profile/models.toml`; loaders merge the two at runtime. See the `[profiles.*.rationale]` fields in the schema file for *why* a profile was chosen. `harness_lint.py` (`models-claude-drift`) catches frontmatter↔toml drift. The table below is the audit-trigger registry only: which profile each agent uses, and what staleness signal would force a re-evaluation.
 
 | Agent | Profile (see `harness/models.toml`) | Re-test When |
 |-------|-------------------------------------|-------------|
-| Researcher | `deep_reflection` | Sonnet matches Opus on reading comprehension benchmarks |
-| Synthesizer | `synthesis` | Sonnet matches Opus on synthesis quality |
-| Reviewer | `mechanical_review` | Haiku becomes capable enough for rubric scoring |
-| Challenger | `reflective_challenge` | Sonnet improves on open-ended question quality |
-| Thinker | `framework_reasoning` | Sonnet matches on framework reasoning |
-| Evolver | `system_evolution` | Sonnet matches on multi-file coherence |
-| Curator | `note_operations` | Haiku becomes capable for preservation checks |
-| Scout | `web_research` | Haiku becomes capable for search + format |
-| Reader | `deep_reading` | Sonnet matches on analytical reading quality |
-| Meeting | `meeting_extraction` | Haiku becomes capable for transcript processing |
-| Librarian | `recommendations` | Haiku becomes capable for bilingual recommendations |
-| Privacy Reviewer | `privacy_scan` | Haiku tier capability or cost changes; double-dispatch budget shifts |
+| Researcher | `core_intelligence` | A cheaper tier matches the primary on reading comprehension benchmarks |
+| Synthesizer | `core_intelligence` | A cheaper tier matches the primary on synthesis quality |
+| Challenger | `core_intelligence` | A cheaper tier improves on open-ended question quality |
+| Thinker | `core_intelligence` | A cheaper tier matches the primary on framework reasoning |
+| Evolver | `core_intelligence` | A cheaper tier matches the primary on multi-file coherence |
+| Reader | `core_intelligence` | A cheaper tier matches the primary on analytical reading quality |
+| Reviewer | `cross_validation` | Cross-provider agreement rate drops on rubric scoring; cost shifts in either binding |
+| Curator | `cross_validation` | Cross-provider agreement rate drops on note preservation |
+| Scout | `cross_validation` | Cross-provider agreement rate drops on web triage |
+| Meeting | `cross_validation` | Cross-provider agreement rate drops on transcript extraction |
+| Librarian | `cross_validation` | Cross-provider agreement rate drops on bilingual recommendations |
+| Privacy Reviewer | `cross_validation` | Cross-provider agreement rate drops on semantic privacy scan; either binding deprecates |
 
 ### Token/Context Budgets
 
@@ -86,7 +86,7 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 
 Run this checklist when any of these events occur:
 
-- [ ] New Claude model release (Opus, Sonnet, Haiku generation change)
+- [ ] New model release in any tier (any provider used in `profile/models.toml` bindings)
 - [ ] Context window size change
 - [ ] semantic.py mode change (stub to real)
 - [ ] Cost structure change (model pricing)

@@ -37,10 +37,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-OV = Path(os.environ.get("OV", "zk"))
 ALLOWLIST = Path(__file__).resolve().parent / "privacy_allowlist.txt"
 PRIVATE_SLUGS = (
-    Path(__file__).resolve().parent.parent / "personal" / "private_slugs.txt"
+    Path(__file__).resolve().parent.parent / "profile" / "private_slugs.txt"
 )
 
 _INFRA_DIRS = {"cache", "assets", ".obsidian"}
@@ -88,7 +87,7 @@ def load_private_slugs() -> set[str]:
     "Protocol"). That floor lets through employer slugs and project
     codenames that happen to be one word. The user maintains this list
     explicitly because no heuristic can reliably tell a generic word from
-    a private proper noun. File is gitignored under `personal/`; absent
+    a private proper noun. File is gitignored under `profile/`; absent
     file means no slugs configured.
     """
     if not PRIVATE_SLUGS.exists():
@@ -292,9 +291,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = ap.parse_args(argv)
 
-    if not OV.exists():
+    # Resolve $OV after argparse so --allow-empty-ov / --json reach the
+    # soft-skip path when OV is unset (otherwise the helper would exit during
+    # path resolution before either flag is consulted).
+    ov_env = os.environ.get("OV")
+    OV = Path(ov_env).expanduser().resolve() if ov_env else None
+    if OV is None or not OV.exists():
+        ov_label = OV.as_posix() if OV is not None else "$OV (unset)"
         msg = (
-            f"privacy_check: {OV} does not exist; cannot scan. "
+            f"privacy_check: {ov_label} does not exist; cannot scan. "
             "Set $OV or pass --allow-empty-ov to acknowledge an empty gate."
         )
         if args.json:

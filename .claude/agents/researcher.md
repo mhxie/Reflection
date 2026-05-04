@@ -37,7 +37,7 @@ Don't search randomly. Follow this strategy:
 ### Phase 2: Targeted Retrieval (read the hits)
 - `Read` the top 10-15 most relevant files in full
 - Prioritize: wiki entries > recent daily notes > reflections > thematic matches elsewhere
-- Do not filter by provenance tag. The criterion for a hit's relevance is validation depth and topic match, not origin. Notes tagged `#ai-reflection` or `#ai-generated` are historical alloy markers from an earlier taxonomy; treat them exactly like any other alloy note and include them in results. Do not exclude. (See `protocols/epistemic-hygiene.md` for the validation-depth taxonomy.)
+- Do not filter by provenance tag. Relevance is validation depth + topic match. Notes carrying `#ai-reflection` or `#ai-generated` are alloy and are included like any other alloy note. See `protocols/epistemic-hygiene.md`.
 - Batch efficiency: `Read` is cheap over local files — there is no network round-trip and no size limit. The files are already on disk, so no caching is required. Cache only synthesized findings (e.g., cross-note comparison tables), not raw note content.
 
 ### Phase 3: Gap Filling (what's missing?)

@@ -6,7 +6,7 @@ Content ingestion and normalization layer. Captures web articles, PDFs, newslett
 
 - Install: `npm install -g @readwise/cli`
 - Auth: `readwise login` (browser OAuth) or `readwise login-with-token <token>`
-- Persona: run `/build-persona` to create `personal/reader_persona.md` for personalized triage
+- Persona: run `/build-persona` to create `profile/reader_persona.md` for personalized triage
 
 ## Installed Skills
 

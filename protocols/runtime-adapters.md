@@ -8,7 +8,7 @@ system. The core idea is to separate four concerns:
 | Workflow | `protocols/`, command specs | `/reflect`, `/weekly`, `/review` |
 | Role | `harness/agents.toml`, agent specs | Researcher, Synthesizer, Reviewer |
 | Capability | `harness/capabilities.toml` | `semantic_query`, `write_local_file`, `web_search` |
-| Runtime and model | adapters, local CLI config | Claude Code with Opus, Codex with GPT |
+| Runtime and model | adapters, local CLI config + `profile/models.toml` (gitignored) | one runtime per call, model bound per profile |
 
 This follows the OpenClaw lesson: the system can use different models when the
 provider and runtime are explicit metadata, not assumptions buried inside the
@@ -33,11 +33,10 @@ repo-scoped `atelier` skill points Codex to these registries without loading
 every command or agent spec up front.
 
 Codex does not yet ship a project-level custom slash-command surface, so the
-parity invocation is `python3 scripts/atelier.py run <command>`, which spawns
-`codex` (or `codex exec` with `--exec`) with the generated workflow prompt
-pre-loaded and the project root as the working directory. This is the
-recommended Codex entry point until Codex documents a stable custom-prompt
-format.
+parity invocation is `python3 scripts/atelier.py run <command>`. For the full
+recipe set (run, run --exec, run --resume, run --fork, plus discovery
+commands), see `AGENTS.md` § Codex Quick Recipes; that file is the operational
+canon for Codex sessions and is read first by Codex.
 
 ## Provider-Neutral Rules
 
@@ -56,25 +55,22 @@ format.
 
 ## Model Profiles
 
-Agent roles ask for capability classes, not fixed provider models. Current
-profile names:
+Agent roles ask for capability classes, not fixed provider models. Profile
+schema (names, rationale, invocation pattern, agent assignments) is defined
+in `harness/models.toml` (committed); the actual provider/model bindings
+(model id, endpoint URL, env var, request extras) live in
+`profile/models.toml` (gitignored). Loaders merge schema + bindings at
+runtime. Three tiers today:
 
-| Profile | Used for |
-|---|---|
-| `deep_reflection` | broad vault reading and pattern discovery |
-| `synthesis` | combining briefs into user-facing insight |
-| `reflective_challenge` | probing questions and assumption tests |
-| `framework_reasoning` | independent framework application |
-| `system_evolution` | multi-file harness changes |
-| `mechanical_review` | checklists, rubric scoring, diff review |
-| `note_operations` | structured local note drafts |
-| `web_research` | external context gathering |
-| `deep_reading` | article and transcript analysis |
-| `meeting_extraction` | action item and decision extraction |
-| `recommendations` | reading and resource curation |
+| Tier | Used for | Invocation |
+|---|---|---|
+| `core_intelligence` | deep cognition: vault reading, synthesis, framework reasoning, challenger, system evolution, deep reading | shadow (Anthropic primary; sampled shadow leg via direct-api for ongoing quality calibration) |
+| `cross_validation` | low-cognitive-load tasks where cross-provider agreement is the trust signal | dual (currently wired for privacy-reviewer in `/system-review` Step 1c; other tier members are eligible but not yet dispatched in pairs) |
+| `external_review` | external reviewers for `/system-review`, run outside the project's harness | dual (codex + direct-api / DeepSeek Pro in `scripts/review.sh`) |
 
-The concrete mapping is in `harness/models.toml`. Updating a provider or model
-should usually touch that file only.
+For the agent-to-tier mapping see the `[agents.*]` section of
+`harness/models.toml`. Swapping providers or models is a binding-file edit
+in `profile/models.toml`; no committed file changes.
 
 ## Capability Profiles
 
@@ -99,32 +95,14 @@ When a user asks Codex to run an Atelier command:
 1. Read `AGENTS.md`.
 2. Read `CLAUDE.md` for domain rules and safety constraints.
 3. Read `.claude/commands/<command>.md` for the workflow.
-4. Translate Claude-specific constructs using the table in `AGENTS.md`.
+4. Translate Claude-specific constructs using the table in `AGENTS.md` § Codex Adaptation.
 5. Read any referenced agent specs from `.claude/agents/`.
 6. Prefer local `$OV/` files, `rg`, and `uv run scripts/semantic.py`.
 7. Ask before any local file write under `$OV/`.
 8. Report any downgraded capability, such as missing web access or unavailable
    subagent dispatch.
 
-If the command name is unknown, run `python3 scripts/atelier.py commands` to
-discover the registered command set. To produce a copyable invocation prompt,
-run `python3 scripts/atelier.py prompt <command>`.
+For discovery, launch, resume, and fork recipes (`python3 scripts/atelier.py
+status | commands | prompt | source | agents | agent-prompt | agent-source |
+run [--exec | --resume | --fork]`), see `AGENTS.md` § Codex Quick Recipes.
 
-If the role name is unknown, run `python3 scripts/atelier.py agents` to
-discover the registered agent set. To produce a focused role-emulation prompt,
-run `python3 scripts/atelier.py agent-prompt <agent>`.
-
-## Migration Path
-
-`.claude/` is the native command and agent surface today; Codex-readable root
-instructions and neutral registries provide portability. Later phases can move
-command and agent source into `harness/` and generate `.claude/` and `.codex/`
-surfaces from it.
-
-Useful next phases:
-
-1. Generate `CLAUDE.md` from `AGENTS.md` or make it a symlink where supported.
-2. Move agent roles into neutral specs and render Claude frontmatter from them.
-3. Move command specs into neutral source and render Claude command files from them.
-4. Extend `scripts/harness_lint.py` to reject provider-specific syntax in shared
-   docs once the migration is complete.

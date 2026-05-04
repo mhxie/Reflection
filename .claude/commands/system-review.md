@@ -1,6 +1,6 @@
 # System Review
 
-Review a system-evolution bundle (protocols, agents, commands, CLAUDE.md, handoff docs) before committing. Runs internal reviewer + external reviewers (codex, gemini) in parallel.
+Review a system-evolution bundle (protocols, agents, commands, CLAUDE.md, handoff docs) before committing. Runs internal reviewer + external reviewers (codex + direct-api / DeepSeek Pro) in parallel.
 
 ## When to use
 
@@ -42,42 +42,61 @@ The script scans tracked files PLUS untracked-but-not-ignored files (per `tracke
 
 Rationale: privacy leaks are a hard veto regardless of score. Catching them deterministically before dispatching the expensive external reviewers saves tokens and prevents NEEDS_REVISION cycles caused by mechanical issues a script already knows. Mirrors `/lint` Phase 0c.
 
-### 1c. Semantic privacy double-guard (blocking, agent-based)
+### 1c. Semantic privacy double-guard (blocking, cross-provider)
 
-The mechanical script in 1b only matches filename stems under `$OV/` and wikilink targets. It misses **semantic** leaks: real names, restaurants, $-amount + deadline pairs, demographic phrases, personal taxonomies. Step 1c closes that gap with two independent agent voices on a cheap model.
+The mechanical script in 1b only matches filename stems under `$OV/` and wikilink targets. It misses **semantic** leaks: real names, restaurants, $-amount + deadline pairs, demographic phrases, personal taxonomies. Step 1c closes that gap with two independent voices from different providers — the `cross_validation` tier per `harness/models.toml` (bindings in `profile/models.toml`). Cross-provider disagreement carries more diagnostic weight than two samples of the same model.
 
 **Run only after 1b returns `hit_count: 0`** (or soft-skips). If 1b aborted with hits, do not dispatch 1c — fix 1b first.
 
-Dispatch **two `privacy-reviewer` agent instances** in parallel — single message, two `Agent` tool calls. Both use the same prompt; the pair acts as redundant independent review (haiku-tier model, cheap enough to run on every system review).
+Dispatch **both legs in parallel — single message, one `Agent` tool call AND one `Bash` tool call**:
 
-Prompt for each instance:
+**Leg A — Anthropic side (`Agent` tool, `subagent_type: privacy-reviewer`):**
 
-> Privacy review the uncommitted bundle. Walk `git status --short` and `git diff HEAD --` yourself; for untracked-but-not-ignored files, `Read` them in full. Cross-reference `personal/` and `profile/` files (they're on disk but gitignored) to detect taxonomy mirroring and value coincidences with what's about to be committed. Apply all leak categories from your agent definition. Return verdict per the format in your spec. You are instance `<A or B>`; do not coordinate with the other instance.
+> Privacy review the uncommitted bundle. Walk `git status --short` and `git diff HEAD --` yourself; for untracked-but-not-ignored files, `Read` them in full. Cross-reference `profile/` files (canonical config home; gitignored but on disk) to detect taxonomy mirroring and value coincidences with what's about to be committed. Apply all leak categories from your agent definition. Return verdict per the format in your spec. You are instance `A` (Anthropic leg); do not coordinate with the direct-api leg.
 
-Pass `instance: A` to the first call and `instance: B` to the second so each can label its report.
+**Leg B — direct-api side (`Bash` tool, single call):**
+
+```bash
+{
+  echo 'Privacy review the uncommitted bundle. Identify semantic leaks: real names, restaurants, $-amount + deadline pairs, demographic phrases, personal taxonomies, employer slugs that the mechanical filename-stem scanner misses. You are instance B (direct-api leg); do not coordinate with the Anthropic leg. Output one of: CLEAN | NEEDS_REVISION (with SHOULD-FIX list) | BLOCKER (with leak descriptions and file:line pointers).'
+  echo
+  echo '--- DIFF ---'
+  git diff HEAD --
+  echo
+  echo '--- UNTRACKED FILES ---'
+  for f in $(git ls-files --others --exclude-standard); do
+    echo "=== $f ==="
+    cat "$f"
+  done
+} | uv run scripts/chat_completion.py --profile cross_validation --prompt -
+```
+
+Both legs return verdicts (CLEAN / NEEDS_REVISION / BLOCKER). The direct-api leg returns `message.content`; treat it as the verdict.
 
 **Verdict aggregation** (most-paranoid wins):
 
-| Instance A | Instance B | Action |
+| Leg A (Anthropic) | Leg B (direct-api) | Action |
 |---|---|---|
 | CLEAN | CLEAN | Proceed to Step 2 |
 | CLEAN | NEEDS_REVISION | Surface SHOULD-FIX list as concerns; proceed to Step 2 (do not block) |
 | NEEDS_REVISION | NEEDS_REVISION | Surface union of SHOULD-FIX as concerns; proceed to Step 2 |
 | Either | BLOCKER | **Abort** with `NEEDS_REVISION`. Present union of BLOCKERs verbatim. Do not dispatch Step 2 reviewers. Fix and re-run `/system-review`. |
 
-The double-guard catches single-model misses: if one instance hallucinates a clean verdict on real leak, the other independent voice acts as cross-check. Cost is bounded (haiku, scope = diff only).
+If the direct-api leg soft-skips (exit 2 — api_env unset), note "direct-api leg unavailable; cross-provider check downgraded to single-leg Anthropic" in the synthesis and continue with Leg A's verdict only. Do not block on direct-api availability.
+
+Cross-provider rationale: two instances of the same model from the same provider have correlated failure modes (training lineage, tokenizer, corpus). The two legs of the cross_validation tier share none of those. Disagreement here is more likely to surface a real leak than two same-model samples would.
 
 ### 2. Dispatch in parallel (one message, multiple tool calls)
 
 Send a **single** assistant message containing both tool calls:
 
-- **Internal reviewer** — `Agent` tool, `subagent_type: reviewer`. Prompt: "Run System Diff Review + System Holistic Review on the uncommitted bundle. Walk `git diff` and `git status` yourself. Include the Phase scope brief (what moved, what was deferred). Return: (a) 4-dim score card (Contract integrity, Wiring correctness, Bug absence, Claim fidelity, each 0-10); (b) antipattern scan walking all 9 entries in `protocols/antipatterns.md` with FLAG or N/A-with-reason for each; (c) concern list with severity (BLOCKER / SHOULD-FIX / NICE-TO-HAVE) and `file:line` pointers, minimum 3 or a 'Hunted but not found' section; (d) pre-mortem one-liner; (e) scope clarifier block. Overall verdict per reviewer.md Scoring: APPROVED / NEEDS_REVISION / REJECTED (no APPROVED_WITH_NOTES for system reviews; any dim <6 or missing artifact forces NEEDS_REVISION)."
+- **Internal reviewer** — `Agent` tool, `subagent_type: reviewer`. Prompt: "Run System Diff Review + System Holistic Review on the uncommitted bundle. Walk `git diff` and `git status` yourself. Include the Phase scope brief (what moved, what was deferred). Return: (a) 4-dim score card (Contract integrity, Wiring correctness, Bug absence, Claim fidelity, each 0-10); (b) antipattern scan walking every entry in `protocols/antipatterns.md` (count entries from the file at scan time) with FLAG or N/A-with-reason for each; (c) concern list with severity (BLOCKER / SHOULD-FIX / NICE-TO-HAVE) and `file:line` pointers, minimum 3 or a 'Hunted but not found' section; (d) pre-mortem one-liner; (e) scope clarifier block. Overall verdict per reviewer.md Scoring: APPROVED / NEEDS_REVISION / REJECTED (no APPROVED_WITH_NOTES for system reviews; any dim <6 or missing artifact forces NEEDS_REVISION)."
 
-- **External reviewers (codex + gemini)** — one `Bash` call, `timeout: 600000`:
+- **External reviewers (codex + direct-api / DeepSeek Pro)** — one `Bash` call, `timeout: 600000`:
   ```bash
   bash scripts/review.sh
   ```
-  (Use `bash scripts/review.sh codex` or `bash scripts/review.sh gemini` for one only.) Reports land in `$OV/cache/review-<timestamp>-{codex,gemini}.md`. The script runs the external CLIs in parallel, blocks on `wait`, includes untracked files in the diff sent to gemini, and treats a missing CLI as a soft-skip.
+  (Use `bash scripts/review.sh codex`, `bash scripts/review.sh deepseek`, or the legacy `bash scripts/review.sh gemini` for one only.) Reports land in `$OV/cache/review-<timestamp>-{codex,direct}.md` (the direct-api leg writes `-direct.md`). The script runs both reviewers in parallel, blocks on `wait`, includes untracked files in the diff sent to each, and treats a missing CLI / unset `DS_API` as a soft-skip.
 
 ### 3. Synchronous wait (invoker contract)
 
@@ -91,9 +110,9 @@ This is a contract at the *invoker* level, not enforced by the script. The scrip
 
 ### 4. Synthesize
 
-Only after both dispatches have returned. Read the two report files under `$OV/cache/review-<timestamp>-{codex,gemini}.md`, combine with the internal reviewer's handoff, and present.
+Only after both dispatches have returned. Read the two report files under `$OV/cache/review-<timestamp>-{codex,direct}.md`, combine with the internal reviewer's handoff, and present.
 
-**External verdict mapping for system reviews:** External reviewers (codex, gemini) may emit `APPROVED_WITH_NOTES`. System reviews do not admit a notes-only verdict; treat external `APPROVED_WITH_NOTES` as `NEEDS_REVISION` for the merge ladder. The "notes" themselves still surface as concerns in the synthesis output. This applies only when synthesizing system reviews; session reviews preserve the original verdict.
+**External verdict mapping for system reviews:** External reviewers (codex, direct-api) may emit `APPROVED_WITH_NOTES`. System reviews do not admit a notes-only verdict; treat external `APPROVED_WITH_NOTES` as `NEEDS_REVISION` for the merge ladder. The "notes" themselves still surface as concerns in the synthesis output. This applies only when synthesizing system reviews; session reviews preserve the original verdict.
 
 Synthesis output:
 
@@ -106,7 +125,7 @@ Synthesis output:
 Floor check: any internal dim <6 OR any required artifact missing -> NEEDS_REVISION regardless of overall score.
 
 ### Required artifacts (internal reviewer)
-- Antipattern scan: [complete 9/9 | missing entries: ...]
+- Antipattern scan: [complete N/N for catalog entries | missing entries: ...]
 - Concern floor: [N surfaced | hunted-but-not-found rationale]
 - Pre-mortem: "If this fails within 30 days, most likely cause is: ..."
 - Scope clarifier: "What this change does NOT do: ..."
@@ -115,15 +134,15 @@ Floor check: any internal dim <6 OR any required artifact missing -> NEEDS_REVIS
 - [source] file:line - issue
 
 ### Convergent findings
-- issue (flagged by: internal, codex, gemini)
+- issue (flagged by: internal, codex, direct-api)
 
 ### Divergent findings
-- issue (internal: yes, codex: no) - resolution: ...
+- issue (internal: yes, codex: no, direct-api: no) - resolution: ...
 
 ### Scores
 - Internal reviewer: X/10 avg across 4 dims; dim floor [passed | BREACHED on <dim>]
 - Codex: <one-line summary>
-- Gemini: <one-line summary>
+- Direct-api (DeepSeek Pro): <one-line summary>
 ```
 
 Then ask the user: "Address the blockers and re-review, or proceed to commit?"
@@ -135,9 +154,9 @@ Then ask the user: "Address the blockers and re-review, or proceed to commit?"
 | 1 | Internal holistic only | Tiny scoped change |
 | 2 | Internal holistic + diff | Single-area change |
 | 3 | Tier 2 + codex | Cross-cutting, low-risk (default for evolution bundles) |
-| 4 | Tier 3 + gemini | Architecture-level, multi-phase |
+| 4 | Tier 3 + direct-api (DeepSeek Pro) | Architecture-level, multi-phase |
 
-If the Evolver specified a tier in its handoff, honor it. Otherwise default to **Tier 3 (internal + codex)** or **Tier 4 (internal + codex + gemini)** for architecture-level bundles.
+If the Evolver specified a tier in its handoff, honor it. Otherwise default to **Tier 3 (internal + codex)** or **Tier 4 (internal + codex + direct-api)** for architecture-level bundles.
 
 ## Cross-references
 
@@ -145,4 +164,4 @@ If the Evolver specified a tier in its handoff, honor it. Otherwise default to *
 - `protocols/orchestrator.md` → Review Tiers
 - `protocols/agent-handoff.md` → `system-review-request` contract
 - `.claude/agents/reviewer.md` → internal reviewer definition
-- `.claude/agents/privacy-reviewer.md` → semantic privacy guard (haiku-tier, dispatched in pairs in Step 1c)
+- `.claude/agents/privacy-reviewer.md` → semantic privacy guard (cross_validation tier, dispatched in pairs in Step 1c)
