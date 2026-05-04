@@ -1,5 +1,9 @@
 # Introspect
 
+> Also reachable via `/hi <natural language>` (e.g., `/hi rebuild profile`, `/hi who am I`,
+> `/hi refresh profile`). See `harness/intents.toml` `[intents.introspect]` for the full
+> pattern list. Both paths execute this same procedure.
+
 Build or refresh your self-model by examining your local notes, session history, and reading patterns. Produces three profile files that the rest of the system consults.
 
 Unlike `/index` (mechanical extraction), `/introspect` discovers patterns: what you're drawn to, how your taste is shifting, where your curiosity is orbiting before you've named it as a goal.

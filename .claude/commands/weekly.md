@@ -1,5 +1,9 @@
 # Weekly Review
 
+> Also reachable via `/hi <natural language>` (e.g., `/hi weekly review`, `/hi this week`).
+> See `harness/intents.toml` `[intents.weekly]` for the full pattern list. Both paths
+> execute this same procedure.
+
 Run a structured weekly review covering the past 7 days. Deeper than daily reflection, lighter than a full goal review.
 
 Daily `/hi` does not run every day. `/weekly` is also the catch-all for any signals that didn't make it into a daily reflection — Apple Health, support pulse, dining, health-cadence checks, key events. Treat it as the weekly checkpoint, not just a synthesis of dailies.

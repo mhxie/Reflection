@@ -1,5 +1,9 @@
 # Goal Review
 
+> Also reachable via `/hi <natural language>` (e.g., `/hi review my goals`,
+> `/hi goal pulse`, `/hi check directions`). See `harness/intents.toml`
+> `[intents.review]` for the full pattern list. Both paths execute this same procedure.
+
 Review progress on near/mid/long-term goals. Surface what's progressing, what's neglected, and what has shifted.
 
 ## Cadence

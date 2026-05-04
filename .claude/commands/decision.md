@@ -1,5 +1,9 @@
 # Decision Journal
 
+> Also reachable via `/hi <natural language>` (e.g., `/hi should I take the offer`,
+> `/hi help me decide`, `/hi torn between`). See `harness/intents.toml`
+> `[intents.decision]` for the full pattern list. Both paths execute this same procedure.
+
 Structured decision-making session for important choices. Uses thinking frameworks to analyze a decision from multiple angles.
 
 ## Trigger

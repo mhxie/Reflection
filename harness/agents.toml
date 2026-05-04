@@ -40,6 +40,7 @@ used_by = [
     "commands.hi",
     "commands.introspect",
     "commands.prm",
+    "intents.introspect",
     "intents.meeting",
     "intents.reflection",
 ]
@@ -55,6 +56,7 @@ used_by = [
     "commands.hi",
     "commands.promote",
     "intents.meeting",
+    "intents.promote",
 ]
 
 [agents.evolver]
@@ -127,9 +129,15 @@ used_by = [
     "commands.hi",
     "commands.prm",
     "commands.promote",
+    "intents.decision",
+    "intents.energy-audit",
+    "intents.explore",
+    "intents.promote",
     "intents.reading",
     "intents.reflection",
+    "intents.review",
     "intents.talk",
+    "intents.weekly",
 ]
 
 [agents.reviewer]
@@ -145,6 +153,7 @@ used_by = [
     "commands.prm",
     "commands.promote",
     "commands.system-review",
+    "intents.introspect",
     "intents.reflection",
 ]
 
@@ -171,6 +180,7 @@ used_by = [
     "commands.civ",
     "commands.hi",
     "intents.reflection",
+    "intents.review",
 ]
 
 [agents.thinker]
@@ -182,6 +192,7 @@ codex_prompt = "Emulate the Thinker role using `.claude/agents/thinker.md` and t
 pattern = "orchestrator-subagent"
 used_by = [
     "commands.hi",
+    "intents.decision",
 ]
 
 [agents.privacy-reviewer]

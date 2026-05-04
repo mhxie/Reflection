@@ -85,16 +85,17 @@ Launch agents based on command type:
 
 | Command | Agents Launched |
 |---------|----------------|
-| `/project:hi` | Researcher + Challenger + 2-5× Scout (parallel) |
-| `/project:review` | Researcher (then Synthesizer) |
-| `/project:weekly` | Researcher |
-| `/project:decision` | Researcher + Thinker (parallel) |
-| `/project:explore` | Researcher |
-| `/project:energy-audit` | Researcher (include amenity floor check) |
-| `/project:prm` | Researcher (daily-note scanning for DL0-1 mentions) + Challenger (vulnerability probing) |
+| `/hi` (default reflection / fallback) | Researcher + Challenger + 2-5× Scout (parallel) |
+| `/review` or `/hi review my goals` | Researcher (then Synthesizer) |
+| `/weekly` or `/hi weekly review` | Researcher |
+| `/decision` or `/hi should I…` | Researcher + Thinker (parallel) |
+| `/explore` or `/hi explore` | Researcher |
+| `/energy-audit` or `/hi I'm drained` | Researcher (include amenity floor check) |
+| `/prm` | Researcher (daily-note scanning for DL0-1 mentions) + Challenger (vulnerability probing) |
 | Read mode (via `/hi`) | Reader (1-4 instances by lens) + Researcher + Scout + Thinker (parallel) |
 | Work meeting transcript | Meeting (Executive mode — action items + decisions) |
-| `/project:curate` | Ad-hoc agent (goal-aware Readwise triage — see `commands/curate.md`) |
+| `/curate` or `/hi triage inbox` | Ad-hoc agent (goal-aware Readwise triage — see `commands/curate.md`) |
+| `/forget` (intent) or `/hi scan my drafts` | Forgetter (cross_validation tier; bounded sweep, decay report under `$OV/agent-findings/`) |
 
 ### Phase 2: Synthesize
 - Synthesizer takes Researcher's brief and produces structured output

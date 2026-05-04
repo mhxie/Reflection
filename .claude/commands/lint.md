@@ -1,5 +1,9 @@
 # /lint — Structural + corpus-level checks over `$OV/wiki/`
 
+> Also reachable via `/hi <natural language>` (e.g., `/hi lint the wiki`, `/hi wiki audit`,
+> `/hi wiki orphans`). See `harness/intents.toml` `[intents.lint]` for the full pattern
+> list. Both paths execute this same procedure.
+
 Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint.py` is the single source of truth, mirroring the `scripts/trust.py` pattern.
 
 **Scope:** Three passes. (0) Harness portability, $OV ingestion hygiene, and privacy checks. (1) Structural: everything under `$OV/wiki/`. (2) Staleness: L2 working-layer directories (`$OV/agent-findings/`, `$OV/drafts/`, `$OV/gtd/`, `$OV/preprints/`, `$OV/reflections/`, `$OV/research/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).

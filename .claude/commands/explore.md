@@ -1,5 +1,9 @@
 # Open Exploration
 
+> Also reachable via `/hi <natural language>` (e.g., `/hi explore`, `/hi what am I missing`,
+> `/hi forgotten connections`). See `harness/intents.toml` `[intents.explore]` for the full
+> pattern list. Both paths execute this same procedure.
+
 Free-form exploration session for when the user doesn't have a specific question — they just want to think. This is the "what's interesting?" command.
 
 ## Prerequisites

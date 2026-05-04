@@ -144,6 +144,198 @@ pattern = "generator-verifier"
 expected_subagent_count = 1
 parallel = false
 
+# The nine sub-mode intents below cover what used to be standalone
+# slash commands (/weekly, /review, /decision, /energy-audit, /explore,
+# /curate, /introspect, /lint, /promote). They remain reachable as direct
+# slashes for muscle memory, and now also via `/hi <natural language>`.
+# Each row points at the procedure file in `.claude/commands/<name>.md`;
+# the orchestrator reads and follows that file when the intent matches.
+# See `.claude/commands/hi.md` "Sub-mode procedures" for the mode → file map.
+
+# Weekly review of the past 7 days. Procedure: .claude/commands/weekly.md.
+# Higher priority than `reading` (40) so explicit "weekly" / "this week"
+# beats the bare "read"/"https://" patterns when both could match.
+[intents.weekly]
+patterns = [
+    "weekly review",
+    "this week",
+    "past 7 days",
+    "past week",
+    "weekly check-in",
+    "run weekly",
+]
+mode = "weekly-review"
+agents = ["researcher"]
+profile_reads = ["identity.md", "directions.md"]
+priority = 45
+pattern = "orchestrator-subagent"
+expected_subagent_count = 1
+parallel = false
+
+# Energy audit across physical / mental / emotional / social dimensions.
+# Procedure: .claude/commands/energy-audit.md. Sits in the "Plan" cluster
+# alongside review/decision; priority 43 between weekly (45) and review (42)
+# so a direct phrase like "energy audit" beats the goal-review keywords.
+[intents.energy-audit]
+patterns = [
+    "energy audit",
+    "drained",
+    "burnt out",
+    "burned out",
+    "exhausted",
+    "energy check",
+]
+mode = "energy-audit"
+agents = ["researcher"]
+profile_reads = ["identity.md", "directions.md"]
+priority = 43
+pattern = "orchestrator-subagent"
+expected_subagent_count = 1
+parallel = false
+
+# Goal review: quarterly full review or monthly light pulse. Procedure:
+# .claude/commands/review.md. Patterns are deliberately specific
+# ("review my goals" not bare "review") so they never collide with reading
+# patterns ("read", "discuss", URLs) at priority 40.
+[intents.review]
+patterns = [
+    "review my goals",
+    "goal review",
+    "check directions",
+    "goal pulse",
+    "goal check",
+    "quarterly review",
+]
+mode = "goal-review"
+agents = ["researcher", "synthesizer"]
+profile_reads = ["identity.md", "directions.md"]
+priority = 42
+pattern = "orchestrator-subagent"
+expected_subagent_count = 2
+parallel = false
+
+# Decision journal: structured framework cross-validation for a hard choice.
+# Procedure: .claude/commands/decision.md. Researcher + Thinker fire in
+# parallel (per orchestrator.md Phase 1 Gather), so pattern is agent-team.
+[intents.decision]
+patterns = [
+    "should I",
+    "help me decide",
+    "help me think through",
+    "torn between",
+    "decision journal",
+    "make a decision",
+]
+mode = "decision-journal"
+agents = ["researcher", "thinker"]
+profile_reads = ["identity.md", "directions.md"]
+priority = 35
+pattern = "agent-team"
+expected_subagent_count = 2
+parallel = true
+
+# Open exploration: surface forgotten threads, cross-domain links, evolution
+# of thinking. Procedure: .claude/commands/explore.md. Single Researcher
+# dispatch on a wide net of semantic + grep + time-shifted searches.
+[intents.explore]
+patterns = [
+    "explore",
+    "wander",
+    "what am I missing",
+    "forgotten connections",
+    "open threads",
+    "what's interesting",
+]
+mode = "open-exploration"
+agents = ["researcher"]
+profile_reads = ["identity.md"]
+priority = 22
+pattern = "orchestrator-subagent"
+expected_subagent_count = 1
+parallel = false
+
+# Curate Readwise inbox against active goals. Procedure:
+# .claude/commands/curate.md. Dispatches a general-purpose ad-hoc agent
+# (not a named cercle role), so `agents = []`; pattern is solo.
+[intents.curate]
+patterns = [
+    "triage inbox",
+    "curate inbox",
+    "curate my reading",
+    "curate readwise",
+    "readwise triage",
+    "score my inbox",
+]
+mode = "curate-inbox"
+agents = []
+profile_reads = ["identity.md", "directions.md"]
+priority = 15
+pattern = "solo"
+expected_subagent_count = 1
+parallel = false
+
+# Promote L2 notes into a schema-compliant L4 wiki entry. Procedure:
+# .claude/commands/promote.md. Researcher (Phase 1 candidate gather) then
+# Curator (Phase 2 draft); sequential, so parallel = false.
+[intents.promote]
+patterns = [
+    "promote to wiki",
+    "promote this",
+    "L4 entry",
+    "canonize this",
+    "create wiki entry",
+    "wiki promote",
+]
+mode = "promote"
+agents = ["researcher", "curator"]
+profile_reads = []
+priority = 14
+pattern = "orchestrator-subagent"
+expected_subagent_count = 2
+parallel = false
+
+# Wiki + harness lint suite. Procedure: .claude/commands/lint.md. Purely
+# script-driven (harness_lint.py, lint.py, staleness.py, privacy_check.py,
+# zk_audit.py, auto_memory_audit.py); no subagent dispatch, hence
+# `agents = []` and expected_subagent_count = 0.
+[intents.lint]
+patterns = [
+    "lint the wiki",
+    "wiki audit",
+    "structural checks",
+    "wiki orphans",
+    "run lint",
+    "wiki lint",
+]
+mode = "lint"
+agents = []
+profile_reads = []
+priority = 12
+pattern = "solo"
+expected_subagent_count = 0
+parallel = false
+
+# Build / refresh profile/ self-model from local notes. Procedure:
+# .claude/commands/introspect.md. The orchestrator does most of the
+# walking; agents fire as a quality gate (Reviewer + Challenger in
+# parallel at Step 5), hence pattern = generator-verifier.
+[intents.introspect]
+patterns = [
+    "introspect",
+    "rebuild profile",
+    "who am I",
+    "self-model",
+    "build my profile",
+    "refresh profile",
+]
+mode = "introspect"
+agents = ["reviewer", "challenger"]
+profile_reads = []
+priority = 10
+pattern = "generator-verifier"
+expected_subagent_count = 2
+parallel = true
+
 # Fallback: matches anything not picked up by a higher-priority intent.
 # Empty patterns + priority 0 makes this the catch-all.
 [intents.reflection]
