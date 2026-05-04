@@ -12,7 +12,7 @@ Inspired by the general lesson: a behavioral workaround for an older model in a 
 
 | Class | Definition | Example | Staleness Signal |
 |-------|-----------|---------|-----------------|
-| **Model Assignment** | Which tier runs which agent | Researcher=core_intelligence | New model release, benchmark shift, cost change |
+| **Voice Assignment** | Which voice tier each role binds to | Researcher = deep tier | New model release, benchmark shift, cost change |
 | **Token/Context Budget** | Context window sizing, loading limits | "last 3 reflections" | Context window expansion |
 | **Temporal Threshold** | Time-based triggers and warnings | "7 days stale" for profile | User behavior data |
 | **Turn Budget** | maxTurns per agent | Evolver=25 | Model efficiency changes |
@@ -20,24 +20,33 @@ Inspired by the general lesson: a behavioral workaround for an older model in a 
 
 ## Assumption Registry
 
-### Model Assignments
+### Voice Assignments
 
-`harness/models.toml` is the source of truth for **profile schema, invocation pattern, and agent assignments**. The actual provider/model **bindings** (model id, endpoint URL, env var, request extras) live in the gitignored `profile/models.toml`; loaders merge the two at runtime. See the `[profiles.*.rationale]` fields in the schema file for *why* a profile was chosen. `harness_lint.py` (`models-claude-drift`) catches frontmatter↔toml drift. The table below is the audit-trigger registry only: which profile each agent uses, and what staleness signal would force a re-evaluation.
+`harness/agents.toml` is the canonical source of truth for the per-agent `voices = [a, b]` binding. `harness/models.toml` declares model identities (committed; just names + comments). Provider/model **bindings** (model id, endpoint URL, env var, request extras) live in the gitignored `profile/models.toml`; loaders merge schema + bindings at runtime. `harness_lint.py` validates that every agent's voices reference identities that exist in the schema. The table below is the audit-trigger registry only: it does not restate the per-agent voices (read agents.toml for those), it lists what staleness signal would force a re-evaluation per role family.
 
-| Agent | Profile (see `harness/models.toml`) | Re-test When |
-|-------|-------------------------------------|-------------|
-| Researcher | `core_intelligence` | A cheaper tier matches the primary on reading comprehension benchmarks |
-| Synthesizer | `core_intelligence` | A cheaper tier matches the primary on synthesis quality |
-| Challenger | `core_intelligence` | A cheaper tier improves on open-ended question quality |
-| Thinker | `core_intelligence` | A cheaper tier matches the primary on framework reasoning |
-| Evolver | `core_intelligence` | A cheaper tier matches the primary on multi-file coherence |
-| Reader | `core_intelligence` | A cheaper tier matches the primary on analytical reading quality |
-| Reviewer | `cross_validation` | Cross-provider agreement rate drops on rubric scoring; cost shifts in either binding |
-| Curator | `cross_validation` | Cross-provider agreement rate drops on note preservation |
-| Scout | `cross_validation` | Cross-provider agreement rate drops on web triage |
-| Meeting | `cross_validation` | Cross-provider agreement rate drops on transcript extraction |
-| Librarian | `cross_validation` | Cross-provider agreement rate drops on bilingual recommendations |
-| Privacy Reviewer | `cross_validation` | Cross-provider agreement rate drops on semantic privacy scan; either binding deprecates |
+Voice tier vocabulary used in this file:
+- **deep** — flagship pair (e.g., highest-cognition Anthropic + highest-cognition direct-api)
+- **mid** — mid-tier pair (cross-provider, cheaper than deep but still substantive)
+- **cheap** — minimal pair (mechanical I/O, verbatim preservation)
+- **external** — cross-provider audit pair (no Anthropic leg by design)
+
+| Agent | Current voice tier | Re-test When |
+|-------|----|-------------|
+| Researcher | deep | A cheaper tier matches the primary on reading comprehension benchmarks |
+| Synthesizer | deep | A cheaper tier matches the primary on synthesis quality |
+| Challenger | deep | A cheaper tier improves on open-ended question quality |
+| Thinker | deep | A cheaper tier matches the primary on framework reasoning |
+| Evolver | deep | A cheaper tier matches the primary on multi-file coherence |
+| Scholar | deep | A cheaper tier matches the primary on dense-paper reading quality |
+| Reader | mid | A cheaper tier matches the primary on routine-article reading quality |
+| Reviewer | mid | Cross-provider agreement rate drops on rubric scoring; cost shifts in either binding |
+| Curator | mid | Cross-provider agreement rate drops on note preservation |
+| Scout | mid | Cross-provider agreement rate drops on web triage |
+| Meeting | mid | Cross-provider agreement rate drops on transcript extraction |
+| Librarian | mid | Cross-provider agreement rate drops on bilingual recommendations |
+| Privacy Reviewer | mid | Cross-provider agreement rate drops on semantic privacy scan; either binding deprecates |
+| Scribe | cheap | A cheaper-still verbatim model becomes available; current pair fails verbatim-preservation tests |
+| External-Reviewer | external | A new external provider becomes worth adding; one of the current legs deprecates |
 
 ### Token/Context Budgets
 
@@ -65,7 +74,8 @@ Inspired by the general lesson: a behavioral workaround for an older model in a 
 | Evolver | evolver.md | 25 | Model efficiency improves |
 | Researcher | researcher.md | 15 | Search strategy changes |
 | Synthesizer | synthesizer.md | 15 | Model gets faster at synthesis |
-| Reviewer | reviewer.md | 15 | Checklist execution speed |
+| Reviewer | reviewer.md | 100 | Checklist execution speed |
+| Privacy Reviewer | privacy-reviewer.md | 100 | Semantic-leak coverage needs |
 | Curator | curator.md | 15 | Note operation complexity |
 | Scout | scout.md | 15 | Web search patterns change |
 | Librarian | librarian.md | 15 | Recommendation patterns |
@@ -73,6 +83,8 @@ Inspired by the general lesson: a behavioral workaround for an older model in a 
 | Thinker | thinker.md | 15 | Framework application depth |
 | Meeting | meeting.md | 10 | Transcript complexity |
 | Reader | reader.md | 15 | Reading depth needs |
+| Scholar | scholar.md | 15 | Dense-text reading depth needs (matches Reader; voices differ) |
+| Scribe | scribe.md | 10 | Mechanical capture pace |
 
 ### Search Strategy
 

@@ -172,6 +172,10 @@ Based on Step 1, use a second `AskUserQuestion`:
 | 2 | **Focused Read** | Pick 1-2 specific lenses to focus on |
 | 3 | **Multi-Lens Read** | Read with all 4 lenses in parallel — full analysis |
 
+#### Reader vs Scholar selection (applies to all three Read modes)
+
+Before dispatching the reading agent, apply the auto-promotion check from `protocols/orchestrator.md` → "Reader → Scholar auto-promotion". If any condition fires (`word_count > 8000`, source path under `$OV/papers/` or `$OV/preprints/`, frontmatter `difficulty: hard`), dispatch **Scholar** instead of Reader. Same lens framework, same prompt — only the bound voices differ. All three Read modes below use this selection.
+
 #### Prefetch Step (Readwise podcasts, videos, articles; applies to all three Read modes)
 
 If the source is a Readwise podcast, video, or article (user provides a Readwise URL, `document_id`, or names a podcast), **cache the transcript once before dispatching any Reader**. Independent fetches across parallel Readers are the failure mode this step exists to avoid (same reasoning as the paper cache).
@@ -297,7 +301,7 @@ Based on the loaded context, run an interactive reflection.
 
 - **Mid-conversation soft surfacing (max 1 per session):** if the user mentions a topic that strongly matches an open TODO not yet mentioned this session, do **one** soft callback: "顺便,你 [date] 写过 [item] 还 open — 要不要本周 commit?" Confidence threshold is high (phrase or strong-token overlap); do not reach for tenuous matches. If user confirms commitment → mark for closure-pending or promotion at wrap-up. If user declines → do not surface again this session.
 - **No proactive list dump.** The TODO list is for *matching*, not narration. Never volunteer "btw here are N open TODOs" outside Step 0 digest or explicit user request.
-- **Closure write-back at wrap-up.** When the user explicitly confirms in conversation that a TODO is done or killed (Step 0 closure / stale prompt or mid-session), accumulate the closure into the **pending Scribe operations** list (see "Pre-Output: Raw Capture" below). Do NOT do direct `Edit` from the orchestrator: that bypasses the `mechanical_capture` cost-partition contract and creates duplicate write paths. Two paths, two source types — both dispatched as Scribe `gtd_entry` operations at wrap-up:
+- **Closure write-back at wrap-up.** When the user explicitly confirms in conversation that a TODO is done or killed (Step 0 closure / stale prompt or mid-session), accumulate the closure into the **pending Scribe operations** list (see "Pre-Output: Raw Capture" below). Do NOT do direct `Edit` from the orchestrator: that bypasses the Scribe cost-partition contract and creates duplicate write paths. Two paths, two source types — both dispatched as Scribe `gtd_entry` operations at wrap-up:
   - **Done path (user completed the item):**
     - GTD-source (`source` under `$OV/gtd/`): pending op `gtd_entry` with `operation_kind: toggle_done`, `target_file: <source>`, `line_no: <line>`, `expected_text: <bullet text from list --json>`.
     - Reflection-source (`source` under `$OV/reflections/`): pending op `gtd_entry` with `operation_kind: prefix_line`, `target_file: <source>`, `line_no: <line>`, `expected_text: <bullet text>`, `prefix: "DONE <effective-date>: "`.
@@ -439,7 +443,7 @@ Not generic advice — something the user can do today or this week. Match user'
 
 ## Pre-Output: Raw Capture (Cloud-Native Mode)
 
-Before writing the reflection file, dispatch the Scribe agent for every accumulated capture operation from this session. Under the cloud-native architecture, chat is the user's authoring surface; the orchestrator must record raw input rather than only synthesizing it into the reflection. Do this work via the Scribe, not yourself: transcribing chat input on `core_intelligence` is a known cost antipattern.
+Before writing the reflection file, dispatch the Scribe agent for every accumulated capture operation from this session. Under the cloud-native architecture, chat is the user's authoring surface; the orchestrator must record raw input rather than only synthesizing it into the reflection. Do this work via the Scribe, not yourself: transcribing chat input on deep-cognition voices is a known cost antipattern.
 
 The orchestrator accumulates pending Scribe operations during the session (it does NOT write directly). Sources of accumulated ops:
 

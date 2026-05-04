@@ -44,7 +44,7 @@ Rationale: privacy leaks are a hard veto regardless of score. Catching them dete
 
 ### 1c. Semantic privacy double-guard (blocking, cross-provider)
 
-The mechanical script in 1b only matches filename stems under `$OV/` and wikilink targets. It misses **semantic** leaks: real names, restaurants, $-amount + deadline pairs, demographic phrases, personal taxonomies. Step 1c closes that gap with two independent voices from different providers — the `cross_validation` tier per `harness/models.toml` (bindings in `profile/models.toml`). Cross-provider disagreement carries more diagnostic weight than two samples of the same model.
+The mechanical script in 1b only matches filename stems under `$OV/` and wikilink targets. It misses **semantic** leaks: real names, restaurants, $-amount + deadline pairs, demographic phrases, personal taxonomies. Step 1c closes that gap with the privacy-reviewer's two voices (declared in `harness/agents.toml`). Cross-provider disagreement carries more diagnostic weight than two samples of the same model.
 
 **Run only after 1b returns `hit_count: 0`** (or soft-skips). If 1b aborted with hits, do not dispatch 1c — fix 1b first.
 
@@ -68,7 +68,7 @@ Dispatch **both legs in parallel — single message, one `Agent` tool call AND o
     echo "=== $f ==="
     cat "$f"
   done
-} | uv run scripts/chat_completion.py --profile cross_validation --prompt -
+} | uv run scripts/chat_completion.py --model deepseek_pro --max-tokens 0 --prompt -
 ```
 
 Both legs return verdicts (CLEAN / NEEDS_REVISION / BLOCKER). The direct-api leg returns `message.content`; treat it as the verdict.
@@ -84,7 +84,7 @@ Both legs return verdicts (CLEAN / NEEDS_REVISION / BLOCKER). The direct-api leg
 
 If the direct-api leg soft-skips (exit 2 — api_env unset), note "direct-api leg unavailable; cross-provider check downgraded to single-leg Anthropic" in the synthesis and continue with Leg A's verdict only. Do not block on direct-api availability.
 
-Cross-provider rationale: two instances of the same model from the same provider have correlated failure modes (training lineage, tokenizer, corpus). The two legs of the cross_validation tier share none of those. Disagreement here is more likely to surface a real leak than two same-model samples would.
+Cross-provider rationale: two instances of the same model from the same provider have correlated failure modes (training lineage, tokenizer, corpus). The privacy-reviewer's two voices share none of those. Disagreement here is more likely to surface a real leak than two same-model samples would.
 
 ### 2. Dispatch in parallel (one message, multiple tool calls)
 
@@ -164,4 +164,4 @@ If the Evolver specified a tier in its handoff, honor it. Otherwise default to *
 - `protocols/orchestrator.md` → Review Tiers
 - `protocols/agent-handoff.md` → `system-review-request` contract
 - `.claude/agents/reviewer.md` → internal reviewer definition
-- `.claude/agents/privacy-reviewer.md` → semantic privacy guard (cross_validation tier, dispatched in pairs in Step 1c)
+- `.claude/agents/privacy-reviewer.md` → semantic privacy guard (intrinsically dual; both voices fire in Step 1c)

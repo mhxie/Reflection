@@ -54,10 +54,14 @@ def check_status() -> None:
     registries = payload["registries"]
     expect(registries["commands"] >= 10, "expected at least 10 portable commands")
     expect(registries["agents"] >= 10, "expected at least 10 portable agents")
-    expect(registries["model_profiles"] >= 3, "expected model profiles")
+    expect(registries["models"] >= 3, "expected model identities")
     expect(registries["capabilities"] >= 5, "expected capabilities")
     expect(payload["roots"]["AGENTS.md"]["exists"], "AGENTS.md missing from status")
     expect(payload["roots"]["CLAUDE.md"]["exists"], "CLAUDE.md missing from status")
+    # The voices aggregation must surface model names that real agents bind to.
+    members = payload.get("agents_by_voices_member", {})
+    expect("opus" in members, "agents_by_voices_member should list opus (researcher et al. bind to it)")
+    expect("deepseek_pro_max" in members, "agents_by_voices_member should list deepseek_pro_max (paired-leg)")
 
 
 def check_filtered_json() -> None:
@@ -65,9 +69,22 @@ def check_filtered_json() -> None:
     expect("lint" in commands, "ops commands should include lint")
     expect(commands["lint"]["source"] == ".claude/commands/lint.md", "lint source drift")
 
-    agents = json.loads(run(["scripts/atelier.py", "agents", "--profile", "core_intelligence", "--json"]))
-    expect("researcher" in agents, "core_intelligence agents should include researcher")
+    # researcher binds voices = ["opus", "deepseek_pro_max"], so --member opus
+    # must include researcher and the other entries must also include opus.
+    agents = json.loads(run(["scripts/atelier.py", "agents", "--member", "opus", "--json"]))
+    expect("researcher" in agents, "agents --member opus should include researcher")
     expect(agents["researcher"]["source"] == ".claude/agents/researcher.md", "researcher source drift")
+    for name, entry in agents.items():
+        voices = entry.get("voices") or []
+        expect(
+            "opus" in voices,
+            f"agents --member opus returned `{name}` whose voices is {voices}",
+        )
+
+    # external-reviewer binds voices = ["deepseek_pro_max", "codex_gpt55_max"];
+    # --member codex_gpt55_max should isolate it (script-driven, no .claude source).
+    ext = json.loads(run(["scripts/atelier.py", "agents", "--member", "codex_gpt55_max", "--json"]))
+    expect("external-reviewer" in ext, "agents --member codex_gpt55_max should include external-reviewer")
 
 
 def check_prompts_and_sources() -> None:

@@ -57,21 +57,12 @@ canon for Codex sessions and is read first by Codex.
 
 Agent roles ask for capability classes, not fixed provider models. Profile
 schema (names, rationale, invocation pattern, agent assignments) is defined
-in `harness/models.toml` (committed); the actual provider/model bindings
-(model id, endpoint URL, env var, request extras) live in
-`profile/models.toml` (gitignored). Loaders merge schema + bindings at
-runtime. Four tiers today:
+in `harness/models.toml` (committed; identity declarations only); the
+actual provider/model bindings (model id, endpoint URL, env var, request
+extras) live in `profile/models.toml` (gitignored). Loaders merge schema +
+bindings at runtime.
 
-| Tier | Used for | Invocation |
-|---|---|---|
-| `core_intelligence` | deep cognition: vault reading, synthesis, framework reasoning, challenger, system evolution, deep reading | shadow (Anthropic primary; sampled shadow leg via direct-api for ongoing quality calibration) |
-| `cross_validation` | low-cognitive-load tasks where cross-provider agreement is the trust signal | dual (currently wired for privacy-reviewer in `/system-review` Step 1c; other tier members are eligible but not yet dispatched in pairs) |
-| `mechanical_capture` | verbatim raw-content recording (daily-note dictation, dining-row, GTD entry, people-stub, generic passthrough); deterministic file routing; no synthesis | single (Pareto-optimal cheap tier; binding preference: direct_api leg / Anthropic-side fallback) |
-| `external_review` | external reviewers for `/system-review`, run outside the project's harness | dual (codex + direct-api / DeepSeek Pro in `scripts/review.sh`) |
-
-For the agent-to-tier mapping see the `[agents.*]` section of
-`harness/models.toml`. Swapping providers or models is a binding-file edit
-in `profile/models.toml`; no committed file changes.
+Voice dispatch model — single source of truth: `protocols/orchestrator.md` → "Voice Dispatch (every role is intrinsically dual)". The agent-to-voices mapping lives in `harness/agents.toml` (committed) as `voices = [a, b]` per agent. Swapping providers or models is a binding-file edit in `profile/models.toml`; no committed file changes.
 
 ## Capability Profiles
 
@@ -99,7 +90,7 @@ When a user asks Codex to run an Atelier command:
 4. Translate Claude-specific constructs using the table in `AGENTS.md` § Codex Adaptation.
 5. Read any referenced agent specs from `.claude/agents/`.
 6. Prefer local `$OV/` files, `rg`, and `uv run scripts/semantic.py`.
-7. Ask before any local file write under `$OV/`. **Exception: Scribe capture operations** (`mechanical_capture` profile; `daily_note`, `dining_row`, `gtd_entry`, `people_stub`, `generic`) write directly without an approval gate — the user has already authored the raw content via chat and verbatim preservation is the trust property. Other agents and ad-hoc orchestrator writes still ask first.
+7. Ask before any local file write under `$OV/`. **Exception: Scribe capture operations** (`daily_note`, `dining_row`, `gtd_entry`, `people_stub`, `generic`) write directly without an approval gate — the user has already authored the raw content via chat and verbatim preservation is the trust property. Other agents and ad-hoc orchestrator writes still ask first.
 8. Report any downgraded capability, such as missing web access or unavailable
    subagent dispatch.
 

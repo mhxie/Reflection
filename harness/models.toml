@@ -1,126 +1,77 @@
-# Model profile registry — four tiers (committed, schema only).
+# Model identity registry — committed schema, no bindings.
 #
-# This file defines tier semantics: profile names, rationale, dispatch
-# pattern, and per-agent assignments. The actual provider/model bindings
-# (which model id, which endpoint URL, which env var) live in the
-# gitignored `profile/models.toml`. Loaders merge the two at runtime:
-# schema from here, bindings from there.
+# This file declares model identities only. Each `[models.X]` entry is a
+# bare table with a docstring; the entries here are intentionally empty.
+# All provider bindings (claude_code id, codex id, direct_api endpoint,
+# api_env, request extras) live in the gitignored `profile/models.toml`
+# and merge at runtime: schema from here, bindings from there.
 #
-# 1. core_intelligence    Deep cognition: vault reading, synthesis,
-#                         challenge, framework reasoning, system evolution,
-#                         multi-lens deep reading. Single-model invocation.
-# 2. cross_validation     Low-cognitive-load tasks where cross-provider
-#                         agreement is the trust signal: mechanical review,
-#                         note operations, web research, meeting extraction,
-#                         recommendations, privacy scanning. Dual dispatch
-#                         wired for privacy-reviewer in /system-review
-#                         Step 1c; other tier members run single today
-#                         and may opt into dual at their dispatch sites.
-# 3. mechanical_capture   Verbatim raw-content recording, light format
-#                         normalization (date headers, paragraph breaks,
-#                         punctuation hygiene), file routing. No synthesis,
-#                         no judgment. Single dispatch on a cheap model;
-#                         dual would only burn tokens since there is no
-#                         cognitive disagreement to surface. Used by the
-#                         scribe agent for daily-note capture from chat-mode
-#                         input under cloud-native architecture.
-# 4. external_review      External reviewers for /system-review.
-#                         Independent voices outside the project's harness,
-#                         dual-invoked across two non-Anthropic providers
-#                         for genuine cross-provider review. No agent maps
-#                         to this profile; invoked by `bash scripts/review.sh`
-#                         and the /system-review command.
+# Three orthogonal axes — kept separate by design:
 #
-# Profile-key schema (binding values live in profile/models.toml):
-#   rationale              required, free-text justification
-#   invocation             required, "single" | "dual" | "shadow"
-#   claude_code            Claude Code-side model id (binding)
-#   codex                  Codex-side model id (binding)
+#   1. Role            (researcher, reader, scribe, ...)  -> .claude/agents/*.md
+#                                                          + harness/agents.toml
+#   2. Model identity  (opus, sonnet, deepseek_pro, ...)  -> THIS FILE
+#   3. Voices         (which two models a role binds, run in parallel) -> harness/agents.toml
+#                                                          (each agent declares
+#                                                          its bound `voices`)
+#
+# Each role is dual-mode by definition: every agent in `harness/agents.toml`
+# declares a `voices = ["modelA", "modelB"]` pair. Both legs run in
+# parallel when the role is dispatched. Tier scales the cardinality of
+# role-units in a gathering (Tier N = N parallel copies of the role's
+# bound pair); tier never alters the voices composition.
+#
+# The "Tier 1-4" review ladder in protocols/orchestrator.md, the evolver,
+# and /system-review is the canonical "tier" semantics in this repo.
+# It governs how many reviewer-units run on a change. It is NOT a model-
+# layer concept.
+#
+# Per-model schema (binding values live in profile/models.toml):
+#   claude_code            Claude Code-side model id (e.g., "opus")
+#   codex                  Codex-side model id (e.g., "openai/gpt-5.5")
 #   codex_reasoning_effort "high" | "low" — Codex-only reasoning effort
 #   direct_api             direct OpenAI-compatible model id
 #   direct_api_base        full endpoint URL — host + path
 #   direct_api_extras      inline table merged into request body for
-#                          provider-specific extensions
+#                          provider-specific extensions (e.g., a `thinking`
+#                          block for reasoning-control providers)
 #   direct_api_timeout     seconds; per-call timeout override (use for
-#                          reasoning-heavy tiers where TTFT exceeds the
+#                          reasoning-heavy models where TTFT exceeds the
 #                          120s default)
 #   api_env                env var holding the API key (Authorization:
 #                          Bearer is assumed)
-#   shadow_api             shadow leg's model id (used by --shadow-of)
-#   shadow_api_base        shadow leg's endpoint URL
-#   shadow_api_extras      shadow leg's request-body extras
-#   shadow_api_timeout     shadow leg's per-call timeout
-#   shadow_api_env         shadow leg's API key env var
 #
-# Invocation patterns:
-#   "single"  Only the Anthropic side runs.
-#   "dual"    Both Anthropic + direct_api legs run in parallel; consumer
-#             reconciles outputs (cross-validation voting). Required: a
-#             direct_api binding to pair with.
-#   "shadow"  Anthropic side is the primary (its output is used).
-#             Sampled fraction also fires a shadow_api leg in the
-#             background for logging-only quality comparison. Sampling
-#             rate via $ATELIER_SHADOW_RATE (default 10%, see
-#             scripts/shadow.sh). Required: a shadow_api binding.
+# Helper scripts that read api_env MUST exit-skip cleanly when unset (a
+# missing key collapses dual voices to single-leg with a warning,
+# never a silent success). Callers that fire dual dispatches (e.g.,
+# review.sh, /system-review Step 1c) MUST handle exit-2 from chat_completion.py
+# as soft-skip-and-degrade, not as a hard failure.
 #
-# Helper scripts that read api_env / shadow_api_env MUST exit-skip
-# cleanly when unset (a missing key downgrades dual to single or
-# silently disables the shadow leg).
+# Shadow sampling — REMOVED. The previous `shadow_api` invocation pattern
+# is gone. Every role is now intrinsically dual (its `voices` field declares
+# two parallel legs); a third sampled "shadow" leg is redundant. If a
+# specific role ever needs additional sampled comparison, it can opt-in at
+# the dispatch site without reintroducing a schema-level mode.
 
-[profiles.core_intelligence]
-rationale = "Tier 1: deep cognition. Vault reading, pattern discovery, synthesis, framework reasoning, challenger questions, system-evolution review, multi-lens deep reading. Primary leg is the trust source; a sampled fraction of calls also fires a shadow leg for logging-only quality comparison (see scripts/shadow.sh and protocols/orchestrator.md → Dual + Shadow Dispatch). Default sample rate 10% via $ATELIER_SHADOW_RATE."
-invocation = "shadow"
+[models.opus]
+# Anthropic Opus — high-cognition Anthropic leg used by deep-thinking roles.
 
-[profiles.cross_validation]
-rationale = "Tier 2: low-cognitive-load tasks where cross-provider agreement is the trust signal. Mechanical review, note operations, web research, meeting extraction, recommendations, privacy scanning. Dual-dispatch capability is wired today for privacy-reviewer in /system-review Step 1c (Anthropic Sonnet leg + direct-api leg via scripts/chat_completion.py). The other tier members (reviewer, curator, scout, meeting, librarian) are eligible to opt into the same pattern at their dispatch sites; until they do, those agents run as single Anthropic dispatches. Where dual is honored, disagreement surfaces as a flag, not a silent average."
-invocation = "dual"
+[models.sonnet]
+# Anthropic Sonnet — mid-tier Anthropic leg used by cross-validation roles.
 
-[profiles.mechanical_capture]
-rationale = "Tier 3: pure mechanical I/O. Verbatim raw-content recording across all capture surfaces (daily notes, dining log rows, GTD entries, people note stubs, generic raw-passthrough), light format normalization, deterministic file routing. No synthesis, no judgment, no cognitive contention to validate; therefore single dispatch on the Pareto-optimal cheap tier (cheapest reliable model that preserves verbatim text). Preferred binding: direct_api leg pointing at a sub-Haiku-cost provider; Anthropic-side fallback runs Haiku 4.x. Provider choices and model ids live in gitignored profile/models.toml. Dual dispatch would only burn tokens. Trust comes from verbatim preservation enforced by the agent's forbidden list, not from cross-provider voting. Exists so the orchestrator (core_intelligence) does not burn its expensive context on transcribing chat input — a previous failure mode where raw daily-note capture either got skipped or paid Opus rates for typewriter work."
-invocation = "single"
+[models.haiku]
+# Anthropic Haiku — cheap Anthropic leg used by mechanical-capture roles.
 
-[profiles.external_review]
-rationale = "Tier 4: external reviewers for /system-review. Independent voices outside the project's primary inference path, dual-invoked across two providers for genuine cross-provider review. No agent maps to this profile; invoked by `bash scripts/review.sh` and the /system-review command. The claude_code binding is a fallback only — running this tier on the primary provider defeats its purpose (cross-provider independence)."
-invocation = "dual"
+[models.deepseek_pro_max]
+# DeepSeek v4 Pro with thinking high + extended timeout.
 
-[agents.researcher]
-profile = "core_intelligence"
+[models.deepseek_pro]
+# DeepSeek v4 Pro with default thinking. The reasoning-light DeepSeek leg
+# paired with Sonnet on every cross-validation role.
 
-[agents.synthesizer]
-profile = "core_intelligence"
+[models.deepseek_flash]
+# DeepSeek v4 Flash. The cheap DeepSeek leg paired with Haiku on the
+# scribe (mechanical-capture).
 
-[agents.challenger]
-profile = "core_intelligence"
-
-[agents.thinker]
-profile = "core_intelligence"
-
-[agents.evolver]
-profile = "core_intelligence"
-
-[agents.reader]
-profile = "core_intelligence"
-
-[agents.reviewer]
-profile = "cross_validation"
-
-[agents.curator]
-profile = "cross_validation"
-
-[agents.scout]
-profile = "cross_validation"
-
-[agents.meeting]
-profile = "cross_validation"
-
-[agents.librarian]
-profile = "cross_validation"
-
-[agents.privacy-reviewer]
-profile = "cross_validation"
-
-[agents.forgetter]
-profile = "cross_validation"
-
-[agents.scribe]
-profile = "mechanical_capture"
+[models.codex_gpt55_max]
+# Codex gpt-5.5 with reasoning_effort = "high".

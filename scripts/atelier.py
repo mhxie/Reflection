@@ -136,8 +136,10 @@ def cmd_agents(args: argparse.Namespace) -> int:
     agents = load_agents()
     selected: dict[str, dict[str, Any]] = {}
     for name, agent in sorted(agents.items()):
-        if args.profile and agent.get("model_profile") != args.profile:
-            continue
+        if args.member:
+            voices = agent.get("voices") or []
+            if not isinstance(voices, list) or args.member not in voices:
+                continue
         selected[name] = agent
     if args.json:
         print(json.dumps(selected, indent=2, sort_keys=True))
@@ -145,15 +147,17 @@ def cmd_agents(args: argparse.Namespace) -> int:
 
     rows: list[tuple[str, str, str, str]] = []
     for name, agent in selected.items():
+        voices = agent.get("voices") or []
+        voices_str = ",".join(voices) if isinstance(voices, list) else str(voices)
         rows.append((
             name,
-            str(agent.get("model_profile", "")),
+            voices_str,
             str(agent.get("status", "")),
             str(agent.get("description", "")),
         ))
     if not rows:
         return 0
-    print_rows(("agent", "model_profile", "status", "description"), rows)
+    print_rows(("agent", "voices", "status", "description"), rows)
     return 0
 
 
@@ -283,7 +287,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 def cmd_status(args: argparse.Namespace) -> int:
     commands = load_commands()
     agents = load_agents()
-    profiles = load_table(MODELS_PATH, "profiles")
+    models = load_table(MODELS_PATH, "models")
     capabilities = load_table(CAPABILITIES_PATH, "capabilities")
 
     payload = {
@@ -300,11 +304,11 @@ def cmd_status(args: argparse.Namespace) -> int:
         "registries": {
             "commands": len(commands),
             "agents": len(agents),
-            "model_profiles": len(profiles),
+            "models": len(models),
             "capabilities": len(capabilities),
         },
         "commands_by_category": count_by(commands, "category"),
-        "agents_by_model_profile": count_by(agents, "model_profile"),
+        "agents_by_voices_member": count_by_voices(agents),
         "paths": {
             "commands": COMMANDS_PATH.relative_to(ROOT).as_posix(),
             "agents": AGENTS_PATH.relative_to(ROOT).as_posix(),
@@ -332,8 +336,8 @@ def cmd_status(args: argparse.Namespace) -> int:
     for key, value in payload["commands_by_category"].items():
         print(f"- {key}: {value}")
     print("")
-    print("Agents by model profile")
-    for key, value in payload["agents_by_model_profile"].items():
+    print("Agents by voices member")
+    for key, value in payload["agents_by_voices_member"].items():
         print(f"- {key}: {value}")
     return 0
 
@@ -343,6 +347,25 @@ def count_by(items: dict[str, dict[str, Any]], field: str) -> dict[str, int]:
     for item in items.values():
         key = str(item.get(field, "") or "(unset)")
         counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def count_by_voices(agents: dict[str, dict[str, Any]]) -> dict[str, int]:
+    """Count how many agents include each model in their voices.
+
+    Each agent's `voices` is a list of model names; an agent contributes
+    one increment per distinct model it lists. The result is keyed by model
+    name (not by voices tuple), so totals will exceed `len(agents)` when
+    each agent declares 2 voices.
+    """
+    counts: dict[str, int] = {}
+    for agent in agents.values():
+        voices = agent.get("voices") or []
+        if not isinstance(voices, list):
+            continue
+        for member in voices:
+            key = str(member) if member else "(unset)"
+            counts[key] = counts.get(key, 0) + 1
     return dict(sorted(counts.items()))
 
 
@@ -374,7 +397,10 @@ def build_parser() -> argparse.ArgumentParser:
     commands.set_defaults(func=cmd_commands)
 
     agents = sub.add_parser("agents", help="List portable agent role specs.")
-    agents.add_argument("--profile", help="Filter by model profile.")
+    agents.add_argument(
+        "--member",
+        help="Filter to agents whose voices includes this model name (e.g., opus, deepseek_pro_max).",
+    )
     agents.add_argument("--json", action="store_true", help="Emit JSON.")
     agents.set_defaults(func=cmd_agents)
 

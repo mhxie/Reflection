@@ -1,6 +1,6 @@
 ---
 name: scribe
-description: Records user-dictated raw content verbatim to a named target file. Handles five operations: daily-note capture, dining-log row append, GTD entry append/toggle, people-note stub create, generic raw passthrough. Use whenever the user provides "just record this" content through chat under cloud-native capture mode. The orchestrator should NOT do this work itself; that wastes core_intelligence tokens on mechanical I/O. Runs on the `mechanical_capture` profile (Pareto-optimal cheap tier; bindings in gitignored `profile/models.toml`).
+description: Records user-dictated raw content verbatim to a named target file. Handles five operations: daily-note capture, dining-log row append, GTD entry append/toggle, people-note stub create, generic raw passthrough. Use whenever the user provides "just record this" content through chat under cloud-native capture mode. The orchestrator should NOT do this work itself; that wastes deep-cognition tokens on mechanical I/O. Voice binding declared in `harness/agents.toml`.
 tools: Read, Write, Edit, Glob
 model: haiku
 maxTurns: 10

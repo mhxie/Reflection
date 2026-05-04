@@ -155,7 +155,11 @@ def cmd_cost_from_log(args: argparse.Namespace) -> int:
             if args.profile and event.get("profile") != args.profile:
                 continue
             usage = event.get("usage")
-            model = event.get("model")
+            # New schema: log writes `api_model` (provider id) + `model` (logical
+            # identity). pricing.toml is keyed by provider id, so prefer
+            # `api_model`. Fall back to `model` for old log records (pre-refactor)
+            # where it held the provider id directly.
+            model = event.get("api_model") or event.get("model")
             if not usage or not model:
                 continue
             entry = model_map.get(model)

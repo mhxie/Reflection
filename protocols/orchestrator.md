@@ -58,27 +58,45 @@ All note writes are local file writes under `$OV/`. There are two writing paths,
 - **Cognitive (→ Curator):** the Curator drafts content operations (compactions, merges, new wiki entries, session-derived notes); the orchestrator owns `Write`/`Edit` and writes after user approval. Every proposal carries a `target_path` under `$OV/`.
 - **Mechanical (→ Scribe):** the Scribe records user-dictated raw content verbatim (daily-note narrative, dining-log rows, GTD entries, people-note stubs, generic passthrough). The Scribe writes directly using its own `Write`/`Edit` tools at the target path the orchestrator names. No user approval gate — verbatim preservation IS the trust property. See "Capture Operations" below and `.claude/agents/scribe.md`.
 
-The orchestrator must not transcribe raw user content itself; that burns `core_intelligence` tokens on mechanical I/O and is the failure mode the `mechanical_capture` profile exists to prevent.
+The orchestrator must not transcribe raw user content itself; that burns deep-cognition tokens on mechanical I/O and is the failure mode the Scribe role exists to prevent.
 
 Daily notes (under `$OV/daily-notes/`) are user-authored. The system reads them by default and does not modify them. **Exception (cloud-native capture):** when the user dictates raw daily-note content through chat, dispatch the Scribe with `operation: daily_note` to record it verbatim. Curator dispatches targeting daily-note paths are still refused; only the Scribe writes daily notes, and only when the user is dictating.
 
-## Dual + Shadow Dispatch (per profile invocation pattern)
+## Voice Dispatch (every role is intrinsically dual)
 
-Every agent maps to a model profile (see `harness/models.toml` `[agents.*]` and the `[profiles.*].invocation` field). The orchestrator's dispatch behavior is governed by that profile:
+Every role declares a `voices = ["modelA", "modelB"]` field in `harness/agents.toml`. Both voices fire in parallel on every dispatch — duality is intrinsic to the role, not a per-call decision. The orchestrator does not pick "single vs dual"; it picks the role, and the role's bound voices run.
 
-| Profile | Invocation | Orchestrator behavior |
-|---|---|---|
-| `core_intelligence` | `shadow` | Dispatch the Anthropic agent normally. After the dispatch is queued (same assistant message), also dispatch one `Bash` call to `scripts/shadow.sh <profile>` with the same prompt on stdin. The wrapper samples at $ATELIER_SHADOW_RATE (default 10%) and backgrounds the API call when sampled — it returns immediately, so this never blocks. Logs land in `~/.cache/atelier/llm_calls/<date>.jsonl` with `shadow_of: core_intelligence` for later quality comparison. |
-| `cross_validation` | `dual` | Dispatch BOTH legs in parallel (one assistant message, two tool calls): (a) `Agent` tool with the agent's `subagent_type` and prompt; (b) `Bash` tool calling `python3 scripts/chat_completion.py --profile cross_validation --max-tokens 16384 --prompt -` with the same user-level prompt on stdin. Reconcile per call-site (the privacy-reviewer pattern in `/system-review` Step 1c is the canonical example). For agents whose output is free-form (Curator, Scout, Meeting, Librarian), use the direct-api leg as a logged second opinion rather than a strict reconciliation gate; surface disagreement in the synthesis. |
-| `external_review` | `dual` | Used only by `/system-review` via `bash scripts/review.sh` — codex CLI + direct-api leg in parallel. Not applicable to agent dispatch. |
+Schema split:
+- **What identities exist** → `harness/models.toml` (committed; declarations only)
+- **How identities map to providers** → `profile/models.toml` (gitignored; bindings)
+- **Which voices each role is bound to** → `harness/agents.toml` (committed; `voices` per agent)
 
-Both legs share the same prompt context; agents whose work depends on tool calls (vault reads, file writes) cannot be perfectly mirrored — the direct-api leg sees the prompt only. Treat the secondary as a cross-check on the verdict / framing, not on the tool-driven output.
+Protocol prose intentionally does NOT enumerate specific model identities per role. That info lives in `harness/agents.toml` as the single source of truth; restating it here would create drift on every rebind. Refer to that file for current voice assignments.
 
-**Why dual for `cross_validation`**: two same-provider samples have correlated failure modes (training lineage, tokenizer, RLHF). Two different-provider voices catch each other's hallucinations. The cost is real but bounded: cross_validation is the cheap tier, and most calls are short.
+**Dispatch mechanics.** For any role R, read `harness/agents.toml` `[agents.R].voices`. Fire both voices in parallel from a single assistant message:
 
-**Why shadow (10%) for `core_intelligence`**: the high-cognition tier is too expensive to dual on every call, but a sampled stream of paired calls accumulates the data needed to recalibrate the tier mapping over time. If the shadow leg consistently matches or beats the primary on quality, the binding could be flipped — and the data is what justifies that decision.
+- **Voice 1 (Anthropic / native runtime leg)** — `Agent` tool with `subagent_type: R` and the prompt.
+- **Voice 2 (direct-api leg)** — `Bash` tool calling `python3 scripts/chat_completion.py --model <voice-2> --max-tokens 0 --prompt -` with the same prompt on stdin.
 
-**Sampling rate override**: `ATELIER_SHADOW_RATE=0` disables shadow entirely; `=100` shadows every call (useful for short calibration sprints).
+The privacy-reviewer pattern in `/system-review` Step 1c is the canonical worked example. Both voices share the same prompt context; agents whose work depends on tool calls (vault reads, file writes) cannot be perfectly mirrored — the direct-api voice sees the prompt only. Treat it as a cross-check on verdict / framing, not on the tool-driven output. For free-form work (Curator drafts, Scout finds, Meeting extracts, Librarian recommends), the second voice is a logged second opinion rather than a strict reconciliation gate; surface disagreement in the synthesis.
+
+**Soft-skip on missing api_env.** When the direct-api voice's `api_env` is unset (key not provided in the runtime environment), `chat_completion.py` exits 2 cleanly. Callers that fire dual dispatches (review.sh, /system-review Step 1c) MUST handle exit-2 as soft-skip-and-degrade — the dual collapses to single-voice with a warning, never a hard failure. Document the degradation in the call site's synthesis.
+
+**Why dual is intrinsic, not opt-in.** Two same-provider samples have correlated failure modes (training lineage, tokenizer, RLHF). Two different-provider voices catch each other's hallucinations. Making duality intrinsic to the role removes the per-dispatch token-budget argument for skipping the second voice. Voice-pair cost is bounded per role: cheap roles get cheap voices, deep roles get deep voices.
+
+**Tier scales cardinality, not voice composition.** A "Tier N" gathering = N parallel copies of role-units. The `/system-review` review-ladder (Tier 1-4) governs how many reviewer-units run on a change. It is the only "tier" semantics in this repo. Tier never alters a role's bound voice pair; it only adds more role-units to the gathering.
+
+## Reader → Scholar auto-promotion
+
+Reader handles routine reads. Scholar handles dense theory, foundational papers, and hard texts. Both share the same lens framework (Critical, Structural, Practical, Dialectical), same workflow, same output format — the only difference is the bound voices (declared per-agent in `harness/agents.toml`). The auto-promotion check lives at the dispatch site (orchestrator or invoking command), not inside the agents themselves.
+
+Route to **Scholar** if any of:
+
+- `word_count > 8000` (≈ 30 minute read)
+- source path under `$OV/papers/` or `$OV/preprints/` (L3 sources)
+- frontmatter declares `difficulty: hard`
+
+Otherwise dispatch **Reader**.
 
 ## Session Flow
 
@@ -198,7 +216,7 @@ Bounded decay sweeps over `$OV/`. Forgetter never deletes; it writes a decay rep
 | "Find redundant notes I should compact" | Dispatch Forgetter with the user's `scope_path` of choice (or ask). Redundant items in the report route to Curator after user approval. | Forgetter → Curator |
 
 ### Capture Operations (→ Scribe)
-Cheap-tier verbatim recording. Dispatched on the `mechanical_capture` profile. The orchestrator MUST NOT transcribe raw user content itself — that burns `core_intelligence` on mechanical I/O. See `.claude/agents/scribe.md` for operation contracts.
+Cheap-tier verbatim recording (Scribe's voices live in `harness/agents.toml`). The orchestrator MUST NOT transcribe raw user content itself — that burns deep-cognition tokens on mechanical I/O. See `.claude/agents/scribe.md` for operation contracts.
 
 | User dictates | Operation | Target tier |
 |---|---|---|
@@ -241,7 +259,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Reviewer + Challenger → Write-back** | Reading discussion ready for write-back | Reviewer checks grounding, Challenger checks completeness | Quality gate before writing to daily note |
 | **Evolver → Orchestrator → Review → Commit** | Evolver proposes a system change | Evolver makes changes (no commit) → returns `review_tier` to orchestrator → orchestrator dispatches reviewers → fixes issues → commits | Quality gate on system evolution (see Review Tiers) |
 | **Batch Compaction** | User asks to compact a topic area | Researcher finds all notes in `$OV/` → Orchestrator snapshots each source to `$OV/cache/compact-<slug>.md` at dispatch time → Curator drafts one output note at a time → orchestrator writes each after approval | Sequential: all snapshots must exist on disk before Curator starts |
-| **Pre-Output Raw Capture** | Reflection / coaching session about to write its reflection file, and the user dictated raw capture content during the session | Orchestrator collects raw user content per Capture surface (daily note, dining row, GTD, people stub, generic) → dispatches one Scribe per surface in parallel → all Scribe writes complete before the orchestrator writes the reflection file | Cost-partitioned: cheap-tier captures, `core_intelligence` does not transcribe |
+| **Pre-Output Raw Capture** | Reflection / coaching session about to write its reflection file, and the user dictated raw capture content during the session | Orchestrator collects raw user content per Capture surface (daily note, dining row, GTD, people stub, generic) → dispatches one Scribe per surface in parallel → all Scribe writes complete before the orchestrator writes the reflection file | Cost-partitioned: cheap-tier captures (Scribe), deep-cognition voices do not transcribe |
 
 ### Parallel Dispatches (A and B run simultaneously)
 

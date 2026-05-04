@@ -76,7 +76,7 @@ Then check:
 
 ### Agents (`.claude/agents/*.md`)
 - Tighten prompts — remove ambiguity, add decision tables
-- Adjust tier assignments — use the cross_validation tier for mechanical tasks, core_intelligence for creative ones (see `harness/models.toml`)
+- Adjust voice bindings — match the role's cognitive load to the appropriate voice tier (see `harness/agents.toml` `voices` field per role). Identities are declared in `harness/models.toml`; bindings live in gitignored `profile/models.toml`. Do not enumerate specific model names in protocol or agent prose.
 - Add/remove/merge roles as team needs change
 - Update tool lists when new tool capabilities appear
 

@@ -2,10 +2,10 @@
 """
 chat_completion.py: stdlib-only OpenAI-compatible chat completion invoker.
 
-Provider-neutral by design. The committed `harness/models.toml` defines
-tier semantics; the gitignored `profile/models.toml` supplies the actual
-provider/model bindings. Swapping providers is a binding-file edit, not
-a script change.
+Provider-neutral by design. The committed `harness/models.toml` declares
+model identities (opus, sonnet, deepseek_pro_max, ...); the gitignored
+`profile/models.toml` supplies the actual provider/model bindings. Swapping
+providers is a binding-file edit, not a script change.
 
 Two modes — pick by use case:
 
@@ -14,7 +14,7 @@ Two modes — pick by use case:
       bulk transforms, classification, anything where the prompt
       is self-contained.
 
-      scripts/chat_completion.py --profile cross_validation --prompt "..."
+      scripts/chat_completion.py --model deepseek_pro --prompt "..."
 
   STATEFUL (--session FILE)
       Multi-turn. The script loads prior messages from FILE, sends
@@ -25,21 +25,21 @@ Two modes — pick by use case:
       linearly with session length; start a new session when the
       thread is done.
 
-      scripts/chat_completion.py --profile X --session /tmp/s.json --prompt "first"
-      scripts/chat_completion.py --profile X --session /tmp/s.json --prompt "second"
+      scripts/chat_completion.py --model X --session /tmp/s.json --prompt "first"
+      scripts/chat_completion.py --model X --session /tmp/s.json --prompt "second"
 
 Other invocation flavors:
 
   Stdin via '-':
-      echo "Hello" | scripts/chat_completion.py --profile X --prompt -
+      echo "Hello" | scripts/chat_completion.py --model X --prompt -
 
-  Direct flags (no profile — ad-hoc):
+  Direct flags (no --model — ad-hoc):
       scripts/chat_completion.py --endpoint https://api.example.com/v1/chat/completions \\
-                                 --model some-model --api-key-env EXAMPLE_KEY \\
+                                 --api-model some-model --api-key-env EXAMPLE_KEY \\
                                  --prompt "..."
 
-Profile keys read from the merged config (any may be overridden by flags):
-    direct_api          model identifier
+Model entry keys read from the merged config (any may be overridden by flags):
+    direct_api          provider's model identifier
     direct_api_base     full endpoint URL (host + path)
     api_env             env var holding the API key
     direct_api_extras   inline table merged into request body for
@@ -51,8 +51,8 @@ Inspectable, hand-editable, gitignore-worthy.
 
 Invocation log (default ON): every successful or failed call appends one
 JSON line to `~/.cache/atelier/llm_calls/<YYYY-MM-DD>.jsonl`. The event
-records timestamp, profile, model, endpoint, prompt, response content,
-reasoning_content (when thinking is enabled), `usage` token counts,
+records timestamp, model name, api model id, endpoint, prompt, response
+content, reasoning_content (when thinking is enabled), `usage` token counts,
 finish_reason, latency, and error kind on failure. Used for after-the-fact
 quality evaluation, latency drift tracking, and reasoning-mode auditing.
 The log dir is machine-local (parallel to ~/.cache/atelier/lance/) so it
@@ -62,10 +62,15 @@ for sensitive prompts; --log-dir overrides the default location.
 Auth is `Authorization: Bearer $<api_env>`. Providers that use a different
 header scheme need their own helper (or a future --auth-header flag).
 
+Note: shadow sampling is no longer a property of any model entry. The
+previous `--shadow-of` flag is gone; for sampled secondary logging,
+invoke this script against an explicit model identity from a wrapper
+(e.g., `scripts/shadow.sh`) — the schema does not encode shadow pairs.
+
 Exit codes:
     0  ok
     1  API error (non-2xx, malformed JSON, missing fields)
-    2  config error (env var missing, profile not found, profile incomplete,
+    2  config error (env var missing, model not found, model entry incomplete,
        or session file invalid)
     3  timeout
     4  invalid arguments (empty prompt, conflicting flags)
@@ -94,27 +99,31 @@ BINDINGS_TOML = REPO_ROOT / "profile" / "models.toml"
 DEFAULT_LOG_DIR = Path.home() / ".cache" / "atelier" / "llm_calls"
 
 
-def _load_profile(name: str) -> dict | None:
-    """Merge committed profile schema with gitignored bindings, by name.
+def _load_model(name: str) -> dict | None:
+    """Merge committed model schema with gitignored bindings, by name.
 
-    Returns the per-profile dict (rationale, invocation, claude_code,
-    direct_api, api_env, ...) with binding values overlaid on the
-    schema. Returns None if the profile is not in the schema. If the
-    bindings file is absent, returns the schema-only profile (which
-    will fail downstream when a binding key is required — by design).
+    Returns the per-model dict (claude_code, codex, direct_api, api_env, ...)
+    with binding values overlaid on the schema. The committed schema in
+    `harness/models.toml` declares model identities; bindings in
+    `profile/models.toml` (gitignored) supply provider/model strings,
+    endpoints, env vars, and request extras. Returns None if the model
+    is not in the schema. If the bindings file is absent, returns the
+    schema-only entry (which will fail downstream when a binding key is
+    required — by design).
     """
     if not SCHEMA_TOML.exists():
         return None
     with SCHEMA_TOML.open("rb") as f:
         schema = tomllib.load(f)
-    profile = dict(schema.get("profiles", {}).get(name) or {})
-    if not profile:
+    model = dict(schema.get("models", {}).get(name) or {})
+    # Schema entry may exist as an empty table (just a docstring); accept it.
+    if name not in (schema.get("models") or {}):
         return None
     if BINDINGS_TOML.exists():
         with BINDINGS_TOML.open("rb") as f:
             bindings = tomllib.load(f)
-        profile.update(bindings.get("profiles", {}).get(name) or {})
-    return profile
+        model.update(bindings.get("models", {}).get(name) or {})
+    return model
 
 
 def _read_prompt(args: argparse.Namespace) -> str:
@@ -146,11 +155,11 @@ def _save_session(path: Path, messages: list[dict]) -> None:
 
 
 def _resolve_extras(
-    profile: dict | None, override_json: str | None, extras_field: str = "direct_api_extras"
+    model_entry: dict | None, override_json: str | None, extras_field: str = "direct_api_extras"
 ) -> dict:
     extras: dict = {}
-    if profile:
-        extras.update(profile.get(extras_field, {}) or {})
+    if model_entry:
+        extras.update(model_entry.get(extras_field, {}) or {})
     if override_json:
         extras.update(json.loads(override_json))
     return extras
@@ -284,36 +293,24 @@ def main(argv: list[str] | None = None) -> int:
         description="OpenAI-compatible chat completion invoker. Stdlib only.",
     )
     ap.add_argument(
-        "--profile",
+        "--model",
         help=(
-            "Profile name. Reads `direct_api`, `direct_api_base`, `api_env`, "
+            "Model identity name (e.g., opus, sonnet, deepseek_pro_max). "
+            "Reads `direct_api`, `direct_api_base`, `api_env`, "
             "`direct_api_extras` from the merged schema (harness/models.toml) "
             "+ bindings (profile/models.toml). Any can be overridden by the "
-            "flags below."
+            "ad-hoc flags below."
         ),
     )
-    ap.add_argument(
-        "--shadow-of",
-        default=None,
-        metavar="PROFILE",
-        help=(
-            "Run the call against the profile's shadow_api binding instead "
-            "of direct_api. Reads shadow_api / shadow_api_base / shadow_api_env "
-            "/ shadow_api_extras / shadow_api_timeout. The invocation log "
-            "records `shadow_of: <PROFILE>` so shadow calls are separable "
-            "from primary calls. Used by scripts/shadow.sh for sampled "
-            "logging-only quality comparison; rarely useful directly."
-        ),
-    )
-    ap.add_argument("--endpoint", help="Override profile's direct_api_base.")
-    ap.add_argument("--model", help="Override profile's direct_api.")
+    ap.add_argument("--endpoint", help="Override the model's direct_api_base.")
+    ap.add_argument("--api-model", help="Override the model's direct_api (the provider's model id).")
     ap.add_argument(
         "--api-key-env",
-        help="Override profile's api_env (env var name, not the key itself).",
+        help="Override the model's api_env (env var name, not the key itself).",
     )
     ap.add_argument(
         "--extras-json",
-        help="JSON object merged into request body, last-wins over profile extras.",
+        help="JSON object merged into request body, last-wins over the model's extras.",
     )
 
     grp = ap.add_mutually_exclusive_group(required=True)
@@ -340,7 +337,11 @@ def main(argv: list[str] | None = None) -> int:
             "hits the cap (finish_reason=length), the script writes the "
             "partial content to stdout but exits 5 so callers see the "
             "truncation. Pass a higher value (e.g., 16384) for review-grade "
-            "calls; pass 0 to silently accept truncation."
+            "calls; pass 0 to OMIT max_tokens from the request entirely "
+            "(no cap; provider's model maximum applies; truncation detection "
+            "disabled). System-review callers SHOULD pass 0 — capping the "
+            "safety net of the evolution loop is the worst place to save "
+            "tokens."
         ),
     )
     ap.add_argument(
@@ -371,9 +372,9 @@ def main(argv: list[str] | None = None) -> int:
         type=float,
         default=None,
         help=(
-            "Per-call timeout in seconds. Defaults to the profile's "
-            "`direct_api_timeout` if set, else 120s. Reasoning-heavy tiers "
-            "should configure this in the profile."
+            "Per-call timeout in seconds. Defaults to the model's "
+            "`direct_api_timeout` if set, else 120s. Reasoning-heavy models "
+            "should configure this in the model's binding entry."
         ),
     )
     ap.add_argument(
@@ -399,40 +400,22 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = ap.parse_args(argv)
 
-    profile = _load_profile(args.profile) if args.profile else None
-    if args.profile and profile is None:
+    model_entry = _load_model(args.model) if args.model else None
+    if args.model and model_entry is None:
         sys.stderr.write(
-            f"chat_completion: profile '{args.profile}' not found in harness/models.toml\n"
+            f"chat_completion: model '{args.model}' not found in harness/models.toml\n"
         )
         return 2
 
-    # When --shadow-of is set, source bindings from the shadow_* keys instead
-    # of the direct_api* keys. The active profile remains args.profile (so
-    # logging records `profile=<args.profile>` plus `shadow_of=<args.shadow_of>`),
-    # but the actual call goes to the shadow binding.
-    if args.shadow_of:
-        shadow_profile = _load_profile(args.shadow_of)
-        if shadow_profile is None:
-            sys.stderr.write(
-                f"chat_completion: --shadow-of profile '{args.shadow_of}' not found\n"
-            )
-            return 2
-        binding_src = shadow_profile
-        api_key_field = "shadow_api"
-        base_field = "shadow_api_base"
-        env_field = "shadow_api_env"
-        extras_field = "shadow_api_extras"
-        timeout_field = "shadow_api_timeout"
-    else:
-        binding_src = profile or {}
-        api_key_field = "direct_api"
-        base_field = "direct_api_base"
-        env_field = "api_env"
-        extras_field = "direct_api_extras"
-        timeout_field = "direct_api_timeout"
+    binding_src = model_entry or {}
+    api_model_field = "direct_api"
+    base_field = "direct_api_base"
+    env_field = "api_env"
+    extras_field = "direct_api_extras"
+    timeout_field = "direct_api_timeout"
 
     endpoint = args.endpoint or binding_src.get(base_field)
-    model = args.model or binding_src.get(api_key_field)
+    api_model = args.api_model or binding_src.get(api_model_field)
     api_env = args.api_key_env or binding_src.get(env_field)
     if args.timeout is not None:
         timeout = args.timeout
@@ -441,17 +424,17 @@ def main(argv: list[str] | None = None) -> int:
     else:
         timeout = 120.0
 
-    if not endpoint or not model or not api_env:
+    if not endpoint or not api_model or not api_env:
         sys.stderr.write(
-            "chat_completion: missing required config (need endpoint, model, and api-key-env "
-            "via --profile or via --endpoint/--model/--api-key-env flags).\n"
+            "chat_completion: missing required config (need endpoint, api-model, and api-key-env "
+            "via --model or via --endpoint/--api-model/--api-key-env flags).\n"
         )
         return 2
 
     api_key = os.environ.get(api_env)
     # Optional canonical-env-var fallbacks. Each entry maps a local alias
-    # (the profile's `api_env`) to the provider's canonical env var, so a
-    # machine that only exports the canonical name still works without
+    # (the model entry's `api_env`) to the provider's canonical env var,
+    # so a machine that only exports the canonical name still works without
     # editing the binding file. Add new entries as needed; keep this list
     # minimal — most providers should use a single env var.
     _CANONICAL_ENV_FALLBACKS: dict[str, str] = {
@@ -492,7 +475,9 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write(f"chat_completion: --extras-json is not valid JSON: {e}\n")
         return 4
 
-    body: dict = {"model": model, "messages": messages, "max_tokens": args.max_tokens}
+    body: dict = {"model": api_model, "messages": messages}
+    if args.max_tokens > 0:
+        body["max_tokens"] = args.max_tokens
     body.update(extras)
 
     # Optional pre-flight: refuse to send if the request would clearly bust
@@ -515,9 +500,8 @@ def main(argv: list[str] | None = None) -> int:
     log_dir = Path(args.log_dir) if args.log_dir else DEFAULT_LOG_DIR
     log_event: dict = {
         "timestamp": datetime.now().isoformat(timespec="seconds"),
-        "profile": args.profile,
-        "shadow_of": args.shadow_of,
-        "model": model,
+        "model": args.model,
+        "api_model": api_model,
         "endpoint": endpoint,
         "session": session_path.as_posix() if session_path else None,
         "system": args.system,

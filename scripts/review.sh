@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # Canonical external review for atelier system-evolution changes.
-# Runs the external_review tier (codex CLI + a direct-api leg) on the
+# Runs the external-reviewer role (codex CLI + a direct-api leg) on the
 # uncommitted diff with pre-baked prompts. Bindings are resolved from
 # `harness/models.toml` (committed schema) + `profile/models.toml`
-# (gitignored bindings). Zero lookup at the call site: the orchestrator
-# just runs this script — no skill, no doc.
+# (gitignored bindings). The voices composition (which two model
+# identities pair on this role) is read from `harness/agents.toml`
+# at run time, so the script stays in sync if the voices is rebound.
+# Zero lookup at the call site: the orchestrator just runs this script
+# — no skill, no doc.
 #
 # Usage:
 #   bash scripts/review.sh             # codex + direct-api in parallel
@@ -12,7 +15,7 @@
 #   bash scripts/review.sh direct      # direct-api only
 #   bash scripts/review.sh gemini      # legacy reviewer (kept for users
 #                                      # with the gemini CLI; not part
-#                                      # of the external_review tier)
+#                                      # of the external-reviewer voices)
 #
 # Output: reports written to $OV/cache/review-<timestamp>-{codex,direct,gemini}.md
 #         stderr/warnings land in   $OV/cache/review-<timestamp>-{codex,direct,gemini}.md.err
@@ -36,6 +39,61 @@ fi
 MODE="${1:-both}"
 TS=$(date +%Y%m%d-%H%M%S)
 OUT_DIR="${OV%/}/cache"
+
+# Resolve external-reviewer's bound voices from harness/agents.toml so the
+# script stays in sync if the voices composition is rebound. Returns a
+# space-separated list of model identity names (e.g., "deepseek_pro_max
+# codex_gpt55_max"). The two legs feed run_direct_api (first) and run_codex
+# (second) below; if the layout ever needs reordering, fix it here, not at
+# the call sites. We read the canonical source rather than hardcoding so
+# the script does not silently drift from harness/agents.toml.
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
+EXT_VOICES=$(python3 - "$REPO_ROOT/harness/agents.toml" <<'PY'
+import sys, tomllib
+data = tomllib.loads(open(sys.argv[1], "rb").read().decode("utf-8"))
+voices = (data.get("agents", {}).get("external-reviewer", {}) or {}).get("voices") or []
+if not voices:
+    sys.stderr.write("review.sh: harness/agents.toml has no [agents.external-reviewer].voices\n")
+    sys.exit(2)
+print(" ".join(voices))
+PY
+) || exit $?
+# Split into the two legs in declared order. The agents.toml voices for
+# external-reviewer is ["deepseek_pro_max", "codex_gpt55_max"] — direct-api
+# leg first, codex CLI leg second. If you rebind, keep that ordering or
+# update the assignments here.
+read -r DIRECT_MODEL CODEX_MODEL <<< "$EXT_VOICES"
+if [ -z "${DIRECT_MODEL:-}" ] || [ -z "${CODEX_MODEL:-}" ]; then
+  echo "review.sh: external-reviewer voices did not resolve to two legs (got: '$EXT_VOICES')" >&2
+  exit 2
+fi
+
+# For the codex leg we also need the codex-side model id and reasoning effort
+# (e.g., openai/gpt-5.5, "high"), which live in profile/models.toml under
+# [models.$CODEX_MODEL]. Schema declarations in harness/models.toml are
+# identity-only; the bindings are gitignored, so resolve at run time.
+CODEX_MODEL_INFO=$(python3 - "$REPO_ROOT" "$CODEX_MODEL" <<'PY'
+import sys, tomllib
+from pathlib import Path
+root, name = Path(sys.argv[1]), sys.argv[2]
+schema = tomllib.loads((root / "harness" / "models.toml").read_text("utf-8"))
+if name not in (schema.get("models") or {}):
+    sys.stderr.write(f"review.sh: model `{name}` missing from harness/models.toml\n")
+    sys.exit(2)
+bindings_path = root / "profile" / "models.toml"
+bindings = {}
+if bindings_path.exists():
+    bindings = tomllib.loads(bindings_path.read_text("utf-8"))
+entry = (bindings.get("models", {}) or {}).get(name) or {}
+codex = entry.get("codex") or ""
+effort = entry.get("codex_reasoning_effort") or ""
+print(f"{codex}\t{effort}")
+PY
+) || exit $?
+CODEX_API_MODEL=$(printf '%s' "$CODEX_MODEL_INFO" | cut -f1)
+CODEX_REASONING=$(printf '%s' "$CODEX_MODEL_INFO" | cut -f2)
+
 # Default payload cap: 400KB (~100K tokens at chars/4). Set to 0 to disable.
 # Catches the obvious failure mode: a fresh log/dump file accidentally left
 # untracked is included verbatim by build_diff and balloons the API request.
@@ -119,9 +177,14 @@ run_codex() {
     echo "[codex] MISSING — skipped" >&2
     return 127
   fi
-  echo "[codex] running → $out (errors → $err)" >&2
+  echo "[codex] running ($CODEX_MODEL → $CODEX_API_MODEL, reasoning=${CODEX_REASONING:-default}) → $out (errors → $err)" >&2
   # codex exec review --uncommitted picks up untracked files natively.
-  codex exec review --uncommitted --full-auto > "$out" 2> "$err"
+  # Model identity comes from the external-reviewer voices in harness/
+  # agents.toml; provider model id + reasoning effort from profile/models.toml.
+  local codex_args=(exec review --uncommitted --full-auto)
+  [ -n "$CODEX_API_MODEL" ] && codex_args+=(-m "$CODEX_API_MODEL")
+  [ -n "$CODEX_REASONING" ] && codex_args+=(-c "model_reasoning_effort=\"$CODEX_REASONING\"")
+  codex "${codex_args[@]}" > "$out" 2> "$err"
   local rc=$?
   if [ $rc -eq 0 ]; then
     echo "[codex] done → $out"
@@ -158,17 +221,20 @@ run_gemini() {
 run_direct_api() {
   local out="$OUT_DIR/review-$TS-direct.md"
   local err="$out.err"
-  echo "[direct-api] running → $out (errors → $err)" >&2
-  # Delegates to chat_completion.py with the external_review profile.
-  # Profile bindings (model, endpoint, env var, reasoning extras) live in
-  # the gitignored profile/models.toml. chat_completion.py exits 2 when
-  # the api_env is unset — we treat that as a soft-skip (127) here.
-  # Reviews regularly need 8K-16K tokens; pass a high --max-tokens cap
-  # explicitly so we don't silently truncate the verdict.
+  echo "[direct-api] running ($DIRECT_MODEL) → $out (errors → $err)" >&2
+  # Delegates to chat_completion.py with the external-reviewer's direct-api
+  # leg ($DIRECT_MODEL, resolved from external-reviewer.voices in
+  # harness/agents.toml). Provider bindings (model, endpoint, env var,
+  # reasoning extras) live in the gitignored profile/models.toml.
+  # chat_completion.py exits 2 when the api_env is unset — we treat that
+  # as a soft-skip (127) here. System-review must NEVER be capped: pass
+  # --max-tokens 0 to omit the cap from the request entirely (provider's
+  # model maximum applies). Capping the safety net of the evolution loop
+  # silently truncates real findings; that is the worst trade in this codebase.
   local body
   body="$PROMPT"$'\n\n'"$(build_diff)"
   printf '%s' "$body" | python3 scripts/chat_completion.py \
-      --profile external_review --max-tokens 16384 --prompt - > "$out" 2> "$err"
+      --model "$DIRECT_MODEL" --max-tokens 0 --prompt - > "$out" 2> "$err"
   local rc=$?
   if [ $rc -eq 0 ]; then
     echo "[direct-api] done → $out"
@@ -205,7 +271,7 @@ case "$MODE" in
     exit $rc
     ;;
   both)
-    # external_review tier: codex CLI + direct-api leg, run in parallel.
+    # external-reviewer role: codex CLI + direct-api leg, run in parallel.
     run_codex &
     CODEX_PID=$!
     run_direct_api &
