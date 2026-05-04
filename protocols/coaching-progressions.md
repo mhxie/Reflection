@@ -38,7 +38,7 @@ At an era transition:
 
 At era transitions and quarterly reviews, assess momentum across all life directions:
 
-- **Golden Age:** Multiple directions showing Moments (see pattern-library.md), energy is high, compounding feels real. Lean into it — expand scope.
+- **Golden Age:** Multiple directions showing Moments (defined in `protocols/pattern-library.md`), energy is high, compounding feels real. Lean into it — expand scope.
 - **Normal:** Steady progress in primary direction, others maintained. Keep going.
 - **Dark Age:** One or more directions show zero Moments for an extended period. Dark ages come from **neglect, not failure**. Surface the cost without judgment: "Your [direction] has gone quiet this quarter. Is that a deliberate choice?"
 - **Heroic Age:** Recovery from a dark age — if you push through stagnation and generate Moments again, the next period starts with extra momentum. The system should recognize and name this.

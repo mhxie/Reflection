@@ -20,7 +20,7 @@ atelier's wiki entries are structured around claims, not paragraphs. Each claim 
 
 ## Note Structure
 
-A wiki entry has three required sections and lives in `$OV/wiki/` (see `local-first-architecture.md` for the layer model).
+A wiki entry has three required sections and lives in `$OV/wiki/`. The full layer model is documented in `protocols/local-first-architecture.md`.
 
 ```markdown
 # Note Title

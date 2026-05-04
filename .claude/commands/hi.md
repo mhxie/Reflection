@@ -178,12 +178,12 @@ Before dispatching the reading agent, apply the auto-promotion check from `proto
 
 #### Prefetch Step (Readwise podcasts, videos, articles; applies to all three Read modes)
 
-If the source is a Readwise podcast, video, or article (user provides a Readwise URL, `document_id`, or names a podcast), **cache the transcript once before dispatching any Reader**. Independent fetches across parallel Readers are the failure mode this step exists to avoid (same reasoning as the paper cache).
+If the source is a Readwise podcast, video, or article (user provides a Readwise URL, `document_id`, or names a podcast), **cache the transcript once before dispatching any reading agent (Reader or Scholar)**. Independent fetches across parallel reading-agent instances are the failure mode this step exists to avoid (same reasoning as the paper cache).
 
 1. Resolve `document_id`. If the user gave a title, find it: `readwise reader-search-documents --query "<keywords>"` → pick the match.
 2. Snapshot content: `readwise reader-get-document-details --document-id <id> | jq -r '.content' > $OV/cache/rw-<id>.md`
-3. Pass `cache_path: $OV/cache/rw-<id>.md` to every Reader dispatch. The Reader agent knows this convention (see `.claude/agents/reader.md`, section "Readwise transcript cache").
-4. For podcasts specifically: also pass the guest name (parsed from title) and host name (from the `author` field) in the dispatch prompt so Reader doesn't have to re-infer for citation.
+3. Pass `cache_path: $OV/cache/rw-<id>.md` to every reading-agent dispatch (Reader or Scholar). The convention is documented in `.claude/agents/reader.md` § "Readwise transcript cache"; Scholar follows the same convention.
+4. For podcasts specifically: also pass the guest name (parsed from title) and host name (from the `author` field) in the dispatch prompt so the reading agent doesn't have to re-infer for citation.
 
 #### Backup to Readwise (final step in every Read mode)
 

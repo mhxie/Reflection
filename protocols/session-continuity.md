@@ -52,7 +52,7 @@ Sessions leave artifacts that future sessions can read:
 |---------|---------------------|-----|
 | `/project:hi` | Daily or every 2-3 days | Maintains awareness of current thinking |
 | `/project:weekly` | Weekly (Sunday or Monday) | Energy and attention patterns need a week of data |
-| `/project:review` | Quarterly (full) / Monthly (light pulse via `/weekly`) | Full review is quarterly; light pulse is monthly. See `.claude/commands/review.md` → Cadence. |
+| `/project:review` | Quarterly (full) / Monthly (light pulse via `/weekly`) | Full review is quarterly; light pulse is monthly. Cadence specifics live in `.claude/commands/review.md`. |
 | `/project:decision` | As needed | When facing a real decision |
 | `/project:explore` | Weekly or when feeling stuck | Keeps serendipity alive |
 | `/project:energy-audit` | Monthly or after high-stress periods | Energy patterns are slow-moving |

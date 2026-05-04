@@ -40,32 +40,27 @@ MODE="${1:-both}"
 TS=$(date +%Y%m%d-%H%M%S)
 OUT_DIR="${OV%/}/cache"
 
-# Resolve external-reviewer's bound voices from harness/agents.toml so the
-# script stays in sync if the voices composition is rebound. Returns a
-# space-separated list of model identity names (e.g., "deepseek_pro_max
-# codex_gpt55_max"). The two legs feed run_direct_api (first) and run_codex
-# (second) below; if the layout ever needs reordering, fix it here, not at
-# the call sites. We read the canonical source rather than hardcoding so
-# the script does not silently drift from harness/agents.toml.
+# Resolve external-reviewer's bound voices from harness/agents.toml. The
+# `voices` field is a keyed inline table; we read each leg by name (direct,
+# codex) so reordering or adding a future leg does not break the script.
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
 EXT_VOICES=$(python3 - "$REPO_ROOT/harness/agents.toml" <<'PY'
 import sys, tomllib
 data = tomllib.loads(open(sys.argv[1], "rb").read().decode("utf-8"))
-voices = (data.get("agents", {}).get("external-reviewer", {}) or {}).get("voices") or []
-if not voices:
-    sys.stderr.write("review.sh: harness/agents.toml has no [agents.external-reviewer].voices\n")
+voices = (data.get("agents", {}).get("external-reviewer", {}) or {}).get("voices") or {}
+if not isinstance(voices, dict) or not voices:
+    sys.stderr.write("review.sh: harness/agents.toml has no [agents.external-reviewer].voices table\n")
     sys.exit(2)
-print(" ".join(voices))
+direct = voices.get("direct", "")
+codex = voices.get("codex", "")
+print(f"{direct}\t{codex}")
 PY
 ) || exit $?
-# Split into the two legs in declared order. The agents.toml voices for
-# external-reviewer is ["deepseek_pro_max", "codex_gpt55_max"] — direct-api
-# leg first, codex CLI leg second. If you rebind, keep that ordering or
-# update the assignments here.
-read -r DIRECT_MODEL CODEX_MODEL <<< "$EXT_VOICES"
+DIRECT_MODEL=$(printf '%s' "$EXT_VOICES" | cut -f1)
+CODEX_MODEL=$(printf '%s' "$EXT_VOICES" | cut -f2)
 if [ -z "${DIRECT_MODEL:-}" ] || [ -z "${CODEX_MODEL:-}" ]; then
-  echo "review.sh: external-reviewer voices did not resolve to two legs (got: '$EXT_VOICES')" >&2
+  echo "review.sh: external-reviewer voices missing direct or codex leg (got direct='$DIRECT_MODEL', codex='$CODEX_MODEL')" >&2
   exit 2
 fi
 
@@ -179,12 +174,17 @@ run_codex() {
   fi
   echo "[codex] running ($CODEX_MODEL → $CODEX_API_MODEL, reasoning=${CODEX_REASONING:-default}) → $out (errors → $err)" >&2
   # codex exec review --uncommitted picks up untracked files natively.
-  # Model identity comes from the external-reviewer voices in harness/
-  # agents.toml; provider model id + reasoning effort from profile/models.toml.
-  local codex_args=(exec review --uncommitted --full-auto)
+  # Model identity from external-reviewer voices in harness/agents.toml;
+  # provider model id + reasoning effort from profile/models.toml.
+  # The custom review prompt ($PROMPT) is piped on stdin via the `-` PROMPT
+  # arg per `codex exec review --help`. (Earlier --full-auto flag was
+  # invalid for the review subcommand; codex was running its built-in rubric
+  # instead of ours, silently.)
+  local codex_args=(exec review --uncommitted)
   [ -n "$CODEX_API_MODEL" ] && codex_args+=(-m "$CODEX_API_MODEL")
   [ -n "$CODEX_REASONING" ] && codex_args+=(-c "model_reasoning_effort=\"$CODEX_REASONING\"")
-  codex "${codex_args[@]}" > "$out" 2> "$err"
+  codex_args+=(-)
+  printf '%s' "$PROMPT" | codex "${codex_args[@]}" > "$out" 2> "$err"
   local rc=$?
   if [ $rc -eq 0 ]; then
     echo "[codex] done → $out"

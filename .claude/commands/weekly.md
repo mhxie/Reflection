@@ -12,7 +12,7 @@ Daily `/hi` does not run every day. `/weekly` is also the catch-all for any sign
 
 When to invoke:
 - **Default**: weekly, on Sunday evening or Monday morning local time.
-- **Soft cue / Hard floor**: the orchestrator surfaces a cue inside `/hi` based on weekly staleness. See `.claude/commands/hi.md` → "Weekly Cue Check" for the authoritative thresholds and routing logic. This file does not duplicate them, so the cue can be tuned in one place.
+- **Soft cue / Hard floor**: the orchestrator surfaces a cue inside `/hi` based on weekly staleness. The authoritative thresholds and routing logic live with the cue surface, not duplicated here.
 - **Manual**: user can invoke directly anytime.
 
 ## Prerequisites
@@ -191,7 +191,7 @@ Based on the review:
 
 After writing the weekly review file, emit a session log:
 1. `Bash: uv run scripts/session_log.py --type weekly --duration <minutes>`
-2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `hi.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
+2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). The canonical fill-in guide lives in `protocols/session-log.md` § "Section Guidance". Leave empty sections with headers only. If the write fails, warn and continue.
 
 ## Wrap Up
 

@@ -20,7 +20,7 @@ Applies to: anything written collaboratively with the system, anything the syste
 
 ### Wiki entry (location-based)
 
-A note that lives under `$OV/wiki/` and follows the **wiki schema** (see `wiki-schema.md`): explicit `## Claims` section, each claim carrying its own anchor set, structured `@anchor` / `@cite` / `@pass` markers with bi-temporal `valid_at` / `invalid_at` semantics, and structural integrity verified by lint. **The certification is the location, not a tag.** Anything in `$OV/wiki/` is a wiki entry by definition, and the trust engine treats it as one. No `#compiled-truth` tag, no `#wiki` tag — the directory walk is the contract.
+A note that lives under `$OV/wiki/` and follows the **wiki schema** (defined in `protocols/wiki-schema.md`): explicit `## Claims` section, each claim carrying its own anchor set, structured `@anchor` / `@cite` / `@pass` markers with bi-temporal `valid_at` / `invalid_at` semantics, and structural integrity verified by lint. **The certification is the location, not a tag.** Anything in `$OV/wiki/` is a wiki entry by definition, and the trust engine treats it as one. No `#compiled-truth` tag, no `#wiki` tag — the directory walk is the contract.
 
 Applies to: notes the user wants the system to treat as authoritative in the local-first knowledge layer. These are the only notes that participate in TrustRank propagation.
 
@@ -48,7 +48,7 @@ Two failure modes anchor the design at opposite ends.
 
 In the LLM Knowledge Bases gist, Andrej Karpathy treats everything in his second brain as acceptable for LLM ingestion and synthesis. There is no zone where the human writer's unmediated voice is preserved as load-bearing. The risk: the second brain becomes a closed loop where the LLM's prior outputs feed the LLM's next outputs, with no external friction to break the cycle. Trust propagates from nothing.
 
-atelier's structural answer: external anchors are the only seeds of trust. Internal agent passes (Reviewer, Challenger, Thinker) can floor or invalidate trust but never accumulate it. See `wiki-schema.md` → "The Trust Propagation Rule."
+atelier's structural answer: external anchors are the only seeds of trust. Internal agent passes (Reviewer, Challenger, Thinker) can floor or invalidate trust but never accumulate it. The propagation rule lives in `protocols/wiki-schema.md` → "The Trust Propagation Rule."
 
 ### Appleton's failure mode (human centipede epistemology)
 
@@ -58,7 +58,7 @@ Maggie Appleton's Dark Forest essay names the endpoint:
 
 The risk: anchors themselves degrade as the source corpus (papers, articles, discussions) becomes increasingly AI-assisted. Even "external validation" stops being independent.
 
-atelier's structural answer: **bi-temporal anchors**. Every `@anchor` carries a `valid_at` timestamp recording when the anchor was added. Later invalidation gets `invalid_at`. This lets the system answer "was this claim externally supported *at the time it was anchored*, even if the anchor has since been superseded?" — which is the right question once the anchor corpus itself can degrade. See `wiki-schema.md` → "Bi-temporal Anchors."
+atelier's structural answer: **bi-temporal anchors**. Every `@anchor` carries a `valid_at` timestamp recording when the anchor was added. Later invalidation gets `invalid_at`. This lets the system answer "was this claim externally supported *at the time it was anchored*, even if the anchor has since been superseded?" — which is the right question once the anchor corpus itself can degrade. The bi-temporal anchor schema lives in `protocols/wiki-schema.md`.
 
 The user's failure mode is not Karpathy's. The user's risk is treating everything as acceptably mixed and losing any anchor — "alloy as surrender." The taxonomy and the trust engine exist to prevent that drift.
 
@@ -97,7 +97,7 @@ This is distinct from normal iterative thinking. It bites specifically when:
 
 **Why this rule exists.** A strategic refinement arc has the same risk profile as an AI-confirmation loop, just at a higher level. Instead of the orchestrator echoing the user's words, the orchestrator echoes the *direction* of the user's refinements. Each step feels like progress because it is monotonically endorsed, but progress-by-endorsement is not progress-by-friction. Friction comes from independent adversarial evaluation (the Challenger's role); the orchestrator's own voice cannot substitute.
 
-See `protocols/orchestrator.md` → Collaboration Triggers → "User refines a strategic/directional claim 2+ times".
+The corresponding orchestrator trigger ("User refines a strategic/directional claim 2+ times") lives in `protocols/orchestrator.md` Collaboration Triggers; this hygiene rule is its semantic basis.
 
 ## The Sacred Zone
 

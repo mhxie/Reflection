@@ -33,10 +33,10 @@ repo-scoped `atelier` skill points Codex to these registries without loading
 every command or agent spec up front.
 
 Codex does not yet ship a project-level custom slash-command surface, so the
-parity invocation is `python3 scripts/atelier.py run <command>`. For the full
+parity invocation is `python3 scripts/atelier.py run <command>`. The full
 recipe set (run, run --exec, run --resume, run --fork, plus discovery
-commands), see `AGENTS.md` § Codex Quick Recipes; that file is the operational
-canon for Codex sessions and is read first by Codex.
+commands) is documented in `AGENTS.md` § Codex Quick Recipes — the operational
+canon for Codex sessions, read first by Codex.
 
 ## Provider-Neutral Rules
 
@@ -62,7 +62,7 @@ actual provider/model bindings (model id, endpoint URL, env var, request
 extras) live in `profile/models.toml` (gitignored). Loaders merge schema +
 bindings at runtime.
 
-Voice dispatch model — single source of truth: `protocols/orchestrator.md` → "Voice Dispatch (every role is intrinsically dual)". The agent-to-voices mapping lives in `harness/agents.toml` (committed) as `voices = [a, b]` per agent. Swapping providers or models is a binding-file edit in `profile/models.toml`; no committed file changes.
+Voice dispatch model — single source of truth: `protocols/orchestrator.md` → "Voice Dispatch". The agent-to-voices mapping lives in `harness/agents.toml` (committed) as a `voices` keyed inline table per agent (`{native = "...", direct = "..."}` or single-leg variants). Swapping providers or models is a binding-file edit in `profile/models.toml`; no committed file changes.
 
 ## Capability Profiles
 

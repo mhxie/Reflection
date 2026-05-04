@@ -62,11 +62,6 @@ for sensitive prompts; --log-dir overrides the default location.
 Auth is `Authorization: Bearer $<api_env>`. Providers that use a different
 header scheme need their own helper (or a future --auth-header flag).
 
-Note: shadow sampling is no longer a property of any model entry. The
-previous `--shadow-of` flag is gone; for sampled secondary logging,
-invoke this script against an explicit model identity from a wrapper
-(e.g., `scripts/shadow.sh`) — the schema does not encode shadow pairs.
-
 Exit codes:
     0  ok
     1  API error (non-2xx, malformed JSON, missing fields)

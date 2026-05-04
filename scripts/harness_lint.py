@@ -59,14 +59,13 @@ ALLOWED_PATTERNS = frozenset({
 })
 
 # Patterns matching agent-name mentions in command source files. Anchored on
-# word boundaries; case-insensitive at usage time. Multi-word stems
-# ("privacy-reviewer") are listed before single-word stems so they match
-# greedily.
-AGENT_NAME_RE = re.compile(
-    r"\b(privacy[- ]reviewer|researcher|synthesizer|reviewer|challenger|"
-    r"thinker|evolver|curator|scout|reader|meeting|librarian|scribe)\b",
-    re.IGNORECASE,
-)
+# word boundaries; case-insensitive at usage time. Built dynamically from the
+# loaded agent registry so new agents are picked up automatically. Multi-word
+# stems are listed before single-word stems so they match greedily.
+def _build_agent_name_re(agent_names: list[str]) -> re.Pattern[str]:
+    by_len = sorted(set(agent_names), key=lambda s: -len(s))
+    parts = [n.replace("-", "[- ]") for n in by_len]
+    return re.compile(r"\b(" + "|".join(parts) + r")\b", re.IGNORECASE)
 
 # A line counts as a dispatch context only if it mentions one of these tokens.
 # Filters incidental prose mentions (e.g., `readwise reader-list-documents`
@@ -287,10 +286,10 @@ def check_models(agents: dict[str, dict[str, str]]) -> tuple[list[Finding], dict
     direct_api_base, api_env, direct_api_extras, direct_api_timeout,
     codex_reasoning_effort) live in `profile/models.toml` (gitignored).
 
-    Agent voices membership lives in `harness/agents.toml` as
-    `voices = ["modelA", "modelB"]` and is validated in
-    `check_agent_registry`. Returns the schema models dict so callers can
-    cross-check voices references without re-reading the file.
+    Agent voices membership lives in `harness/agents.toml` as a keyed inline
+    table `voices = {native = "X", direct = "Y"}` (or single-leg variants)
+    and is validated in `check_agent_registry`. Returns the schema models
+    dict so callers can cross-check voices references without re-reading.
     """
     findings: list[Finding] = []
     data, err = _load_toml(ROOT / "harness" / "models.toml")
@@ -361,14 +360,54 @@ def _check_model_bindings(
     agents: dict[str, dict[str, str]],
     models: dict[str, Any],
 ) -> list[Finding]:
-    """Cross-check profile/models.toml bindings against the schema.
+    """Cross-check profile/models.toml bindings against the schema, and
+    cross-check `.claude/agents/<name>.md` frontmatter `model:` against the
+    role's native voice leg in `harness/agents.toml`.
 
-    Soft check: if the bindings file is missing, return silently. Absence is
-    the expected state on fresh clones (the file is gitignored, machine-local).
-    When present, verify every schema model has a `[models.X]` binding entry.
+    Soft check on bindings: if the bindings file is missing, return silently.
+    Absence is the expected state on fresh clones (the file is gitignored,
+    machine-local). When present, verify every schema model has a binding.
     """
-    del agents  # reserved for future per-agent binding checks
     findings: list[Finding] = []
+
+    # Cross-check Claude frontmatter `model:` against the native voice leg
+    # for every role declared in harness/agents.toml. Drift here means the
+    # Anthropic-side dispatch (Agent tool) and the harness's declared native
+    # voice disagree, which silently routes to the wrong model.
+    harness_path = ROOT / "harness" / "agents.toml"
+    if harness_path.exists():
+        h_data, _ = _load_toml(harness_path)
+        if h_data is not None:
+            registry = h_data.get("agents", {}) or {}
+            for agent_name, frontmatter in agents.items():
+                entry = registry.get(agent_name)
+                if not isinstance(entry, dict):
+                    continue
+                voices = entry.get("voices")
+                if not isinstance(voices, dict):
+                    continue
+                native_id = voices.get("native")
+                fm_model = frontmatter.get("model")
+                if native_id and fm_model and native_id != fm_model:
+                    bindings_path = ROOT / "profile" / "models.toml"
+                    expected_native = native_id
+                    if bindings_path.exists():
+                        b_data, _ = _load_toml(bindings_path)
+                        if b_data is not None:
+                            binding = (b_data.get("models", {}) or {}).get(native_id, {}) or {}
+                            cc = binding.get("claude_code")
+                            if isinstance(cc, str):
+                                expected_native = cc
+                    if fm_model != expected_native:
+                        findings.append(
+                            Finding(
+                                "WARN",
+                                "models-claude-drift",
+                                frontmatter.get("path", f".claude/agents/{agent_name}.md"),
+                                f"frontmatter model `{fm_model}` differs from native voice `{native_id}` (expected `{expected_native}` per profile/models.toml)",
+                            )
+                        )
+
     bindings_path = ROOT / "profile" / "models.toml"
     if not bindings_path.exists():
         return findings
@@ -430,8 +469,9 @@ def check_agent_registry(
 ) -> list[Finding]:
     """Validate harness/agents.toml registry shape + voices bindings.
 
-    Each agent declares `voices = ["modelA", "modelB"]` whose entries must
-    exist in `harness/models.toml`. Source paths must match the discovered
+    Each agent declares a `voices` keyed inline table mapping leg name
+    (`native`/`direct`/`codex`) to model identity; every model identity
+    referenced must exist in `harness/models.toml`. Source paths must match the discovered
     `.claude/agents/*.md` file (one exception: script-driven agents like
     `external-reviewer` declare a non-`.claude/agents/` source and have no
     Claude-side spec). Codex prompt should reference the source path so
@@ -491,33 +531,35 @@ def check_agent_registry(
             )
         voices = entry.get("voices")
         if voices is not None:
-            if not isinstance(voices, list) or not voices:
+            if not isinstance(voices, dict) or not voices:
                 findings.append(
                     Finding(
                         "ERROR",
                         "agents-voices-shape",
                         "harness/agents.toml",
-                        f"agent `{name}` voices must be a non-empty list of model names",
+                        f"agent `{name}` voices must be a non-empty inline table mapping leg name to model identity",
                     )
                 )
             else:
-                if len(voices) != 2:
-                    findings.append(
-                        Finding(
-                            "WARN",
-                            "agents-voices-cardinality",
-                            "harness/agents.toml",
-                            f"agent `{name}` voices has {len(voices)} voices (expected 2: dual by definition)",
+                allowed_legs = {"native", "direct", "codex"}
+                for leg_name, model_ref in voices.items():
+                    if leg_name not in allowed_legs:
+                        findings.append(
+                            Finding(
+                                "ERROR",
+                                "agents-voices-leg-name",
+                                "harness/agents.toml",
+                                f"agent `{name}` voices leg `{leg_name}` not in {sorted(allowed_legs)}",
+                            )
                         )
-                    )
-                for model_ref in voices:
+                        continue
                     if not isinstance(model_ref, str):
                         findings.append(
                             Finding(
                                 "ERROR",
                                 "agents-voices-leg-shape",
                                 "harness/agents.toml",
-                                f"agent `{name}` voices leg `{model_ref!r}` is not a string",
+                                f"agent `{name}` voices leg `{leg_name}` value `{model_ref!r}` is not a string",
                             )
                         )
                         continue
@@ -527,9 +569,70 @@ def check_agent_registry(
                                 "ERROR",
                                 "agents-voices-unknown-model",
                                 "harness/agents.toml",
-                                f"agent `{name}` voices references unknown model `{model_ref}` (not in harness/models.toml)",
+                                f"agent `{name}` voices leg `{leg_name}` references unknown model `{model_ref}` (not in harness/models.toml)",
                             )
                         )
+        kinds = entry.get("kinds")
+        if kinds is None:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "agents-kinds-missing",
+                    "harness/agents.toml",
+                    f"agent `{name}` is missing `kinds` field (must be a non-empty list of 'system' or 'app')",
+                )
+            )
+        elif not isinstance(kinds, list) or not kinds:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "agents-kinds-shape",
+                    "harness/agents.toml",
+                    f"agent `{name}` kinds must be a non-empty list",
+                )
+            )
+        else:
+            for kind in kinds:
+                if kind not in ("system", "app"):
+                    findings.append(
+                        Finding(
+                            "ERROR",
+                            "agents-kinds-unknown",
+                            "harness/agents.toml",
+                            f"agent `{name}` kinds value `{kind!r}` not in {{'system', 'app'}}",
+                        )
+                    )
+        rationale = entry.get("dispatch_rationale")
+        allowed_rationales = {"context-isolation", "model-tier", "parallelization", "tool-isolation"}
+        if rationale is None:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "agents-dispatch-rationale-missing",
+                    "harness/agents.toml",
+                    f"agent `{name}` is missing `dispatch_rationale` field; declare why a subagent is worth the overhead vs. inline orchestration",
+                )
+            )
+        elif not isinstance(rationale, list) or not rationale:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "agents-dispatch-rationale-shape",
+                    "harness/agents.toml",
+                    f"agent `{name}` dispatch_rationale must be a non-empty list",
+                )
+            )
+        else:
+            for value in rationale:
+                if value not in allowed_rationales:
+                    findings.append(
+                        Finding(
+                            "ERROR",
+                            "agents-dispatch-rationale-unknown",
+                            "harness/agents.toml",
+                            f"agent `{name}` dispatch_rationale value `{value!r}` not in {sorted(allowed_rationales)}",
+                        )
+                    )
         prompt = str(entry.get("codex_prompt", ""))
         if source and str(source) not in prompt:
             findings.append(
@@ -569,15 +672,15 @@ def check_agent_registry(
         # voices but skip the Claude-side source-path checks for them.
         if is_script_driven:
             voices = entry.get("voices")
-            if isinstance(voices, list):
-                for model_ref in voices:
+            if isinstance(voices, dict):
+                for leg_name, model_ref in voices.items():
                     if isinstance(model_ref, str) and model_ref not in models:
                         findings.append(
                             Finding(
                                 "ERROR",
                                 "agents-voices-unknown-model",
                                 "harness/agents.toml",
-                                f"agent `{name}` voices references unknown model `{model_ref}`",
+                                f"agent `{name}` voices leg `{leg_name}` references unknown model `{model_ref}`",
                             )
                         )
             if source and not (ROOT / source).exists():
@@ -918,18 +1021,33 @@ def load_intents() -> tuple[dict[str, dict[str, Any]], list[Finding]]:
 def _expected_used_by(
     intents: dict[str, dict[str, Any]],
     commands: dict[str, str],
+    harness_agents: dict[str, Any] | None = None,
 ) -> dict[str, list[str]]:
     """Compute the expected `used_by` list per agent.
 
-    Walks two registries:
+    Walks three registries:
       1. `intents.<name>.agents[*]` (harness/intents.toml)
       2. agent-name mentions inside each `commands.<name>` source file
+         (via dynamic AGENT_NAME_RE built from the registry)
+      3. references to a script-driven agent's `source` path (e.g.,
+         `scripts/review.sh` for external-reviewer) inside command sources
 
     Returns a dict keyed by agent name; values are sorted lists of strings
     of the form `"intents.<name>"` / `"commands.<name>"`. Agents with no
     references map to an empty list (orphan signal).
     """
     expected: dict[str, set[str]] = {}
+    agent_names = list((harness_agents or {}).keys())
+    name_re = _build_agent_name_re(agent_names) if agent_names else None
+
+    # Map non-.md `source` paths back to the agent name (script-driven agents).
+    script_sources: dict[str, str] = {}
+    for agent_name, entry in (harness_agents or {}).items():
+        if not isinstance(entry, dict):
+            continue
+        source = entry.get("source")
+        if isinstance(source, str) and not source.endswith(".md"):
+            script_sources[source] = agent_name
 
     for intent_name, entry in intents.items():
         if not isinstance(entry, dict):
@@ -948,12 +1066,17 @@ def _expected_used_by(
         except OSError:
             continue
         seen: set[str] = set()
-        for line in text.splitlines():
-            if not DISPATCH_CONTEXT_RE.search(line):
-                continue
-            for match in AGENT_NAME_RE.finditer(line):
-                stem = match.group(1).lower().replace(" ", "-")
-                seen.add(stem)
+        if name_re is not None:
+            for line in text.splitlines():
+                if not DISPATCH_CONTEXT_RE.search(line):
+                    continue
+                for match in name_re.finditer(line):
+                    stem = match.group(1).lower().replace(" ", "-")
+                    seen.add(stem)
+        # Script-driven agents: search for references to their source path.
+        for script_path, agent_name in script_sources.items():
+            if script_path in text:
+                seen.add(agent_name)
         for stem in seen:
             expected.setdefault(stem, set()).add(f"commands.{command_name}")
 
@@ -1248,7 +1371,7 @@ def check_agent_pattern_and_used_by(
     if not isinstance(registry, dict):
         return findings
 
-    expected = _expected_used_by(intents, commands)
+    expected = _expected_used_by(intents, commands, registry)
 
     for name, entry in sorted(registry.items()):
         if not isinstance(entry, dict):
@@ -1343,7 +1466,6 @@ def fix_used_by() -> int:
             sys.stderr.write(f"harness_lint --fix-used-by: aborting: {f.where}: {f.message}\n")
         sys.stderr.write("harness_lint --fix-used-by: fix the command registry and retry\n")
         return 2
-    expected = _expected_used_by(intents, commands)
     agents_path = ROOT / "harness" / "agents.toml"
     if not agents_path.exists():
         sys.stderr.write("harness_lint: harness/agents.toml not found\n")
@@ -1357,6 +1479,7 @@ def fix_used_by() -> int:
     if not isinstance(registry, dict):
         sys.stderr.write("harness_lint: harness/agents.toml has no [agents] table\n")
         return 1
+    expected = _expected_used_by(intents, commands, registry)
 
     text = agents_path.read_text(encoding="utf-8")
     new_text = text
@@ -1407,6 +1530,120 @@ def _format_used_by_block(refs: list[str]) -> str:
     return "\n".join(lines)
 
 
+MAX_DOC_INDIRECTION_DEPTH = 3
+DOC_LINT_ROOTS = (".claude/", "protocols/", "harness/", "scripts/")
+DOC_LINT_TOPS = ("AGENTS.md", "CLAUDE.md", "README.md")
+
+# Instruction-level cross-document references. We only count refs that LOOK
+# like an instruction to read another file (markdown link, explicit "see/per/
+# follow/refer X.md", or arrow `-> X.md`). Bare backticked path mentions in
+# prose (footnotes, cross-references, "this is documented alongside X.md")
+# are NOT counted; they are passive mentions, not redirections. The goal is
+# to catch instruction chains a reader has to follow ("read this, which says
+# read that, which says read that"), not every textual mention.
+DOC_REF_PATTERNS = [
+    re.compile(r"\[[^\]]+\]\(([\w./-]+\.md)\)"),          # markdown link
+    re.compile(r"(?:see|per|read|follow|refer to)\s+`?([\w./-]+\.md)`?", re.IGNORECASE),
+    re.compile(r"(?:->|→)\s*`?([\w./-]+\.md)`?"),          # arrow pointer
+]
+
+
+def _doc_files() -> list[Path]:
+    """Committed .md files we walk for indirection-depth checks."""
+    files: list[Path] = []
+    for top in DOC_LINT_TOPS:
+        p = ROOT / top
+        if p.exists():
+            files.append(p)
+    for root in DOC_LINT_ROOTS:
+        base = ROOT / root
+        if not base.exists():
+            continue
+        for p in base.rglob("*.md"):
+            files.append(p)
+    return files
+
+
+def _build_doc_graph() -> dict[Path, set[Path]]:
+    """Map each committed .md file to the set of other .md files it references."""
+    files = _doc_files()
+    file_set = {f.resolve() for f in files}
+    graph: dict[Path, set[Path]] = {f.resolve(): set() for f in files}
+    for src in files:
+        try:
+            text = src.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        src_dir = src.parent
+        for pat in DOC_REF_PATTERNS:
+            for match in pat.finditer(text):
+                ref = match.group(1)
+                if ref.startswith("$OV/") or ref.startswith("//"):
+                    continue
+                for candidate in (ROOT / ref, src_dir / ref):
+                    resolved = candidate.resolve()
+                    if resolved in file_set and resolved != src.resolve():
+                        graph[src.resolve()].add(resolved)
+                        break
+    return graph
+
+
+def check_doc_indirection_depth() -> list[Finding]:
+    """Forbid indirection chains deeper than MAX_DOC_INDIRECTION_DEPTH hops
+    or any cycle in the cross-document reference graph. A "hop" is one
+    `.md` file referencing another. Three hops max: `a.md -> b.md -> c.md`
+    is allowed; `a.md -> b.md -> c.md -> d.md` is not.
+    """
+    findings: list[Finding] = []
+    graph = _build_doc_graph()
+
+    def find_long_path_or_cycle(start: Path) -> tuple[list[Path] | None, list[Path] | None]:
+        """DFS from start. Return (long_path, cycle_path)."""
+        stack: list[tuple[Path, list[Path]]] = [(start, [start])]
+        while stack:
+            node, path = stack.pop()
+            for nxt in graph.get(node, set()):
+                if nxt in path:
+                    cycle = path[path.index(nxt):] + [nxt]
+                    return None, cycle
+                new_path = path + [nxt]
+                if len(new_path) > MAX_DOC_INDIRECTION_DEPTH:
+                    return new_path, None
+                stack.append((nxt, new_path))
+        return None, None
+
+    flagged: set[tuple[str, ...]] = set()
+    for start in sorted(graph.keys()):
+        long_path, cycle = find_long_path_or_cycle(start)
+        if cycle is not None:
+            key = tuple(p.relative_to(ROOT).as_posix() for p in cycle)
+            if key in flagged:
+                continue
+            flagged.add(key)
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "doc-indirection-cycle",
+                    key[0],
+                    f"cross-document reference cycle: {' -> '.join(key)}",
+                )
+            )
+        elif long_path is not None:
+            key = tuple(p.relative_to(ROOT).as_posix() for p in long_path)
+            if key in flagged:
+                continue
+            flagged.add(key)
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "doc-indirection-depth",
+                    key[0],
+                    f"cross-document indirection chain too deep ({len(key)} hops, max {MAX_DOC_INDIRECTION_DEPTH}): {' -> '.join(key)}",
+                )
+            )
+    return findings
+
+
 def run_lints() -> list[Finding]:
     findings: list[Finding] = []
     findings.extend(check_root_files())
@@ -1435,6 +1672,7 @@ def run_lints() -> list[Finding]:
     findings.extend(check_intents_mode_mapping(intents))
     findings.extend(check_intents_profile_reads(intents))
     findings.extend(check_agent_pattern_and_used_by(intents, commands))
+    findings.extend(check_doc_indirection_depth())
     findings.sort(key=lambda f: (SEVERITY_ORDER.get(f.severity, 99), f.code, f.where, f.message))
     return findings
 

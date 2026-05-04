@@ -15,11 +15,13 @@
 #                                                          (each agent declares
 #                                                          its bound `voices`)
 #
-# Each role is dual-mode by definition: every agent in `harness/agents.toml`
-# declares a `voices = ["modelA", "modelB"]` pair. Both legs run in
-# parallel when the role is dispatched. Tier scales the cardinality of
-# role-units in a gathering (Tier N = N parallel copies of the role's
-# bound pair); tier never alters the voices composition.
+# Each role declares a `voices` keyed inline table in `harness/agents.toml`
+# (`{native = "X", direct = "Y"}`, with leg keys `native`/`direct`/`codex`).
+# Whether all declared legs fire on a dispatch is the call site's decision;
+# see `protocols/orchestrator.md` -> "Voice Dispatch" for the canonical
+# story. Single-leg roles (Scribe) declare only `{native}` by design.
+# Tier scales the cardinality of role-units in a gathering (Tier N = N
+# parallel copies); tier never alters voices composition.
 #
 # The "Tier 1-4" review ladder in protocols/orchestrator.md, the evolver,
 # and /system-review is the canonical "tier" semantics in this repo.
@@ -42,16 +44,9 @@
 #                          Bearer is assumed)
 #
 # Helper scripts that read api_env MUST exit-skip cleanly when unset (a
-# missing key collapses dual voices to single-leg with a warning,
-# never a silent success). Callers that fire dual dispatches (e.g.,
-# review.sh, /system-review Step 1c) MUST handle exit-2 from chat_completion.py
-# as soft-skip-and-degrade, not as a hard failure.
-#
-# Shadow sampling — REMOVED. The previous `shadow_api` invocation pattern
-# is gone. Every role is now intrinsically dual (its `voices` field declares
-# two parallel legs); a third sampled "shadow" leg is redundant. If a
-# specific role ever needs additional sampled comparison, it can opt-in at
-# the dispatch site without reintroducing a schema-level mode.
+# missing key collapses dual voices to single-leg with a warning, never a
+# silent success). Callers that fire dual dispatches MUST handle exit-2
+# from chat_completion.py as soft-skip-and-degrade, not as a hard failure.
 
 [models.opus]
 # Anthropic Opus — high-cognition Anthropic leg used by deep-thinking roles.

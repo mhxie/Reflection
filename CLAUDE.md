@@ -40,13 +40,13 @@ Five-tier model. Directory is the tier; location carries the certification level
 - Semantic-primary search. Content queries start with `uv run scripts/semantic.py query`, not Grep. Grep is for structural queries only.
 - Local-first reads. Read from `$OV/` via Read + Grep + semantic.py.
 
-Prioritize by validation depth, not origin. Trust criterion: alloy (default) < wiki entry under `$OV/wiki/` < `#solo-flight`. Legacy `#ai-reflection` tags are searchable alloy. See `protocols/epistemic-hygiene.md`.
+Prioritize by validation depth, not origin. Trust criterion: alloy (default) < wiki entry under `$OV/wiki/` < `#solo-flight`. Legacy `#ai-reflection` tags are searchable alloy. Full taxonomy in `protocols/epistemic-hygiene.md`.
 
 ## Writing Rules
 
 - No em dashes in written output. Use colons, semicolons, parentheses, or restructure.
 - No H1 headings inside markdown files. The filename is the title; the body opens with metadata or `##`. Filenames are space-separated title-case.
-- Daily notes are user-authored. System reads, does not modify. **Exception**: user-dictated raw content → dispatch `scribe` (verbatim cheap-tier; see `.claude/agents/scribe.md`).
+- Daily notes are user-authored. System reads, does not modify. **Exception**: user-dictated raw content → dispatch `scribe` (verbatim cheap-tier; spec in `.claude/agents/scribe.md`).
 - Cite sources. Reference notes by `[[Title]]`. Never claim the user wrote something without a source.
 - Match the user's language. Chinese for Chinese-language topics; English otherwise. Reading-intensive output in Chinese.
 - `$OV` is the canonical persistence store, not auto-memory. Write to `profile/`: user facts (`profile/identity.md`), goals (`profile/directions.md`), private policy or preferences (`profile/<topic>.md`). Other persistence: validated knowledge to `$OV/wiki/`, session insights to `$OV/reflections/`, project context to `profile/directions.md` or daily notes. `$OV/personal/` is L2 raw-domain assets only (photos, events under `$OV/personal/raw/`); do not put config there. Auto-memory is fallback only, reserved for items that fit no $OV tier (rare cross-conversation orchestration nudges). On recall, search $OV first via `scripts/semantic.py query` + Grep; consult auto-memory only when $OV returns nothing.
@@ -65,11 +65,11 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 
 ## Coaching Style
 
-- Ask questions, don't lecture. Adapt depth per `protocols/coaching-progressions.md`.
-- Criteria-first dispatch. Before multi-step agent dispatches, state the user-verifiable success criterion. If the request has multiple reasonable readings, surface 2-3 readings and your default before acting. See `protocols/orchestrator.md` → "Criteria-First Dispatch".
-- Track eras and directions. Surface Moments (see `protocols/pattern-library.md`).
-- Respect the amenity floor per life area (see `protocols/session-scoring.md`).
-- Epistemic hygiene: write-first nudge (invite user to jot their position before AI digs in). Respect AI-free zones. See `protocols/epistemic-hygiene.md`.
+- Ask questions, don't lecture. Depth progressions: `protocols/coaching-progressions.md`.
+- Criteria-first dispatch. Before multi-step agent dispatches, state the user-verifiable success criterion. If the request has multiple reasonable readings, surface 2-3 readings and your default before acting. Pattern in `protocols/orchestrator.md`.
+- Track eras and directions. Moments catalogued in `protocols/pattern-library.md`.
+- Respect the amenity floor per life area; floor definition in `protocols/session-scoring.md`.
+- Epistemic hygiene: write-first nudge (invite user to jot their position before AI digs in). Respect AI-free zones. Full hygiene taxonomy in `protocols/epistemic-hygiene.md`.
 - Recency matters. Flag goals >1 year old as potentially stale.
 - Be honest about uncertainty. Never speculate when you can search.
 
@@ -88,7 +88,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 
 ## Agent Teams
 
-Agent definitions live in `.claude/agents/`; portable role metadata lives in `harness/agents.toml`; model profiles live in `harness/models.toml`. Team (14): Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Scout, Reader, Meeting, Librarian, Privacy-Reviewer, Forgetter, Scribe. For dispatch routing, see `protocols/orchestrator.md`.
+Agent definitions in `.claude/agents/`; voices/metadata in `harness/agents.toml`; model identities in `harness/models.toml`. Team (15): Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Scout, Reader, Scholar, Meeting, Librarian, Privacy-Reviewer, Forgetter, Scribe. Dispatch routing in `protocols/orchestrator.md`.
 
 ## Runtime Portability
 

@@ -22,7 +22,7 @@ Inspired by the general lesson: a behavioral workaround for an older model in a 
 
 ### Voice Assignments
 
-`harness/agents.toml` is the canonical source of truth for the per-agent `voices = [a, b]` binding. `harness/models.toml` declares model identities (committed; just names + comments). Provider/model **bindings** (model id, endpoint URL, env var, request extras) live in the gitignored `profile/models.toml`; loaders merge schema + bindings at runtime. `harness_lint.py` validates that every agent's voices reference identities that exist in the schema. The table below is the audit-trigger registry only: it does not restate the per-agent voices (read agents.toml for those), it lists what staleness signal would force a re-evaluation per role family.
+`harness/agents.toml` is the canonical source of truth for the per-agent `voices` keyed inline table (`{native = "X", direct = "Y"}` or single-leg variants). `harness/models.toml` declares model identities (committed; just names + comments). Provider/model **bindings** (model id, endpoint URL, env var, request extras) live in the gitignored `profile/models.toml`; loaders merge schema + bindings at runtime. `harness_lint.py` validates that every agent's voices reference identities that exist in the schema. The table below is the audit-trigger registry only: it does not restate the per-agent voices (read agents.toml for those), it lists what staleness signal would force a re-evaluation per role family.
 
 Voice tier vocabulary used in this file:
 - **deep** — flagship pair (e.g., highest-cognition Anthropic + highest-cognition direct-api)
@@ -45,7 +45,7 @@ Voice tier vocabulary used in this file:
 | Meeting | mid | Cross-provider agreement rate drops on transcript extraction |
 | Librarian | mid | Cross-provider agreement rate drops on bilingual recommendations |
 | Privacy Reviewer | mid | Cross-provider agreement rate drops on semantic privacy scan; either binding deprecates |
-| Scribe | cheap | A cheaper-still verbatim model becomes available; current pair fails verbatim-preservation tests |
+| Scribe | cheap (single-leg, native only) | A cheaper-still verbatim model becomes available; the current native voice fails verbatim-preservation tests |
 | External-Reviewer | external | A new external provider becomes worth adding; one of the current legs deprecates |
 
 ### Token/Context Budgets
@@ -93,6 +93,12 @@ Voice tier vocabulary used in this file:
 | semantic.py is primary for content queries | CLAUDE.md | Real embedding mode | Index is machine-local at `~/.cache/atelier/lance/`; rebuild with `uv run scripts/semantic.py index` |
 | Grep for structural queries only | CLAUDE.md | Always | semantic.py covers structural queries too |
 | Retry with synonyms on empty results | error-handling.md | Manual retry | semantic.py handles synonyms natively |
+
+### Known Runtime Caps
+
+| Assumption | Where it bites | Re-test When |
+|---|---|---|
+| `maxTurns` frontmatter is the sole turn budget for `Agent`-tool dispatches | Empirically, system reviews (reviewer + evolver) truncate around 25-32 tool uses despite `maxTurns: 100` in their .md frontmatter. The script-driven external-reviewer (chat_completion.py + codex CLI) IS uncapped. The `maxTurns: 100` setting is intent; actual runtime applies an additional ceiling we don't control from agent definitions. | Claude Code releases that change subagent dispatch turn budgets, OR a workaround that routes system reviews through script-driven dispatch (chat_completion.py with the reviewer prompt) instead of `Agent` tool. |
 
 ## Audit Checklist
 

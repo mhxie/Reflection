@@ -128,7 +128,7 @@ The default mode. Scores session output on 5 dimensions.
 | 3-4 | Significant speculation without flagging |
 | 0-2 | Fabricated content or hallucinated note references |
 
-**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, a session output claiming wiki-entry-grade certainty (claim sections, `@anchor` / `@cite` markers) without the corresponding file living under `$OV/wiki/` and passing structural integrity, a non-wiki note that copies wiki schema shape. (Provenance tags are not relevant: alloy carries no tag by default; see `protocols/epistemic-hygiene.md`.)
+**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, a session output claiming wiki-entry-grade certainty (claim sections, `@anchor` / `@cite` markers) without the corresponding file living under `$OV/wiki/` and passing structural integrity, a non-wiki note that copies wiki schema shape. (Provenance tags are not relevant: alloy carries no tag by default; the validation-depth taxonomy is in `protocols/epistemic-hygiene.md`.)
 
 ### 4. Staleness Check (weight: 10%)
 

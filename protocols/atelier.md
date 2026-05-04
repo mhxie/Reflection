@@ -22,7 +22,7 @@ The system's narrative register draws from the impressionist atelier (master + s
 | session log | **bench notes** | `$OV/sessions/*.md` |
 | promote (L2 → L4) | **exhibit** / **mount** on the cimaise | `/promote` |
 
-## Le cercle — 14 specialist operators
+## Le cercle — 15 specialist operators
 
 Each agent maps to an impressionist-period archetype. **Dispatch keys are unchanged** (`researcher`, `synthesizer`, etc.); archetype names are for narration only.
 
@@ -36,12 +36,15 @@ Each agent maps to an impressionist-period archetype. **Dispatch keys are unchan
 | `curator` | The Collector | Caillebotte — patron-organizer |
 | `scout` | The Flâneur | wanders the boulevard, returns with observations |
 | `reader` | The Reader | Borges: "I am proudest of having been a reader" |
+| `scholar` | The Scholar | the deep close-reader for foundational texts |
 | `librarian` | The Cataloguer | maintains the source register |
 | `meeting` | The Stenographer | takes the bench notes verbatim |
 | `evolver` | The Master of the Atelier | system meta — runs the atelier itself |
 | `privacy-reviewer` | The Steward | keeps confidences from the public exhibition |
 | `forgetter` | The Conservator | preserves the œuvre by removing decay, not by hoarding |
 | `scribe` | The Typewriter | records what is dictated, no editorial hand |
+
+(The `external-reviewer` is registry infrastructure — script-driven via `scripts/review.sh` for `/system-review` — not part of le cercle proper.)
 
 ## Mode
 

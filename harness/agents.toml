@@ -4,54 +4,81 @@
 # Codex uses this registry plus `scripts/atelier.py agents` and
 # `scripts/atelier.py agent-prompt <agent>` to discover and emulate roles.
 #
-# Each agent declares its bound dual-pair `voices = ["modelA", "modelB"]`.
-# Both voices run in parallel on every dispatch — duality is intrinsic to
-# the role. Model identities are defined in `harness/models.toml`; provider
-# bindings live in gitignored `profile/models.toml`. See
-# `protocols/orchestrator.md` → "Voice Dispatch (every role is intrinsically
-# dual)" for the canonical dispatch description.
+# Each agent declares a `voices` keyed inline table mapping leg name to
+# model identity. Allowed leg keys:
 #
-# Coordination patterns (the `pattern` field, per `protocols/orchestrator.md`
-# → "Coordination Patterns"). Allowed values:
+#   native  Anthropic-side leg, dispatched via Claude Code's `Agent` tool
+#           (subagent_type matches the role). Uses the model declared in
+#           the role's `.claude/agents/<name>.md` frontmatter `model:` field.
+#   direct  OpenAI-compatible direct-api leg, dispatched via
+#           `python3 scripts/chat_completion.py --model <identity>`.
+#   codex   Codex CLI leg, dispatched via `codex exec -m <identity>`.
+#           Reserved for the external-reviewer role today.
+#
+# Multi-leg roles fire all declared legs in parallel on dispatch. The
+# orchestrator issues one tool call per leg in the same assistant message.
+# Single-leg roles (Scribe) fire only their declared leg; this is the
+# explicit carve-out for write-capable / mechanical agents where a second
+# external leg would either duplicate writes or leak verbatim content.
+#
+# See `protocols/orchestrator.md` -> "Voice Dispatch" for the canonical
+# dispatch recipe.
+#
+# Model identities are defined in `harness/models.toml`; provider bindings
+# live in gitignored `profile/models.toml`.
+#
+# `dispatch_rationale` declares why this role is worth dispatching as a
+# subagent rather than running inline in the orchestrator. An agent is worth
+# dispatching only if (subagent input + run overhead + output) < orchestrator
+# inline cost, OR it runs in parallel to accelerate wall time. Allowed values
+# (a non-empty list; multiple may apply):
+#
+#   "context-isolation"  Agent reads large/specific files that would pollute
+#                        the orchestrator's context (vault scans, transcripts,
+#                        multi-file evolutions).
+#   "model-tier"         Agent runs on a different model — cheaper or stronger
+#                        than the orchestrator's default.
+#   "parallelization"    Multiple instances run in parallel for wall-time
+#                        savings (Reader hub, Scout multi-direction).
+#   "tool-isolation"     Agent uses a different tool subset (write-only,
+#                        scan-only) where keeping the boundary in the
+#                        orchestrator would risk overreach.
+#
+# Lint validates each agent declares at least one rationale. An agent with
+# no rationale fails lint, forcing the maintainer to either justify the
+# subagent or merge the role into the orchestrator inline.
+#
+# `kinds` declares the domain(s) a role operates on. Allowed values:
+#
+#   "system"  Operates on the codebase / protocols / harness itself.
+#   "app"     Operates on the user's content (notes, multimodal info,
+#             reading material).
+#
+# A role may declare both. `kinds` is a non-empty list of these tokens.
+# Lint validates the values; `scripts/atelier.py agents --kind <k>`
+# filters by kind.
+#
+# Coordination patterns (the `pattern` field). Allowed values:
 #
 #   "orchestrator-subagent"  Lead orchestrator dispatches bounded subtasks.
-#                            Default for most agent dispatches.
-#   "generator-verifier"     Generator drafts; verifier checks the output as
-#                            a gate (e.g., Reviewer + Challenger gating
-#                            Curator output; privacy-reviewer dual-pair).
-#   "agent-team"             Multiple persistent autonomous workers, often
-#                            multi-instance and parallel (Reader hub, Scout
-#                            multi-direction).
-#   "shared-state"           Agents read/write a common store. Currently
-#                            unused; reserved for future.
+#   "generator-verifier"     Generator drafts; verifier checks the output.
+#   "agent-team"             Multiple persistent autonomous workers.
+#   "shared-state"           Agents read/write a common store. Reserved.
 #   "solo"                   Single-agent dispatch with no coordination.
 #
-# `pattern` is annotation only; it does not change the dispatch's voice
-# count (every role still fires both voices in parallel via the `voices`
-# field).
+# `pattern` is annotation only. No code path may branch on its value.
+# Lint validates it is in the allowed set.
 #
-# No-branching contract: `pattern` is documentation. No code path in
-# `scripts/`, no agent prompt, and no orchestrator instruction may branch on
-# this field's value (e.g., `if pattern == "agent-team": auto_parallelize()`).
-# To add behavior keyed on coordination shape, propose a separate field with
-# explicit semantics; do not extend `pattern` with new values to enable a
-# runtime check. The 5-value enum is intentionally a closed set; expansion
-# requires a separate wave with explicit governance. Lint validates the value
-# is in the allowed set; behavioral coupling is forbidden by convention.
-#
-# `used_by` lists intents (`intents.<name>` from `harness/intents.toml`) and
-# commands (`commands.<name>` from `harness/commands.toml`) that dispatch
-# the agent. Empty `used_by` is an orphan signal (lint WARN). Keep this
-# list maintained by hand; `python3 scripts/harness_lint.py --fix-used-by`
-# regenerates it from the intents/commands walk.
-#
-# external-reviewer is declared here for schema symmetry but is invoked
-# only by `scripts/review.sh` and `/system-review` (script-driven, not via
-# orchestrator agent dispatch). It has no `.claude/agents/*.md` source.
+# `used_by` lists intents (`intents.<name>` from `harness/intents.toml`)
+# and commands (`commands.<name>` from `harness/commands.toml`) that
+# dispatch the agent. Empty `used_by` is an orphan signal (lint WARN).
+# `python3 scripts/harness_lint.py --fix-used-by` regenerates from the walk.
 
 [agents.challenger]
 source = ".claude/agents/challenger.md"
-voices = ["opus", "deepseek_pro_max"]
+voices = { native = "opus", direct = "deepseek_pro_max" }
+kinds = ["app"]
+dispatch_rationale = ["model-tier"]
 status = "portable-adapted"
 description = "Probes the painter's thoughts with sharp questions; affirms or counters in turn. Le cercle archetype: The Critic (Degas)."
 codex_prompt = "Emulate the Challenger role using `.claude/agents/challenger.md` and the runtime adapter protocol."
@@ -67,7 +94,9 @@ used_by = [
 
 [agents.curator]
 source = ".claude/agents/curator.md"
-voices = ["sonnet", "deepseek_pro"]
+voices = { native = "sonnet", direct = "deepseek_pro" }
+kinds = ["app"]
+dispatch_rationale = ["tool-isolation"]
 status = "portable-adapted"
 description = "Drafts note-content operations (compactions, merges, new notes, wiki entries) for the orchestrator to write under $OV/. Le cercle archetype: The Collector (Caillebotte)."
 codex_prompt = "Emulate the Curator role using `.claude/agents/curator.md` and the runtime adapter protocol."
@@ -81,7 +110,9 @@ used_by = [
 
 [agents.evolver]
 source = ".claude/agents/evolver.md"
-voices = ["opus", "deepseek_pro_max"]
+voices = { native = "opus", direct = "deepseek_pro_max" }
+kinds = ["system"]
+dispatch_rationale = ["context-isolation", "model-tier"]
 status = "portable-adapted"
 description = "Improves the atelier itself: agents, commands, frameworks, methodology. Le cercle archetype: The Master of the Atelier."
 codex_prompt = "Emulate the Evolver role using `.claude/agents/evolver.md` and the runtime adapter protocol."
@@ -92,18 +123,23 @@ used_by = [
 
 [agents.forgetter]
 source = ".claude/agents/forgetter.md"
-voices = ["sonnet", "deepseek_pro"]
+voices = { native = "sonnet", direct = "deepseek_pro" }
+kinds = ["app"]
+dispatch_rationale = ["context-isolation", "tool-isolation"]
 status = "portable-adapted"
 description = "Active decay scanner over $OV/: redundant / time-stale / contradicted / low-signal. Proposes; never deletes. Filesystem-output via $OV/agent-findings/. Le cercle archetype: The Conservator."
 codex_prompt = "Emulate the Forgetter role using `.claude/agents/forgetter.md` and the runtime adapter protocol. Hard contract: propose, never delete; write to `$OV/agent-findings/decay-<ts>.md`, return path only."
 pattern = "generator-verifier"
 used_by = [
+    "commands.hi",
     "intents.forget",
 ]
 
 [agents.librarian]
 source = ".claude/agents/librarian.md"
-voices = ["sonnet", "deepseek_pro"]
+voices = { native = "sonnet", direct = "deepseek_pro" }
+kinds = ["app"]
+dispatch_rationale = ["tool-isolation"]
 status = "portable-adapted"
 description = "Recommends readings, resources, and thinkers relevant to the painter's interests and goals. Le cercle archetype: The Cataloguer."
 codex_prompt = "Emulate the Librarian role using `.claude/agents/librarian.md` and the runtime adapter protocol."
@@ -114,7 +150,9 @@ used_by = [
 
 [agents.meeting]
 source = ".claude/agents/meeting.md"
-voices = ["sonnet", "deepseek_pro"]
+voices = { native = "sonnet", direct = "deepseek_pro" }
+kinds = ["app"]
+dispatch_rationale = ["context-isolation"]
 status = "portable-adapted"
 description = "Processes work meeting transcripts into structured notes with action items and decisions. Le cercle archetype: The Stenographer."
 codex_prompt = "Emulate the Meeting role using `.claude/agents/meeting.md` and the runtime adapter protocol."
@@ -126,7 +164,9 @@ used_by = [
 
 [agents.reader]
 source = ".claude/agents/reader.md"
-voices = ["sonnet", "deepseek_pro"]
+voices = { native = "sonnet", direct = "deepseek_pro" }
+kinds = ["app"]
+dispatch_rationale = ["context-isolation", "parallelization"]
 status = "portable-adapted"
 description = "Reads articles and notes through critical, structural, practical, and dialectical lenses. For dense theory, foundational papers, or hard texts, dispatch the Scholar instead. Le cercle archetype: The Reader."
 codex_prompt = "Emulate the Reader role using `.claude/agents/reader.md` and the runtime adapter protocol."
@@ -139,16 +179,22 @@ used_by = [
 
 [agents.scholar]
 source = ".claude/agents/scholar.md"
-voices = ["opus", "deepseek_pro_max"]
+voices = { native = "opus", direct = "deepseek_pro_max" }
+kinds = ["app"]
+dispatch_rationale = ["context-isolation", "model-tier", "parallelization"]
 status = "portable-adapted"
 description = "Deep-cognition variant of Reader: same lenses, same workflow, dispatched with stronger voices for dense theory, foundational papers, and hard texts. Le cercle archetype: The Scholar."
 codex_prompt = "Emulate the Scholar role using `.claude/agents/scholar.md` and the runtime adapter protocol."
 pattern = "agent-team"
-used_by = []
+used_by = [
+    "commands.hi",
+]
 
 [agents.researcher]
 source = ".claude/agents/researcher.md"
-voices = ["opus", "deepseek_pro_max"]
+voices = { native = "opus", direct = "deepseek_pro_max" }
+kinds = ["app"]
+dispatch_rationale = ["context-isolation"]
 status = "portable-adapted"
 description = "Gathers raw context from the painter's œuvre ($OV/). Le cercle archetype: The Observer (Pissarro)."
 codex_prompt = "Emulate the Researcher role using `.claude/agents/researcher.md` and the runtime adapter protocol."
@@ -171,9 +217,11 @@ used_by = [
 
 [agents.reviewer]
 source = ".claude/agents/reviewer.md"
-voices = ["sonnet", "deepseek_pro"]
+voices = { native = "sonnet", direct = "deepseek_pro" }
+kinds = ["system", "app"]
+dispatch_rationale = ["tool-isolation", "parallelization"]
 status = "portable-adapted"
-description = "Quality-checks session outputs and system evolution changes. Both bound voices fire in parallel for cross-provider corroboration. Le cercle archetype: The Arbiter (Manet)."
+description = "Quality-checks session outputs and system evolution changes. Le cercle archetype: The Arbiter (Manet)."
 codex_prompt = "Emulate the Reviewer role using `.claude/agents/reviewer.md` and the runtime adapter protocol."
 pattern = "generator-verifier"
 used_by = [
@@ -188,7 +236,9 @@ used_by = [
 
 [agents.scout]
 source = ".claude/agents/scout.md"
-voices = ["sonnet", "deepseek_pro"]
+voices = { native = "sonnet", direct = "deepseek_pro" }
+kinds = ["app"]
+dispatch_rationale = ["parallelization"]
 status = "portable-adapted"
 description = "Gathers external context from outside the œuvre: articles, discussions, research, recent developments. Le cercle archetype: The Flâneur."
 codex_prompt = "Emulate the Scout role using `.claude/agents/scout.md` and the runtime adapter protocol."
@@ -200,7 +250,9 @@ used_by = [
 
 [agents.synthesizer]
 source = ".claude/agents/synthesizer.md"
-voices = ["opus", "deepseek_pro_max"]
+voices = { native = "opus", direct = "deepseek_pro_max" }
+kinds = ["app"]
+dispatch_rationale = ["context-isolation"]
 status = "portable-adapted"
 description = "Composes gathered context into structured reflections, summaries, and insights. Le cercle archetype: The Colorist (Monet)."
 codex_prompt = "Emulate the Synthesizer role using `.claude/agents/synthesizer.md` and the runtime adapter protocol."
@@ -214,7 +266,9 @@ used_by = [
 
 [agents.thinker]
 source = ".claude/agents/thinker.md"
-voices = ["opus", "deepseek_pro_max"]
+voices = { native = "opus", direct = "deepseek_pro_max" }
+kinds = ["app"]
+dispatch_rationale = ["model-tier"]
 status = "portable-adapted"
 description = "Applies structured thinking frameworks for outside-view reasoning. Le cercle archetype: The Structuralist (Cézanne)."
 codex_prompt = "Emulate the Thinker role using `.claude/agents/thinker.md` and the runtime adapter protocol."
@@ -226,9 +280,11 @@ used_by = [
 
 [agents.privacy-reviewer]
 source = ".claude/agents/privacy-reviewer.md"
-voices = ["sonnet", "deepseek_pro"]
+voices = { native = "sonnet", direct = "deepseek_pro" }
+kinds = ["system"]
+dispatch_rationale = ["tool-isolation"]
 status = "portable-adapted"
-description = "Semantic privacy scanner for committed-file diffs. Catches leaks the mechanical scripts/privacy_check.py misses. Both bound voices fire in parallel during /system-review Step 1c for cross-provider double-guard. Le cercle archetype: The Steward."
+description = "Semantic privacy scanner for committed-file diffs. Catches leaks the mechanical scripts/privacy_check.py misses. Le cercle archetype: The Steward."
 codex_prompt = "Emulate the Privacy Reviewer role using `.claude/agents/privacy-reviewer.md` and the runtime adapter protocol."
 pattern = "generator-verifier"
 used_by = [
@@ -237,9 +293,11 @@ used_by = [
 
 [agents.scribe]
 source = ".claude/agents/scribe.md"
-voices = ["haiku", "deepseek_flash"]
+voices = { native = "haiku" }
+kinds = ["app"]
+dispatch_rationale = ["model-tier", "tool-isolation"]
 status = "portable-adapted"
-description = "Records user-dictated raw content (daily-note narrative from chat-mode input, future raw-passthrough tasks) to the named target file verbatim. Cheap voices; verbatim preservation is the trust property, not synthesis. Exists so the orchestrator does not burn deep-cognition tokens on mechanical I/O. Le cercle archetype: The Typewriter."
+description = "Records user-dictated raw content to the named target file verbatim. Single-leg by design: write-capable, dual would risk duplicate writes or leak verbatim user content externally. Exists so the orchestrator does not burn deep-cognition tokens on mechanical I/O. Le cercle archetype: The Typewriter."
 codex_prompt = "Emulate the Scribe role using `.claude/agents/scribe.md` and the runtime adapter protocol. Verbatim preservation is the trust property; no paraphrasing, summarizing, or editorialization."
 pattern = "solo"
 used_by = [
@@ -249,9 +307,13 @@ used_by = [
 
 [agents.external-reviewer]
 source = "scripts/review.sh"
-voices = ["deepseek_pro_max", "codex_gpt55_max"]
+voices = { direct = "deepseek_pro_max", codex = "codex_gpt55_max" }
+kinds = ["system"]
+dispatch_rationale = ["model-tier", "tool-isolation"]
 status = "script-driven"
-description = "External reviewers for /system-review. Independent voices outside the project's primary inference path, dual-invoked across two non-Anthropic providers for genuine cross-provider review. Script-driven: invoked by `bash scripts/review.sh` and the /system-review command, not via orchestrator agent dispatch. No `.claude/agents/*.md` source by design — the script is the contract."
+description = "External reviewers for /system-review. Independent voices from two non-Anthropic providers. Script-driven (invoked by `bash scripts/review.sh`); no Anthropic native leg by design."
 codex_prompt = "external-reviewer is invoked via `bash scripts/review.sh`, not via agent dispatch. See scripts/review.sh and .claude/commands/system-review.md."
 pattern = "generator-verifier"
-used_by = []
+used_by = [
+    "commands.system-review",
+]

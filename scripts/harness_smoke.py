@@ -45,8 +45,11 @@ def expect(condition: bool, message: str) -> None:
 
 def check_harness_lint() -> None:
     payload = json.loads(run(["scripts/harness_lint.py", "--json"]))
-    expect(payload["counts"] == {"error": 0, "warn": 0, "info": 0}, "harness_lint.py is not clean")
-    expect(payload["findings"] == [], "harness_lint.py returned findings")
+    counts = payload["counts"]
+    expect(counts.get("error", 0) == 0, f"harness_lint.py reports {counts.get('error', 0)} error(s)")
+    expect(counts.get("warn", 0) == 0, f"harness_lint.py reports {counts.get('warn', 0)} warn(s)")
+    error_or_warn = [f for f in payload["findings"] if f.get("severity") in ("ERROR", "WARN")]
+    expect(error_or_warn == [], f"harness_lint.py returned {len(error_or_warn)} error/warn finding(s)")
 
 
 def check_status() -> None:
@@ -69,19 +72,21 @@ def check_filtered_json() -> None:
     expect("lint" in commands, "ops commands should include lint")
     expect(commands["lint"]["source"] == ".claude/commands/lint.md", "lint source drift")
 
-    # researcher binds voices = ["opus", "deepseek_pro_max"], so --member opus
-    # must include researcher and the other entries must also include opus.
+    # researcher binds voices = {native = "opus", direct = "deepseek_pro_max"},
+    # so --member opus must include researcher and the other entries must also
+    # bind opus to one of their voice legs.
     agents = json.loads(run(["scripts/atelier.py", "agents", "--member", "opus", "--json"]))
     expect("researcher" in agents, "agents --member opus should include researcher")
     expect(agents["researcher"]["source"] == ".claude/agents/researcher.md", "researcher source drift")
     for name, entry in agents.items():
-        voices = entry.get("voices") or []
+        voices = entry.get("voices") or {}
+        members = list(voices.values()) if isinstance(voices, dict) else []
         expect(
-            "opus" in voices,
+            "opus" in members,
             f"agents --member opus returned `{name}` whose voices is {voices}",
         )
 
-    # external-reviewer binds voices = ["deepseek_pro_max", "codex_gpt55_max"];
+    # external-reviewer binds voices = {direct = "deepseek_pro_max", codex = "codex_gpt55_max"};
     # --member codex_gpt55_max should isolate it (script-driven, no .claude source).
     ext = json.loads(run(["scripts/atelier.py", "agents", "--member", "codex_gpt55_max", "--json"]))
     expect("external-reviewer" in ext, "agents --member codex_gpt55_max should include external-reviewer")

@@ -121,7 +121,7 @@ This bypasses shell-command approval for trusted projects.
 When changing the harness:
 
 1. Keep the core protocol provider-neutral.
-2. Add or update model profiles in `harness/models.toml`.
+2. Add or update model identities in `harness/models.toml` (declarations only; provider bindings live in gitignored `profile/models.toml`).
 3. Add or update capability mappings in `harness/capabilities.toml`.
 4. Add or update role mappings in `harness/agents.toml`.
 5. Add or update command mappings in `harness/commands.toml`.

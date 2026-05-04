@@ -137,8 +137,13 @@ def cmd_agents(args: argparse.Namespace) -> int:
     selected: dict[str, dict[str, Any]] = {}
     for name, agent in sorted(agents.items()):
         if args.member:
-            voices = agent.get("voices") or []
-            if not isinstance(voices, list) or args.member not in voices:
+            voices = agent.get("voices") or {}
+            members = list(voices.values()) if isinstance(voices, dict) else []
+            if args.member not in members:
+                continue
+        if args.kind:
+            kinds = agent.get("kinds") or []
+            if not isinstance(kinds, list) or args.kind not in kinds:
                 continue
         selected[name] = agent
     if args.json:
@@ -147,8 +152,11 @@ def cmd_agents(args: argparse.Namespace) -> int:
 
     rows: list[tuple[str, str, str, str]] = []
     for name, agent in selected.items():
-        voices = agent.get("voices") or []
-        voices_str = ",".join(voices) if isinstance(voices, list) else str(voices)
+        voices = agent.get("voices") or {}
+        if isinstance(voices, dict):
+            voices_str = ",".join(f"{leg}={model}" for leg, model in sorted(voices.items()))
+        else:
+            voices_str = str(voices)
         rows.append((
             name,
             voices_str,
@@ -309,6 +317,7 @@ def cmd_status(args: argparse.Namespace) -> int:
         },
         "commands_by_category": count_by(commands, "category"),
         "agents_by_voices_member": count_by_voices(agents),
+        "agents_by_kind": count_by_kinds(agents),
         "paths": {
             "commands": COMMANDS_PATH.relative_to(ROOT).as_posix(),
             "agents": AGENTS_PATH.relative_to(ROOT).as_posix(),
@@ -339,6 +348,10 @@ def cmd_status(args: argparse.Namespace) -> int:
     print("Agents by voices member")
     for key, value in payload["agents_by_voices_member"].items():
         print(f"- {key}: {value}")
+    print("")
+    print("Agents by kind")
+    for key, value in payload["agents_by_kind"].items():
+        print(f"- {key}: {value}")
     return 0
 
 
@@ -351,20 +364,32 @@ def count_by(items: dict[str, dict[str, Any]], field: str) -> dict[str, int]:
 
 
 def count_by_voices(agents: dict[str, dict[str, Any]]) -> dict[str, int]:
-    """Count how many agents include each model in their voices.
+    """Count how many agents bind each model identity in their voices.
 
-    Each agent's `voices` is a list of model names; an agent contributes
-    one increment per distinct model it lists. The result is keyed by model
-    name (not by voices tuple), so totals will exceed `len(agents)` when
-    each agent declares 2 voices.
+    Each agent's `voices` is a keyed inline table mapping leg name to model
+    identity; an agent contributes one increment per distinct model it binds.
+    Totals exceed `len(agents)` when each agent declares multiple legs.
     """
     counts: dict[str, int] = {}
     for agent in agents.values():
-        voices = agent.get("voices") or []
-        if not isinstance(voices, list):
+        voices = agent.get("voices") or {}
+        if not isinstance(voices, dict):
             continue
-        for member in voices:
-            key = str(member) if member else "(unset)"
+        for model_id in voices.values():
+            key = str(model_id) if model_id else "(unset)"
+            counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def count_by_kinds(agents: dict[str, dict[str, Any]]) -> dict[str, int]:
+    """Count how many agents declare each kind."""
+    counts: dict[str, int] = {}
+    for agent in agents.values():
+        kinds = agent.get("kinds") or []
+        if not isinstance(kinds, list):
+            continue
+        for kind in kinds:
+            key = str(kind) if kind else "(unset)"
             counts[key] = counts.get(key, 0) + 1
     return dict(sorted(counts.items()))
 
@@ -399,7 +424,12 @@ def build_parser() -> argparse.ArgumentParser:
     agents = sub.add_parser("agents", help="List portable agent role specs.")
     agents.add_argument(
         "--member",
-        help="Filter to agents whose voices includes this model name (e.g., opus, deepseek_pro_max).",
+        help="Filter to agents whose voices include this model identity (e.g., opus, deepseek_pro_max).",
+    )
+    agents.add_argument(
+        "--kind",
+        choices=("system", "app"),
+        help="Filter to agents whose kinds include this value.",
     )
     agents.add_argument("--json", action="store_true", help="Emit JSON.")
     agents.set_defaults(func=cmd_agents)

@@ -76,7 +76,7 @@ Dimension fields by mode:
 - **Session mode** (4 dims): `citations`, `goal_coverage`, `honesty`, `staleness`. Each `{score: 0-10, issues: []}` (or `missing_categories` / `flags` / `warnings` respectively).
 - **System mode** (4 dims, replacing the session set): `contract_integrity`, `wiring_correctness`, `bug_absence`, `claim_fidelity`. Each `{score: 0-10, issues: []}`.
 
-For score-to-verdict mapping and the artifact-presence floor, see `.claude/agents/reviewer.md` → Scoring. For the privacy-gate precedence and revision-round policy, see `protocols/quality-gates.md` → Gate 3.
+Score-to-verdict mapping and the artifact-presence floor are defined in `.claude/agents/reviewer.md` § Scoring. Privacy-gate precedence and revision-round policy live in `protocols/quality-gates.md` § Gate 3.
 
 ## Contract: Challenger → User
 

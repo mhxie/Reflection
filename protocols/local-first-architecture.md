@@ -35,7 +35,7 @@ The fast, sloppy, ephemeral layer. Readwise's inbox holds external content (arti
 
 ### L2 — Working / half-baked
 
-The alloy layer. Most of the user's active thinking lives here: daily free-writes (`$OV/daily-notes/`), session reflections (`$OV/reflections/`), user-initiated research reports (`$OV/research/`), arxiv preprints and paper reviews (`$OV/preprints/`), promoted agent synthesis briefs (`$OV/agent-findings/`), working drafts (`$OV/drafts/`), and active planning (`$OV/gtd/`). Alloy by default — see `epistemic-hygiene.md`. Fully searchable, citable, but not certified. The substrate from which wiki entries are distilled.
+The alloy layer. Most of the user's active thinking lives here: daily free-writes (`$OV/daily-notes/`), session reflections (`$OV/reflections/`), user-initiated research reports (`$OV/research/`), arxiv preprints and paper reviews (`$OV/preprints/`), promoted agent synthesis briefs (`$OV/agent-findings/`), working drafts (`$OV/drafts/`), and active planning (`$OV/gtd/`). Alloy by default; the validation-depth taxonomy lives in `protocols/epistemic-hygiene.md`. Fully searchable, citable, but not certified. The substrate from which wiki entries are distilled.
 
 Older topic directories (career, research, people, etc.) carried over from earlier knowledge systems are parked in `$OV/archive/` and stay there until individual notes are surfaced upward.
 

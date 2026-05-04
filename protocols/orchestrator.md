@@ -20,9 +20,9 @@ The atelier uses five coordination patterns — annotated on every agent (`harne
 | Generator-verifier | A generator drafts; a verifier (or pair) checks the output as a gate before commit. | Reviewer + Challenger gating Curator output; privacy-reviewer dual-pair in `/system-review` Step 1c. |
 | Agent-team | Multiple persistent autonomous workers — often multi-instance and parallel — share a hub but act independently. | Reader hub (multi-lens), Scout multi-direction (2-5 instances). |
 | Shared-state | Agents read and write a common store rather than passing context turn-by-turn. | Currently unused; reserved for future cross-agent coordination (e.g., a shared TrustRank store, cross-session findings cache). |
-| Solo | Single-agent dispatch with no coordination. | Scribe verbatim capture (`mechanical_capture` profile). |
+| Solo | Single-agent dispatch with no coordination. | Scribe verbatim capture (single-leg native voice). |
 
-The `pattern` field is annotation only. The orchestrator's actual dispatch behavior is governed by the existing Dual + Shadow Dispatch table (see § Dual + Shadow Dispatch below) and the agent collaboration matrix; `pattern` is descriptive metadata that lets reviewers and lint reason about dispatch shape without re-deriving it from prose. User-facing visibility of routing decisions for `/hi` is provided by the always-on dispatch announcement (canonical instructions in `.claude/commands/hi.md` → "Always-on Routing Announcement"); the `pattern` field itself is consumed only by review tooling.
+The `pattern` field is annotation only. The orchestrator's actual dispatch behavior is governed by the Voice Dispatch contract (§ Voice Dispatch below) and the agent collaboration matrix; `pattern` is descriptive metadata that lets reviewers and lint reason about dispatch shape without re-deriving it from prose. User-facing visibility of routing decisions for `/hi` is provided by the always-on dispatch announcement (canonical instructions in `.claude/commands/hi.md` § "Always-on Routing Announcement"); the `pattern` field itself is consumed only by review tooling.
 
 No-branching contract: `pattern` is documentation. No code path in `scripts/`, no agent prompt, and no orchestrator instruction may branch on this field's value (e.g., `if pattern == "agent-team": auto_parallelize()`). To add behavior keyed on coordination shape, propose a separate field with explicit semantics; do not extend `pattern` with new values to enable a runtime check. The 5-value enum is intentionally a closed set; expansion requires a separate wave with explicit governance. Lint validates the value is in the allowed set; behavioral coupling is forbidden by convention. A future audit could grep `scripts/`, `.claude/`, and `protocols/` for `pattern == "..."` if the contract slips, but for now prose is sufficient.
 
@@ -62,29 +62,55 @@ The orchestrator must not transcribe raw user content itself; that burns deep-co
 
 Daily notes (under `$OV/daily-notes/`) are user-authored. The system reads them by default and does not modify them. **Exception (cloud-native capture):** when the user dictates raw daily-note content through chat, dispatch the Scribe with `operation: daily_note` to record it verbatim. Curator dispatches targeting daily-note paths are still refused; only the Scribe writes daily notes, and only when the user is dictating.
 
-## Voice Dispatch (every role is intrinsically dual)
+## Voice Dispatch
 
-Every role declares a `voices = ["modelA", "modelB"]` field in `harness/agents.toml`. Both voices fire in parallel on every dispatch — duality is intrinsic to the role, not a per-call decision. The orchestrator does not pick "single vs dual"; it picks the role, and the role's bound voices run.
+Every role declares a `voices` keyed inline table in `harness/agents.toml` mapping leg name to model identity. Three leg types:
+
+- **`native`** — Anthropic-side leg dispatched via `Agent` tool (`subagent_type: <role>`); the model resolves from the role's `.claude/agents/<role>.md` frontmatter `model:` field.
+- **`direct`** — direct-api leg dispatched via `python3 scripts/chat_completion.py --model <identity> --max-tokens 0 --prompt -` with the prompt on stdin.
+- **`codex`** — Codex CLI leg dispatched via `codex exec` (today only used by `external-reviewer` via `scripts/review.sh`).
 
 Schema split:
 - **What identities exist** → `harness/models.toml` (committed; declarations only)
 - **How identities map to providers** → `profile/models.toml` (gitignored; bindings)
-- **Which voices each role is bound to** → `harness/agents.toml` (committed; `voices` per agent)
+- **Which voices each role binds** → `harness/agents.toml` (`voices` per agent)
 
-Protocol prose intentionally does NOT enumerate specific model identities per role. That info lives in `harness/agents.toml` as the single source of truth; restating it here would create drift on every rebind. Refer to that file for current voice assignments.
+Protocol prose does NOT enumerate specific model identities per role. That info lives in `harness/agents.toml`; restating it here creates drift on every rebind.
 
-**Dispatch mechanics.** For any role R, read `harness/agents.toml` `[agents.R].voices`. Fire both voices in parallel from a single assistant message:
+### Dispatch shape per role
 
-- **Voice 1 (Anthropic / native runtime leg)** — `Agent` tool with `subagent_type: R` and the prompt.
-- **Voice 2 (direct-api leg)** — `Bash` tool calling `python3 scripts/chat_completion.py --model <voice-2> --max-tokens 0 --prompt -` with the same prompt on stdin.
+`voices` declares each role's INTENDED leg set. Whether all declared legs fire on a given dispatch is the **call site's** decision, not a universal contract. This is intentional: the schema is forward-ready (every role pre-declares its bound pair), but enabling the second leg per dispatch site is a per-call-site decision based on tool needs, write safety, and runtime cost.
 
-The privacy-reviewer pattern in `/system-review` Step 1c is the canonical worked example. Both voices share the same prompt context; agents whose work depends on tool calls (vault reads, file writes) cannot be perfectly mirrored — the direct-api voice sees the prompt only. Treat it as a cross-check on verdict / framing, not on the tool-driven output. For free-form work (Curator drafts, Scout finds, Meeting extracts, Librarian recommends), the second voice is a logged second opinion rather than a strict reconciliation gate; surface disagreement in the synthesis.
+Pattern at a multi-leg call site (the orchestrator fires one tool call per leg in the same assistant message):
 
-**Soft-skip on missing api_env.** When the direct-api voice's `api_env` is unset (key not provided in the runtime environment), `chat_completion.py` exits 2 cleanly. Callers that fire dual dispatches (review.sh, /system-review Step 1c) MUST handle exit-2 as soft-skip-and-degrade — the dual collapses to single-voice with a warning, never a hard failure. Document the degradation in the call site's synthesis.
+| Voices declared | Multi-leg dispatch shape |
+|---|---|
+| `{native = "X", direct = "Y"}` | `Agent(subagent_type=role, …)` + `Bash(chat_completion.py --model Y --max-tokens 0 …)` |
+| `{native = "X"}` only | `Agent(subagent_type=role, …)` only — single-leg by design |
+| `{direct = "Y", codex = "Z"}` | `Bash(chat_completion.py --model Y …)` + `Bash(codex exec -m Z …)` — script-driven only (see `scripts/review.sh`) |
 
-**Why dual is intrinsic, not opt-in.** Two same-provider samples have correlated failure modes (training lineage, tokenizer, RLHF). Two different-provider voices catch each other's hallucinations. Making duality intrinsic to the role removes the per-dispatch token-budget argument for skipping the second voice. Voice-pair cost is bounded per role: cheap roles get cheap voices, deep roles get deep voices.
+The dispatched legs share the same user-facing prompt. Agents whose work depends on tool calls (vault reads, file writes) cannot be perfectly mirrored — the direct-api leg sees the prompt only. Treat the second leg as a cross-check on verdict / framing, not on the tool-driven output.
 
-**Tier scales cardinality, not voice composition.** A "Tier N" gathering = N parallel copies of role-units. The `/system-review` review-ladder (Tier 1-4) governs how many reviewer-units run on a change. It is the only "tier" semantics in this repo. Tier never alters a role's bound voice pair; it only adds more role-units to the gathering.
+### Single-leg roles (write-capable carve-out)
+
+Roles that write files or handle verbatim user-authored content declare only the `native` leg. Today: **Scribe** (`voices = {native = "haiku"}`). Rationale: a parallel direct-api leg would either (a) produce duplicate writes or (b) leak verbatim user content to an external API. The single-leg declaration is explicit; lint accepts any non-empty voices table. Add a single-leg carve-out only when the role meets one of these conditions and document why in the agent's description.
+
+### Currently-enabled multi-leg call sites
+
+The multi-leg dispatch shape is enabled at these specific sites today:
+
+- **`/system-review` Step 1c** — privacy-reviewer's `native` + `direct` legs both fire (worked example in that command file).
+- **`scripts/review.sh`** — external-reviewer's `direct` + `codex` legs both fire.
+
+Every other dispatch site (the Reading hub in `/hi`, collaboration rows below, ad-hoc agent dispatches) fires only the role's `native` leg. The `direct` leg is declared in `voices` as a forward binding for when that call site opts in. To enable a second leg at any new call site, follow the worked example in `/system-review` Step 1c. Lint does NOT enforce dual dispatch at every call site; the schema is intent, the call site is policy.
+
+### Soft-skip on missing api_env
+
+When a `direct`-leg's `api_env` is unset (key not provided in the runtime environment), `chat_completion.py` exits 2 cleanly. Callers MUST handle exit-2 as soft-skip-and-degrade: the dispatch collapses to a single-leg result with a warning surfaced in the synthesis, never a hard failure. Same handling for codex-leg unavailability (codex CLI not installed → exit 127; treated as soft-skip).
+
+### Tier scales cardinality, not voice composition
+
+A "Tier N" gathering = N parallel copies of role-units. The `/system-review` review-ladder (Tier 1-4) governs how many reviewer-units run on a change. This is the only "tier" semantics in this repo. Tier never alters a role's bound voice composition; it only adds more role-units to the gathering. (Earlier prose in `protocols/harness-assumptions.md` may use "voice tier" loosely; that is not a separate ladder, it just means "the role's cognitive band of voices." Prefer "voice band" or just refer to the role's specific voices in `harness/agents.toml`.)
 
 ## Reader → Scholar auto-promotion
 
@@ -115,7 +141,7 @@ Launch agents based on command type:
 | Read mode (via `/hi`) | Reader (1-4 instances by lens) + Researcher + Scout + Thinker (parallel) |
 | Work meeting transcript | Meeting (Executive mode — action items + decisions) |
 | `/curate` or `/hi triage inbox` | Ad-hoc agent (goal-aware Readwise triage — see `commands/curate.md`) |
-| `/forget` (intent) or `/hi scan my drafts` | Forgetter (cross_validation tier; bounded sweep, decay report under `$OV/agent-findings/`) |
+| `/forget` (intent) or `/hi scan my drafts` | Forgetter (mid-tier voices; bounded sweep, decay report under `$OV/agent-findings/`) |
 
 ### Phase 2: Synthesize
 - Synthesizer takes Researcher's brief and produces structured output
@@ -206,7 +232,7 @@ The user can request these actions during or after any session:
 | "Change how [command] works" | Modify command | Evolver |
 
 ### Decay Operations (→ Forgetter)
-Bounded decay sweeps over `$OV/`. Forgetter never deletes; it writes a decay report to `$OV/agent-findings/decay-<ts>.md` and returns only the path. The orchestrator surfaces the report; the user reads it and decides. Every dispatch must specify `scope_path` (one directory under `$OV/`); `max_candidates` defaults to 20 and `time_budget_s` defaults to 300. See `.claude/agents/forgetter.md`.
+Bounded decay sweeps over `$OV/`. Forgetter never deletes; it writes a decay report to `$OV/agent-findings/decay-<ts>.md` and returns only the path. The orchestrator surfaces the report; the user reads it and decides. Every dispatch must specify `scope_path` (one directory under `$OV/`); `max_candidates` defaults to 20 and `time_budget_s` defaults to 300. The role spec is `.claude/agents/forgetter.md`.
 
 | User Says | Action | Agent |
 |-----------|--------|-------|
@@ -216,7 +242,7 @@ Bounded decay sweeps over `$OV/`. Forgetter never deletes; it writes a decay rep
 | "Find redundant notes I should compact" | Dispatch Forgetter with the user's `scope_path` of choice (or ask). Redundant items in the report route to Curator after user approval. | Forgetter → Curator |
 
 ### Capture Operations (→ Scribe)
-Cheap-tier verbatim recording (Scribe's voices live in `harness/agents.toml`). The orchestrator MUST NOT transcribe raw user content itself — that burns deep-cognition tokens on mechanical I/O. See `.claude/agents/scribe.md` for operation contracts.
+Cheap-tier verbatim recording. Scribe voices and operation contracts live in `harness/agents.toml` and `.claude/agents/scribe.md`. The orchestrator MUST NOT transcribe raw user content itself — that burns deep-cognition tokens on mechanical I/O.
 
 | User dictates | Operation | Target tier |
 |---|---|---|
@@ -352,10 +378,10 @@ During any session, actively look for these signals and chain agents:
 | Librarian recommends resources | Route to Researcher to check existing notes |
 | Any session scores low on surprise | Next session: Researcher should search older/deeper notes |
 | Researcher flags a Moment | Surface it to user, suggest `#moment` tag via Curator, note which direction it feeds |
-| Energy audit shows a life area below amenity floor | Flag it: "[Area] is below amenity floor." See `protocols/session-scoring.md` |
+| Energy audit shows a life area below amenity floor | Flag it: "[Area] is below amenity floor." Amenity-floor definition lives in `protocols/session-scoring.md`. |
 | User tries to change focus mid-session | Enforce Focus Lock — redirect to a full `/review` session first |
 | User says "this was great" or "this wasn't helpful" | Route feedback to Evolver |
-| User refines a strategic/directional claim 2+ times in one session | Treat as refinement-arc. Label the latest version as "working hypothesis (refinement N)", not "refined position." Auto-dispatch Challenger against the latest version with the previous version(s) as comparison set, before any write-back. Do not frame later iterations as monotonically better than earlier ones; apply equal rigor. See `protocols/epistemic-hygiene.md` → "Refinement-arc hygiene". |
+| User refines a strategic/directional claim 2+ times in one session | Treat as refinement-arc. Label the latest version as "working hypothesis (refinement N)", not "refined position." Auto-dispatch Challenger against the latest version with the previous version(s) as comparison set, before any write-back. Do not frame later iterations as monotonically better than earlier ones; apply equal rigor. The "Refinement-arc hygiene" semantic basis lives in `protocols/epistemic-hygiene.md`. |
 | Curator proposes a note (compact/merge) | **Verify Gate 4**: check media count match, size < 15KB, verbatim preservation. Block if any check fails. |
 | **Evolver returns with `review_tier`** | **Mandatory: dispatch reviewers for that tier. Never skip.** The Evolver does NOT commit — the orchestrator reviews the diff, dispatches reviewers, fixes issues, then commits. The orchestrator owns this gate. See Review Tiers above for which reviewers to dispatch per tier. |
 

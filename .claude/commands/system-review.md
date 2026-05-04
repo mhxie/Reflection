@@ -56,7 +56,10 @@ Dispatch **both legs in parallel — single message, one `Agent` tool call AND o
 
 **Leg B — direct-api side (`Bash` tool, single call):**
 
+Resolve the direct-leg model identity from the canonical voices binding (so this dispatch tracks `harness/agents.toml` automatically and never drifts from the schema):
+
 ```bash
+DIRECT_MODEL=$(python3 -c "import tomllib; print(tomllib.loads(open('harness/agents.toml','rb').read().decode()).get('agents',{}).get('privacy-reviewer',{}).get('voices',{}).get('direct',''))")
 {
   echo 'Privacy review the uncommitted bundle. Identify semantic leaks: real names, restaurants, $-amount + deadline pairs, demographic phrases, personal taxonomies, employer slugs that the mechanical filename-stem scanner misses. You are instance B (direct-api leg); do not coordinate with the Anthropic leg. Output one of: CLEAN | NEEDS_REVISION (with SHOULD-FIX list) | BLOCKER (with leak descriptions and file:line pointers).'
   echo
@@ -68,7 +71,7 @@ Dispatch **both legs in parallel — single message, one `Agent` tool call AND o
     echo "=== $f ==="
     cat "$f"
   done
-} | uv run scripts/chat_completion.py --model deepseek_pro --max-tokens 0 --prompt -
+} | uv run scripts/chat_completion.py --model "$DIRECT_MODEL" --max-tokens 0 --prompt -
 ```
 
 Both legs return verdicts (CLEAN / NEEDS_REVISION / BLOCKER). The direct-api leg returns `message.content`; treat it as the verdict.
@@ -96,7 +99,7 @@ Send a **single** assistant message containing both tool calls:
   ```bash
   bash scripts/review.sh
   ```
-  (Use `bash scripts/review.sh codex`, `bash scripts/review.sh deepseek`, or the legacy `bash scripts/review.sh gemini` for one only.) Reports land in `$OV/cache/review-<timestamp>-{codex,direct}.md` (the direct-api leg writes `-direct.md`). The script runs both reviewers in parallel, blocks on `wait`, includes untracked files in the diff sent to each, and treats a missing CLI / unset `DS_API` as a soft-skip.
+  (Use `bash scripts/review.sh codex` or `bash scripts/review.sh direct` for one leg only; `gemini` is a legacy mode kept for users with the gemini CLI.) Reports land in `$OV/cache/review-<timestamp>-{codex,direct}.md`. The script runs both reviewers in parallel, blocks on `wait`, includes untracked files in the diff sent to each, and treats a missing CLI / unset api_env as a soft-skip.
 
 ### 3. Synchronous wait (invoker contract)
 
@@ -147,16 +150,9 @@ Floor check: any internal dim <6 OR any required artifact missing -> NEEDS_REVIS
 
 Then ask the user: "Address the blockers and re-review, or proceed to commit?"
 
-## Tiers (from `protocols/orchestrator.md`)
+## Tiers
 
-| Tier | Runs | When |
-|---|---|---|
-| 1 | Internal holistic only | Tiny scoped change |
-| 2 | Internal holistic + diff | Single-area change |
-| 3 | Tier 2 + codex | Cross-cutting, low-risk (default for evolution bundles) |
-| 4 | Tier 3 + direct-api (DeepSeek Pro) | Architecture-level, multi-phase |
-
-If the Evolver specified a tier in its handoff, honor it. Otherwise default to **Tier 3 (internal + codex)** or **Tier 4 (internal + codex + direct-api)** for architecture-level bundles.
+The Tier 1-4 ladder is canonical in `protocols/orchestrator.md` → "Review Tiers". This file does not restate the table. If the **Evolver** agent specified a tier in its handoff, honor it; otherwise default to Tier 3 (or Tier 4 for architecture-level bundles).
 
 ## Cross-references
 

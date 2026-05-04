@@ -102,7 +102,7 @@ This is preprocessing, not a separate lens. The real analysis comes from whichev
 **Language rule:** Technical content (papers, engineering blogs) → match source language. General/non-professional content (articles, essays, opinion pieces) → Chinese (reading-intensive output). Lens names stay in English for structure. Quotes always verbatim.
 
 ```markdown
----scholar-brief---
+---reader-brief---
 lens: [Critical / Structural / Practical / Dialectical]
 source: [article title or note title]
 confidence: high / medium / low
