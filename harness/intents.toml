@@ -1,0 +1,128 @@
+# Portable intent router registry.
+#
+# Canonical registry of `/hi <context>` intent rules. Each row maps a set of
+# trigger phrases / format markers to a routing decision: which mode of /hi to
+# invoke, which agents the orchestrator should expect to dispatch, and which
+# profile files to pre-read.
+#
+# Source-of-truth status (Wave 1A): `.claude/commands/hi.md` "Routing &
+# Dispatch" / "Intent Routing" prose is the active source; the rows in this
+# file are descriptive metadata that mirrors that prose by hand. Wave 1B will
+# add `scripts/atelier.py intent <text>` and a `/hi --explain` flag; once
+# those land, `/hi` will read this file directly and the prose table will be
+# regenerated from here. Neither the subcommand nor the flag exists today —
+# until they ship, keep the prose and this file aligned by hand.
+#
+# Codex parity: once Wave 1B lands, Codex will discover the routing table by
+# `python3 scripts/atelier.py intent "<text>"` rather than parsing prose.
+# That subcommand is not yet available.
+#
+# Schema:
+#   patterns                  list of trigger phrases / format markers (case
+#                             insensitive, substring-match by default; the
+#                             dispatch helper treats list members as ORed)
+#   mode                      string identifier of a /hi sub-mode (e.g.,
+#                             "capture-fast-path", "read-and-discuss")
+#   agents                    list of agent keys from harness/agents.toml
+#                             that the orchestrator expects to dispatch
+#                             (informational; not a hard contract)
+#   profile_reads             list of filenames under profile/ that the
+#                             orchestrator should pre-read before dispatch
+#   priority                  int; higher = more specific, matched first.
+#                             The fallback intent is priority = 0.
+#   pattern                   coordination pattern (one of:
+#                             "orchestrator-subagent", "generator-verifier",
+#                             "agent-team", "shared-state", "solo")
+#   expected_subagent_count   int hint surfaced by /hi --explain. 1 if a
+#                             single agent; otherwise typical-case count.
+#   parallel                  bool; whether the agents dispatch in parallel
+#                             (informational; the actual dispatch shape is
+#                             still the orchestrator's call)
+#
+# Design note (per the cached "intent table is meta-harness; design for
+# staleness" principle): keep the schema minimal and stable. Resist fields
+# that encode current-model assumptions (e.g., model ids, token budgets,
+# specific tool names). Coordination pattern is annotation; lint validates
+# the value set, not behavior.
+
+[intents.capture]
+patterns = [
+    "记一下",
+    "记录",
+    "log this",
+    "just write down",
+    "just save this",
+    "save this",
+    "date-stamped narrative",
+]
+mode = "capture-fast-path"
+agents = ["scribe"]
+profile_reads = []
+priority = 50
+pattern = "solo"
+expected_subagent_count = 1
+parallel = false
+
+[intents.reading]
+patterns = [
+    "http://",
+    "https://",
+    "[[",
+    "read",
+    "discuss",
+    "let's read",
+]
+mode = "read-and-discuss"
+agents = ["reader", "researcher", "scout", "thinker", "reviewer", "challenger"]
+profile_reads = ["identity.md"]
+priority = 40
+pattern = "agent-team"
+expected_subagent_count = 6
+parallel = true
+
+[intents.meeting]
+patterns = [
+    "meeting",
+    "standup",
+    "1:1",
+    "meeting notes",
+]
+mode = "meeting-process"
+agents = ["meeting", "challenger", "curator"]
+profile_reads = []
+priority = 30
+pattern = "orchestrator-subagent"
+expected_subagent_count = 3
+parallel = false
+
+# Talk/transcript routes to the "Read & Discuss" sub-mode of /hi (per
+# .claude/commands/hi.md → "Intent Routing"), which dispatches 1 Reader
+# (Critical lens, with auto-transcript preprocessing) + 1 Researcher (related
+# notes) in parallel.
+[intents.talk]
+patterns = [
+    "seminar",
+    "talk",
+    "transcript",
+    "podcast",
+    "video",
+]
+mode = "transcript-read"
+agents = ["reader", "researcher"]
+profile_reads = ["identity.md"]
+priority = 20
+pattern = "agent-team"
+expected_subagent_count = 2
+parallel = true
+
+# Fallback: matches anything not picked up by a higher-priority intent.
+# Empty patterns + priority 0 makes this the catch-all.
+[intents.reflection]
+patterns = []
+mode = "daily-reflection"
+agents = ["researcher", "challenger", "scout", "synthesizer", "reviewer"]
+profile_reads = ["identity.md", "directions.md"]
+priority = 0
+pattern = "orchestrator-subagent"
+expected_subagent_count = 5
+parallel = true

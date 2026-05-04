@@ -14,9 +14,19 @@ Claude Code and Codex:
   6. Tracked agent specs are represented in harness/agents.toml.
   7. The harness reference doc exists.
   8. Codex has a repo-scoped Atelier skill for workflow discovery.
+  9. Intent/agent registry coherence: every `intents.<name>.agents[*]`
+     resolves to an agent in `harness/agents.toml`; pattern values in
+     both registries are drawn from the allowed set; `agents.<name>.used_by`
+     is consistent with the intents/commands walk; orphans flagged.
 
 Exit code: 0 if no ERROR-level findings, 1 if any ERROR-level finding.
 argparse returns 2 on CLI usage errors.
+
+Fixers (mutating, off by default):
+  --fix-used-by  Regenerate `used_by` lists in `harness/agents.toml` from the
+                 intents+commands walk. Idempotent. Use after editing
+                 `harness/intents.toml` or after a command adds/drops an
+                 agent dispatch. Default lint runs are read-only.
 """
 
 from __future__ import annotations
@@ -33,6 +43,38 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SEVERITY_ORDER = {"ERROR": 0, "WARN": 1, "INFO": 2}
+
+# Allowed coordination-pattern values for both `agents.<name>.pattern` (in
+# harness/agents.toml) and `intents.<name>.pattern` (in harness/intents.toml).
+# Definitions live in protocols/orchestrator.md → "Coordination Patterns".
+ALLOWED_PATTERNS = frozenset({
+    "orchestrator-subagent",
+    "generator-verifier",
+    "agent-team",
+    "shared-state",
+    "solo",
+})
+
+# Patterns matching agent-name mentions in command source files. Anchored on
+# word boundaries; case-insensitive at usage time. Multi-word stems
+# ("privacy-reviewer") are listed before single-word stems so they match
+# greedily.
+AGENT_NAME_RE = re.compile(
+    r"\b(privacy[- ]reviewer|researcher|synthesizer|reviewer|challenger|"
+    r"thinker|evolver|curator|scout|reader|meeting|librarian|scribe)\b",
+    re.IGNORECASE,
+)
+
+# A line counts as a dispatch context only if it mentions one of these tokens.
+# Filters incidental prose mentions (e.g., `readwise reader-list-documents`
+# CLI commands, "Reader persona" prose) from the used_by walk; only lines
+# that look like real dispatch sites contribute. Per-line scope keeps the
+# heuristic local — a CLI fragment one line above a real dispatch will not
+# accidentally tag the agent.
+DISPATCH_CONTEXT_RE = re.compile(
+    r"\b(dispatch(?:es|ed|ing)?|subagent_type|agent|cercle)\b|\*\*",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -848,6 +890,418 @@ def check_scripts_zk_paths() -> list[Finding]:
     return findings
 
 
+def load_intents() -> tuple[dict[str, dict[str, Any]], list[Finding]]:
+    """Load harness/intents.toml; return ({}, [finding]) on missing/invalid.
+
+    The file is required harness state in Wave 1A onward. Missing rows are
+    treated as a load failure, not a silent pass — an empty `[intents]`
+    table (comment-only file or accidental wipe) means `/hi` would route
+    nothing, which is never the intended state.
+    """
+    findings: list[Finding] = []
+    path = ROOT / "harness" / "intents.toml"
+    if not path.exists():
+        findings.append(
+            Finding(
+                "ERROR",
+                "intents-missing-file",
+                "harness/intents.toml",
+                "intent registry is missing",
+            )
+        )
+        return {}, findings
+    data, err = _load_toml(path)
+    if err:
+        return {}, [err]
+    assert data is not None
+    intents = data.get("intents", {})
+    if not isinstance(intents, dict):
+        return {}, [
+            Finding(
+                "ERROR",
+                "intents-shape",
+                "harness/intents.toml",
+                "[intents] table missing or not a table",
+            )
+        ]
+    if not intents:
+        # File exists, parses, but has no rows. Wave 1A makes the intent
+        # registry required harness state; an empty registry is a load
+        # failure, not a silent pass.
+        findings.append(
+            Finding(
+                "ERROR",
+                "intents-empty-registry",
+                "harness/intents.toml",
+                "[intents] table is empty (no intent rows declared)",
+            )
+        )
+        return {}, findings
+    return intents, findings
+
+
+def _expected_used_by(
+    intents: dict[str, dict[str, Any]],
+    commands: dict[str, str],
+) -> dict[str, list[str]]:
+    """Compute the expected `used_by` list per agent.
+
+    Walks two registries:
+      1. `intents.<name>.agents[*]` (harness/intents.toml)
+      2. agent-name mentions inside each `commands.<name>` source file
+
+    Returns a dict keyed by agent name; values are sorted lists of strings
+    of the form `"intents.<name>"` / `"commands.<name>"`. Agents with no
+    references map to an empty list (orphan signal).
+    """
+    expected: dict[str, set[str]] = {}
+
+    for intent_name, entry in intents.items():
+        if not isinstance(entry, dict):
+            continue
+        for agent_name in entry.get("agents", []) or []:
+            if not isinstance(agent_name, str):
+                continue
+            expected.setdefault(agent_name, set()).add(f"intents.{intent_name}")
+
+    for command_name, source in commands.items():
+        source_path = ROOT / source
+        if not source_path.exists():
+            continue
+        try:
+            text = source_path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        seen: set[str] = set()
+        for line in text.splitlines():
+            if not DISPATCH_CONTEXT_RE.search(line):
+                continue
+            for match in AGENT_NAME_RE.finditer(line):
+                stem = match.group(1).lower().replace(" ", "-")
+                seen.add(stem)
+        for stem in seen:
+            expected.setdefault(stem, set()).add(f"commands.{command_name}")
+
+    return {name: sorted(refs) for name, refs in expected.items()}
+
+
+def check_intents_registry(
+    intents: dict[str, dict[str, Any]],
+    claude_agents: dict[str, Any],
+    harness_agents: dict[str, Any],
+) -> list[Finding]:
+    """Validate intent rows: agent references resolve, pattern values valid,
+    and overlapping patterns at the same priority are flagged.
+
+    Agent references must resolve against BOTH registries:
+      - `claude_agents` from `load_claude_agents()` (`.claude/agents/*.md`):
+        canonical for Claude Code subagent dispatch.
+      - `harness_agents` from `harness/agents.toml` `[agents]` table:
+        canonical for Codex parity (Codex emulates roles by reading this
+        registry, not by walking the .claude tree).
+
+    A row is fully valid only when both registries know the agent. Missing
+    in either registry is an ERROR with a distinct code so operators can
+    see which surface is broken.
+    """
+    findings: list[Finding] = []
+    if not intents:
+        return findings
+
+    for intent_name, entry in sorted(intents.items()):
+        if not isinstance(entry, dict):
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "intents-entry-shape",
+                    "harness/intents.toml",
+                    f"intent `{intent_name}` is not a table",
+                )
+            )
+            continue
+        # (a) agent references valid in BOTH registries
+        agents_field = entry.get("agents", []) or []
+        if not isinstance(agents_field, list):
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "intents-agent-shape",
+                    "harness/intents.toml",
+                    f"intent `{intent_name}` `agents` must be a list",
+                )
+            )
+        else:
+            for agent_name in agents_field:
+                if not isinstance(agent_name, str):
+                    findings.append(
+                        Finding(
+                            "ERROR",
+                            "intents-agent-missing-claude",
+                            "harness/intents.toml",
+                            f"intent `{intent_name}` has non-string agent entry `{agent_name!r}`",
+                        )
+                    )
+                    continue
+                if agent_name not in claude_agents:
+                    findings.append(
+                        Finding(
+                            "ERROR",
+                            "intents-agent-missing-claude",
+                            "harness/intents.toml",
+                            f"intent `{intent_name}` references agent `{agent_name}` not in .claude/agents/ (Claude Code dispatch will fail)",
+                        )
+                    )
+                if agent_name not in harness_agents:
+                    findings.append(
+                        Finding(
+                            "ERROR",
+                            "intents-agent-missing-harness",
+                            "harness/intents.toml",
+                            f"intent `{intent_name}` references agent `{agent_name}` not in harness/agents.toml (Codex parity broken)",
+                        )
+                    )
+        # (c) intent pattern value valid
+        pattern_value = entry.get("pattern")
+        if pattern_value is None:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "intents-pattern-missing",
+                    "harness/intents.toml",
+                    f"intent `{intent_name}` is missing required `pattern` field",
+                )
+            )
+        elif not isinstance(pattern_value, str):
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "intents-pattern-invalid",
+                    "harness/intents.toml",
+                    f"intent `{intent_name}` pattern must be a string, got {type(pattern_value).__name__}",
+                )
+            )
+        elif pattern_value not in ALLOWED_PATTERNS:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "intents-pattern-invalid",
+                    "harness/intents.toml",
+                    f"intent `{intent_name}` pattern=`{pattern_value}` not in {sorted(ALLOWED_PATTERNS)}",
+                )
+            )
+
+    # (f) priority collisions: only exact-duplicate phrases at same priority
+    by_priority: dict[int, list[tuple[str, set[str]]]] = {}
+    for intent_name, entry in intents.items():
+        if not isinstance(entry, dict):
+            continue
+        priority = entry.get("priority")
+        if not isinstance(priority, int):
+            continue
+        patterns = entry.get("patterns", []) or []
+        if not isinstance(patterns, list):
+            continue
+        normalized = {p.lower() for p in patterns if isinstance(p, str) and p.strip()}
+        if not normalized:
+            continue
+        by_priority.setdefault(priority, []).append((intent_name, normalized))
+
+    for priority, rows in by_priority.items():
+        for i in range(len(rows)):
+            for j in range(i + 1, len(rows)):
+                name_a, set_a = rows[i]
+                name_b, set_b = rows[j]
+                overlap = sorted(set_a & set_b)
+                if overlap:
+                    findings.append(
+                        Finding(
+                            "WARN",
+                            "intents-priority-collision",
+                            "harness/intents.toml",
+                            f"intents `{name_a}` and `{name_b}` share priority={priority} and overlapping patterns: {overlap}",
+                        )
+                    )
+
+    return findings
+
+
+def check_agent_pattern_and_used_by(
+    intents: dict[str, dict[str, Any]],
+    commands: dict[str, str],
+) -> list[Finding]:
+    """Validate `pattern` and `used_by` on every agent in harness/agents.toml.
+
+    Three checks: (b) pattern in allowed set, (d) used_by drift relative
+    to walked expectation, (e) orphan (empty used_by) WARN.
+    """
+    findings: list[Finding] = []
+    data, err = _load_toml(ROOT / "harness" / "agents.toml")
+    if err:
+        return [err]
+    assert data is not None
+    registry = data.get("agents", {})
+    if not isinstance(registry, dict):
+        return findings
+
+    expected = _expected_used_by(intents, commands)
+
+    for name, entry in sorted(registry.items()):
+        if not isinstance(entry, dict):
+            continue
+        # (b) pattern value valid
+        pattern_value = entry.get("pattern")
+        if pattern_value is None:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "agents-pattern-invalid",
+                    "harness/agents.toml",
+                    f"agent `{name}` is missing `pattern` field",
+                )
+            )
+        elif pattern_value not in ALLOWED_PATTERNS:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "agents-pattern-invalid",
+                    "harness/agents.toml",
+                    f"agent `{name}` pattern=`{pattern_value}` not in {sorted(ALLOWED_PATTERNS)}",
+                )
+            )
+        # (d) used_by drift
+        stored = entry.get("used_by")
+        if not isinstance(stored, list):
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "agents-used-by-shape",
+                    "harness/agents.toml",
+                    f"agent `{name}` is missing `used_by` field (must be a list)",
+                )
+            )
+            stored_set: set[str] = set()
+        else:
+            stored_set = {s for s in stored if isinstance(s, str)}
+        expected_set = set(expected.get(name, []))
+        missing = sorted(expected_set - stored_set)
+        extra = sorted(stored_set - expected_set)
+        if missing or extra:
+            parts: list[str] = []
+            if missing:
+                parts.append(f"missing {missing}")
+            if extra:
+                parts.append(f"extra {extra}")
+            findings.append(
+                Finding(
+                    "WARN",
+                    "agents-used-by-drift",
+                    "harness/agents.toml",
+                    f"agent `{name}` used_by drift: " + "; ".join(parts) +
+                    " (run `python3 scripts/harness_lint.py --fix-used-by`)",
+                )
+            )
+        # (e) orphan
+        if not stored_set and not expected_set:
+            findings.append(
+                Finding(
+                    "WARN",
+                    "agents-orphan",
+                    "harness/agents.toml",
+                    f"agent `{name}` has no callers (no intent or command dispatches it)",
+                )
+            )
+
+    return findings
+
+
+def fix_used_by() -> int:
+    """Rewrite `used_by` lists in harness/agents.toml from the walk.
+
+    Read-modify-write of the agents.toml file. Idempotent: re-running with
+    no upstream changes is a no-op. Preserves all other formatting verbatim
+    by editing only the `used_by = [...]` block.
+    """
+    # Refuse to regenerate from partial data. Either load failure (missing
+    # intents.toml, invalid TOML, missing command tree) would silently drop
+    # references on the rewrite, corrupting the file we are trying to repair.
+    intents, intent_findings = load_intents()
+    intent_errors = [f for f in intent_findings if f.severity == "ERROR"]
+    if intent_errors:
+        for f in intent_errors:
+            sys.stderr.write(f"harness_lint --fix-used-by: aborting: {f.where}: {f.message}\n")
+        sys.stderr.write("harness_lint --fix-used-by: fix the intent registry and retry\n")
+        return 2
+    commands, command_findings = load_claude_commands()
+    command_errors = [f for f in command_findings if f.severity == "ERROR"]
+    if command_errors:
+        for f in command_errors:
+            sys.stderr.write(f"harness_lint --fix-used-by: aborting: {f.where}: {f.message}\n")
+        sys.stderr.write("harness_lint --fix-used-by: fix the command registry and retry\n")
+        return 2
+    expected = _expected_used_by(intents, commands)
+    agents_path = ROOT / "harness" / "agents.toml"
+    if not agents_path.exists():
+        sys.stderr.write("harness_lint: harness/agents.toml not found\n")
+        return 1
+    data, err = _load_toml(agents_path)
+    if err:
+        sys.stderr.write(f"harness_lint: {err.message}\n")
+        return 1
+    assert data is not None
+    registry = data.get("agents", {})
+    if not isinstance(registry, dict):
+        sys.stderr.write("harness_lint: harness/agents.toml has no [agents] table\n")
+        return 1
+
+    text = agents_path.read_text(encoding="utf-8")
+    new_text = text
+    changed_agents: list[str] = []
+    # Rewrite each agent's used_by block in place. We match the table header
+    # and the existing used_by = [...] block (multi-line), and replace the
+    # block contents only — preserving all other fields and ordering.
+    for name in sorted(registry.keys()):
+        refs = expected.get(name, [])
+        formatted = _format_used_by_block(refs)
+        # Pattern: `[agents.<name>]` ... `used_by = [...]` (multi-line)
+        # Match the table block from its header up to the next `[agents.` or
+        # end of file, then within that match replace the used_by block.
+        section_re = re.compile(
+            rf"(\[agents\.{re.escape(name)}\][^\[]*?)(used_by\s*=\s*\[[^\]]*\])",
+            re.DOTALL,
+        )
+
+        def _sub(match: re.Match[str], formatted: str = formatted) -> str:
+            return match.group(1) + formatted
+
+        new_section, count = section_re.subn(_sub, new_text, count=1)
+        if count == 0:
+            sys.stderr.write(
+                f"harness_lint: --fix-used-by: could not locate `used_by` block for `{name}` (skipped)\n"
+            )
+            continue
+        if new_section != new_text:
+            new_text = new_section
+            changed_agents.append(name)
+
+    if new_text == text:
+        print("harness_lint --fix-used-by: no changes")
+        return 0
+    agents_path.write_text(new_text, encoding="utf-8")
+    print(f"harness_lint --fix-used-by: updated {len(changed_agents)} agent(s): {', '.join(changed_agents)}")
+    return 0
+
+
+def _format_used_by_block(refs: list[str]) -> str:
+    """Format a `used_by = [...]` TOML block (matches existing style)."""
+    if not refs:
+        return "used_by = []"
+    lines = ["used_by = ["]
+    for ref in refs:
+        lines.append(f'    "{ref}",')
+    lines.append("]")
+    return "\n".join(lines)
+
+
 def run_lints() -> list[Finding]:
     findings: list[Finding] = []
     findings.extend(check_root_files())
@@ -862,6 +1316,17 @@ def run_lints() -> list[Finding]:
     findings.extend(check_harness_readme())
     findings.extend(check_atelier_skill())
     findings.extend(check_scripts_zk_paths())
+    intents, intent_findings = load_intents()
+    findings.extend(intent_findings)
+    # Resolve intent agent references against both registries:
+    #   - `agents` is from load_claude_agents() (.claude/agents/*.md filesystem
+    #     walk); canonical for Claude Code subagent dispatch.
+    #   - `harness_agents_data` is from harness/agents.toml; canonical for
+    #     Codex parity. A broken reference in either is an error.
+    harness_agents_raw, _ = _load_toml(ROOT / "harness" / "agents.toml")
+    harness_agents_data = (harness_agents_raw or {}).get("agents", {}) or {}
+    findings.extend(check_intents_registry(intents, agents, harness_agents_data))
+    findings.extend(check_agent_pattern_and_used_by(intents, commands))
     findings.sort(key=lambda f: (SEVERITY_ORDER.get(f.severity, 99), f.code, f.where, f.message))
     return findings
 
@@ -904,7 +1369,15 @@ def main(argv: list[str] | None = None) -> int:
         description="Check Claude Code and Codex harness portability.",
     )
     parser.add_argument("--json", action="store_true", help="Emit JSON.")
+    parser.add_argument(
+        "--fix-used-by",
+        action="store_true",
+        help="Regenerate `used_by` lists in harness/agents.toml from the intents/commands walk, then exit. Mutating; off by default.",
+    )
     args = parser.parse_args(argv)
+
+    if args.fix_used_by:
+        return fix_used_by()
 
     findings = run_lints()
     if args.json:

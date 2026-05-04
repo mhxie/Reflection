@@ -6,6 +6,7 @@ Provider-neutral registry files for the Atelier runtime layer.
 |---|---|
 | `commands.toml` | Portable workflow names mapped to `.claude/commands/*.md` sources and Codex prompts. |
 | `agents.toml` | Portable role names mapped to `.claude/agents/*.md` sources and model profiles. |
+| `intents.toml` | Intent router registry for `/hi` — trigger phrases mapped to dispatch shape (mode, agents, profile reads, coordination pattern). |
 | `models.toml` | Role-level model profiles (committed schema: tier names, rationale, invocation pattern, agent assignments). Provider/model bindings live in gitignored `profile/models.toml` and merge at runtime. |
 | `capabilities.toml` | Runtime-neutral capability names and the Codex-side tool that implements each. The Claude Code mapping lives in `.claude/agents/*.md` `tools:` frontmatter (single source of truth). |
 

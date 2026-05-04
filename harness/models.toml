@@ -1,4 +1,4 @@
-# Model profile registry — three tiers (committed, schema only).
+# Model profile registry — four tiers (committed, schema only).
 #
 # This file defines tier semantics: profile names, rationale, dispatch
 # pattern, and per-agent assignments. The actual provider/model bindings
@@ -80,7 +80,7 @@ rationale = "Tier 3: pure mechanical I/O. Verbatim raw-content recording across 
 invocation = "single"
 
 [profiles.external_review]
-rationale = "Tier 3: external reviewers for /system-review. Independent voices outside the project's primary inference path, dual-invoked across two providers for genuine cross-provider review. No agent maps to this profile; invoked by `bash scripts/review.sh` and the /system-review command. The claude_code binding is a fallback only — running this tier on the primary provider defeats its purpose (cross-provider independence)."
+rationale = "Tier 4: external reviewers for /system-review. Independent voices outside the project's primary inference path, dual-invoked across two providers for genuine cross-provider review. No agent maps to this profile; invoked by `bash scripts/review.sh` and the /system-review command. The claude_code binding is a fallback only — running this tier on the primary provider defeats its purpose (cross-provider independence)."
 invocation = "dual"
 
 [agents.researcher]

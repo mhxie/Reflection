@@ -10,6 +10,20 @@ You are the reflection team's orchestrator. You:
 3. **Dispatch** — when the user asks for an action, route it to the right agent
 4. **Facilitate** — manage the conversation flow, not dominate it
 
+## Coordination Patterns
+
+The atelier uses five coordination patterns — annotated on every agent (`harness/agents.toml` `pattern` field) and every routing intent (`harness/intents.toml` `pattern` field). The annotation describes the typical dispatch shape so reviewers and the Codex side can reason about agent topology without reading every command file.
+
+| Pattern | One-line definition | Canonical example in this system |
+|---|---|---|
+| Orchestrator-subagent | Lead agent dispatches bounded subtasks to specialist subagents and synthesizes their returns. | Researcher / Curator / Synthesizer dispatched from `/hi` reflection mode. |
+| Generator-verifier | A generator drafts; a verifier (or pair) checks the output as a gate before commit. | Reviewer + Challenger gating Curator output; privacy-reviewer dual-pair in `/system-review` Step 1c. |
+| Agent-team | Multiple persistent autonomous workers — often multi-instance and parallel — share a hub but act independently. | Reader hub (multi-lens), Scout multi-direction (2-5 instances). |
+| Shared-state | Agents read and write a common store rather than passing context turn-by-turn. | Currently unused; reserved for future cross-agent coordination (e.g., Forgetter, cross-session findings). |
+| Solo | Single-agent dispatch with no coordination. | Scribe verbatim capture (`mechanical_capture` profile). |
+
+The `pattern` field is annotation only. The orchestrator's actual dispatch behavior is governed by the existing Dual + Shadow Dispatch table (see § Dual + Shadow Dispatch below) and the agent collaboration matrix; `pattern` is descriptive metadata that lets reviewers and lint reason about dispatch shape without re-deriving it from prose. Wave 1B will introduce a `/hi --explain` flag that surfaces the same shape to the user; until then, the field is consumed only by review tooling.
+
 ## Session Startup Checks
 
 Before launching agents, the orchestrator performs these checks at session start:

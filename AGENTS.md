@@ -125,8 +125,10 @@ When changing the harness:
 3. Add or update capability mappings in `harness/capabilities.toml`.
 4. Add or update role mappings in `harness/agents.toml`.
 5. Add or update command mappings in `harness/commands.toml`.
-6. Update `.agents/skills/atelier/SKILL.md` if the Codex workflow changes.
-7. Keep Claude-specific syntax in `.claude/` and Codex-specific notes in
+6. Add or update intent router rows in `harness/intents.toml` (trigger phrases
+   → dispatch shape for `/hi`).
+7. Update `.agents/skills/atelier/SKILL.md` if the Codex workflow changes.
+8. Keep Claude-specific syntax in `.claude/` and Codex-specific notes in
    `.codex/`.
-8. Run `python3 scripts/harness_lint.py` before finishing.
-9. Run `python3 scripts/harness_smoke.py` after helper or registry edits.
+9. Run `python3 scripts/harness_lint.py` before finishing.
+10. Run `python3 scripts/harness_smoke.py` after helper or registry edits.
