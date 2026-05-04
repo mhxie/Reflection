@@ -6,22 +6,30 @@
 # gitignored `profile/models.toml`. Loaders merge the two at runtime:
 # schema from here, bindings from there.
 #
-# 1. core_intelligence  Deep cognition: vault reading, synthesis,
-#                       challenge, framework reasoning, system evolution,
-#                       multi-lens deep reading. Single-model invocation.
-# 2. cross_validation   Low-cognitive-load tasks where cross-provider
-#                       agreement is the trust signal: mechanical review,
-#                       note operations, web research, meeting extraction,
-#                       recommendations, privacy scanning. Dual dispatch
-#                       wired for privacy-reviewer in /system-review
-#                       Step 1c; other tier members run single today
-#                       and may opt into dual at their dispatch sites.
-# 3. external_review    External reviewers for /system-review.
-#                       Independent voices outside the project's harness,
-#                       dual-invoked across two non-Anthropic providers
-#                       for genuine cross-provider review. No agent maps
-#                       to this profile; invoked by `bash scripts/review.sh`
-#                       and the /system-review command.
+# 1. core_intelligence    Deep cognition: vault reading, synthesis,
+#                         challenge, framework reasoning, system evolution,
+#                         multi-lens deep reading. Single-model invocation.
+# 2. cross_validation     Low-cognitive-load tasks where cross-provider
+#                         agreement is the trust signal: mechanical review,
+#                         note operations, web research, meeting extraction,
+#                         recommendations, privacy scanning. Dual dispatch
+#                         wired for privacy-reviewer in /system-review
+#                         Step 1c; other tier members run single today
+#                         and may opt into dual at their dispatch sites.
+# 3. mechanical_capture   Verbatim raw-content recording, light format
+#                         normalization (date headers, paragraph breaks,
+#                         punctuation hygiene), file routing. No synthesis,
+#                         no judgment. Single dispatch on a cheap model;
+#                         dual would only burn tokens since there is no
+#                         cognitive disagreement to surface. Used by the
+#                         scribe agent for daily-note capture from chat-mode
+#                         input under cloud-native architecture.
+# 4. external_review      External reviewers for /system-review.
+#                         Independent voices outside the project's harness,
+#                         dual-invoked across two non-Anthropic providers
+#                         for genuine cross-provider review. No agent maps
+#                         to this profile; invoked by `bash scripts/review.sh`
+#                         and the /system-review command.
 #
 # Profile-key schema (binding values live in profile/models.toml):
 #   rationale              required, free-text justification
@@ -67,6 +75,10 @@ invocation = "shadow"
 rationale = "Tier 2: low-cognitive-load tasks where cross-provider agreement is the trust signal. Mechanical review, note operations, web research, meeting extraction, recommendations, privacy scanning. Dual-dispatch capability is wired today for privacy-reviewer in /system-review Step 1c (Anthropic Sonnet leg + direct-api leg via scripts/chat_completion.py). The other tier members (reviewer, curator, scout, meeting, librarian) are eligible to opt into the same pattern at their dispatch sites; until they do, those agents run as single Anthropic dispatches. Where dual is honored, disagreement surfaces as a flag, not a silent average."
 invocation = "dual"
 
+[profiles.mechanical_capture]
+rationale = "Tier 3: pure mechanical I/O. Verbatim raw-content recording across all capture surfaces (daily notes, dining log rows, GTD entries, people note stubs, generic raw-passthrough), light format normalization, deterministic file routing. No synthesis, no judgment, no cognitive contention to validate; therefore single dispatch on the Pareto-optimal cheap tier (cheapest reliable model that preserves verbatim text). Preferred binding: direct_api leg pointing at a sub-Haiku-cost provider; Anthropic-side fallback runs Haiku 4.x. Provider choices and model ids live in gitignored profile/models.toml. Dual dispatch would only burn tokens. Trust comes from verbatim preservation enforced by the agent's forbidden list, not from cross-provider voting. Exists so the orchestrator (core_intelligence) does not burn its expensive context on transcribing chat input — a previous failure mode where raw daily-note capture either got skipped or paid Opus rates for typewriter work."
+invocation = "single"
+
 [profiles.external_review]
 rationale = "Tier 3: external reviewers for /system-review. Independent voices outside the project's primary inference path, dual-invoked across two providers for genuine cross-provider review. No agent maps to this profile; invoked by `bash scripts/review.sh` and the /system-review command. The claude_code binding is a fallback only — running this tier on the primary provider defeats its purpose (cross-provider independence)."
 invocation = "dual"
@@ -106,3 +118,6 @@ profile = "cross_validation"
 
 [agents.privacy-reviewer]
 profile = "cross_validation"
+
+[agents.scribe]
+profile = "mechanical_capture"

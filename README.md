@@ -158,7 +158,7 @@ Capture sources                  Local data layer ($OV/)
                      +-----------+-------+-------+-----------+
                      v           v               v           v
                 Le Cercle    Sessions     Frameworks    Trust engine
-                (12 agents)  (12 types)   (22 + xval)   (trust.py,
+                (13 agents)  (12 types)   (22 + xval)   (trust.py,
                      |           |               |        lint.py)
                      v           v               v
                 Protocols    $OV/reflections/   Cross-validation

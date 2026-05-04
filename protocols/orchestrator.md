@@ -37,9 +37,14 @@ Concrete transform, "Compact these notes" becomes: "Success = N notes in `$OV/` 
 
 ## Note Writing
 
-All note writes are local file writes under `$OV/`. The orchestrator (not the Curator) owns the `Write`/`Edit` tools. The Curator drafts proposals; the orchestrator writes after user approval. Every proposal carries a `target_path` under `$OV/` and the orchestrator either creates the file (`Write`) or applies a surgical change (`Edit`).
+All note writes are local file writes under `$OV/`. There are two writing paths, one cognitive and one mechanical:
 
-Daily notes (`$OV/daily-notes/YYYY-MM-DD.md`) are user-authored. The system reads them; it does not modify them. Curator dispatches that target a daily-note path are refused.
+- **Cognitive (→ Curator):** the Curator drafts content operations (compactions, merges, new wiki entries, session-derived notes); the orchestrator owns `Write`/`Edit` and writes after user approval. Every proposal carries a `target_path` under `$OV/`.
+- **Mechanical (→ Scribe):** the Scribe records user-dictated raw content verbatim (daily-note narrative, dining-log rows, GTD entries, people-note stubs, generic passthrough). The Scribe writes directly using its own `Write`/`Edit` tools at the target path the orchestrator names. No user approval gate — verbatim preservation IS the trust property. See "Capture Operations" below and `.claude/agents/scribe.md`.
+
+The orchestrator must not transcribe raw user content itself; that burns `core_intelligence` tokens on mechanical I/O and is the failure mode the `mechanical_capture` profile exists to prevent.
+
+Daily notes (under `$OV/daily-notes/`) are user-authored. The system reads them by default and does not modify them. **Exception (cloud-native capture):** when the user dictates raw daily-note content through chat, dispatch the Scribe with `operation: daily_note` to record it verbatim. Curator dispatches targeting daily-note paths are still refused; only the Scribe writes daily notes, and only when the user is dictating.
 
 ## Dual + Shadow Dispatch (per profile invocation pattern)
 
@@ -165,6 +170,24 @@ The user can request these actions during or after any session:
 | "Add a new framework for X" | Create framework file | Evolver |
 | "Change how [command] works" | Modify command | Evolver |
 
+### Capture Operations (→ Scribe)
+Cheap-tier verbatim recording. Dispatched on the `mechanical_capture` profile. The orchestrator MUST NOT transcribe raw user content itself — that burns `core_intelligence` on mechanical I/O. See `.claude/agents/scribe.md` for operation contracts.
+
+| User dictates | Operation | Target tier |
+|---|---|---|
+| Date-stamped narrative for a day | `daily_note` | under `$OV/daily-notes/` |
+| Restaurant + score / 必点 | `dining_row` | the user's dining-log file under `$OV/travel/` |
+| Action item with deadline / area, or close-out toggle on an existing item | `gtd_entry` (`add` / `toggle_done` / `toggle_killed`) | most recently modified file under `$OV/gtd/` |
+| Person mentioned with bio context, no person note exists yet | `people_stub` | under `$OV/archive/people/` |
+| "Save this somewhere" — no typed slot fits | `generic` | orchestrator picks an `$OV/drafts/` path |
+
+The Scribe is the only writer for these surfaces; the orchestrator does not duplicate the work after dispatch returns. Schemas (column layouts, field names, marker glyphs, header styles) are user-private and discovered from `$OV/` at dispatch time, not encoded here.
+
+**Zero-files recovery (orchestrator side, before dispatch):**
+- `gtd_entry` — if `$OV/gtd/` is empty, ask the user once for a default GTD filename and create the file in the dispatch context (or skip the dispatch and surface the question). Do not pass an empty `target_file` to the Scribe.
+- `generic` — if no `$OV/drafts/` path is obvious from content, propose `$OV/drafts/<short-slug>.md` and confirm with the user before dispatch.
+- `dining_row` / `daily_note` — if the canonical target file or directory does not exist, the Scribe will return a clarification request; route it back to the user to supply the path or filename rather than retrying with a guess.
+
 ## Agent Collaboration Matrix
 
 The orchestrator should actively look for collaboration opportunities during sessions. When one agent's output creates a natural opening for another, chain them.
@@ -188,6 +211,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Reviewer + Challenger → Write-back** | Reading discussion ready for write-back | Reviewer checks grounding, Challenger checks completeness | Quality gate before writing to daily note |
 | **Evolver → Orchestrator → Review → Commit** | Evolver proposes a system change | Evolver makes changes (no commit) → returns `review_tier` to orchestrator → orchestrator dispatches reviewers → fixes issues → commits | Quality gate on system evolution (see Review Tiers) |
 | **Batch Compaction** | User asks to compact a topic area | Researcher finds all notes in `$OV/` → Orchestrator snapshots each source to `$OV/cache/compact-<slug>.md` at dispatch time → Curator drafts one output note at a time → orchestrator writes each after approval | Sequential: all snapshots must exist on disk before Curator starts |
+| **Pre-Output Raw Capture** | Reflection / coaching session about to write its reflection file, and the user dictated raw capture content during the session | Orchestrator collects raw user content per Capture surface (daily note, dining row, GTD, people stub, generic) → dispatches one Scribe per surface in parallel → all Scribe writes complete before the orchestrator writes the reflection file | Cost-partitioned: cheap-tier captures, `core_intelligence` does not transcribe |
 
 ### Parallel Dispatches (A and B run simultaneously)
 
@@ -292,6 +316,6 @@ During any session, actively look for these signals and chain agents:
 1. **Don't bottleneck.** If the user asks for something an agent can do, dispatch it — don't try to do it yourself.
 2. **Present, don't lecture.** Your job is to facilitate the user's thinking, not to overwhelm them with agent outputs.
 3. **One thing at a time.** Present findings incrementally, not all at once.
-4. **Ask before acting.** For note operations (create, merge, replace), confirm with the user before writing.
+4. **Ask before acting.** For Curator-mediated note operations (create, merge, replace), confirm with the user before writing. **Exception: Scribe capture operations** (`daily_note`, `dining_row`, `gtd_entry`, `people_stub`, `generic`) write directly without an approval gate — verbatim preservation is the trust property and the user has already authored the content via chat. See "Note Writing" section above.
 5. **Track dispatches.** Note which agents were invoked and their results in the session output.
 6. **Quality gate enforcement.** Check Gate outputs before presenting to user.

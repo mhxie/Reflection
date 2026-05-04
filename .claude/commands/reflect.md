@@ -10,6 +10,7 @@ Detect intent from `<context>`, skip the Step 1 menu, route directly:
 
 | Intent | Trigger words / format | Action |
 |---|---|---|
+| Capture (fast path) | "记一下", "记录", "log this", "just write down", or pure factual events with no question/discussion (e.g., "5/4 早上去了 X, 中午吃了 Y") | Dispatch Scribe directly with the right operation; skip the coaching flow. See Capture Fast Path below. |
 | Reading | article URL, `[[Note Title]]`, "read/discuss" | Read & Discuss with input as article |
 | Meeting | "meeting", "standup", "1:1", "meeting notes" | Dispatch Meeting agent |
 | Talk/transcript | "seminar", "talk", "transcript", "podcast", "video", or large transcript paste | Read & Discuss (Reader preprocesses transcript) |
@@ -17,12 +18,26 @@ Detect intent from `<context>`, skip the Step 1 menu, route directly:
 
 If no `<context>`, fall through to Weekly Cue Check, then Step 1 menu.
 
+### Capture Fast Path
+
+When the user's input is "just write this down" (factual, no reflection sought), do not run the coaching flow. Dispatch the Scribe directly with the right operation:
+
+| Content shape | Scribe operation | Target tier |
+|---|---|---|
+| Date-stamped narrative for a day | `daily_note` | under `$OV/daily-notes/` |
+| Restaurant + score / 必点 | `dining_row` | the user's dining-log file under `$OV/travel/` |
+| New person mentioned with bio context, file does not exist | `people_stub` | under `$OV/archive/people/` |
+| Action item with deadline / area | `gtd_entry` (`add`) | most recently modified file under `$OV/gtd/` |
+| Anything else "just save this" | `generic` | orchestrator picks an appropriate path under `$OV/drafts/` |
+
+Resolve the exact target file path at dispatch time by inspecting the target directory for the user's existing structural conventions (subdirectory tree, filename style). Do not assume a layout; the user owns these conventions and they are private to `$OV/`. Confirm with the user once when multiple plausible targets exist; if the path is obvious from a quick directory listing, just dispatch.
+
 ### Effective Date
 
 Resolve inline before dispatch:
 - `<effective-date>`: if local time < 03:00, use yesterday's calendar date; else today.
 
-Daily notes are user-authored under `$OV/daily-notes/YYYY-MM-DD.md`. The system reads them as-is; nothing pulls or mirrors them from anywhere else.
+Daily notes are user-authored under `$OV/daily-notes/`. The system reads them as-is; nothing pulls or mirrors them from anywhere else. The exact subdirectory layout and filename pattern are user-private; resolve them at runtime by listing the target directory. **Exception (cloud-native mode):** when the user provides daily-note-style narrative through `/reflect <args>` or chat, the orchestrator dispatches the `scribe` agent to record it verbatim before writing the reflection file. See "Pre-Output: Raw Capture" below. The user is still the author; the scribe is the typewriter.
 
 ### Weekly Cue Check (before Step 1 menu, only when no `<context>` routed away)
 
@@ -246,15 +261,15 @@ Based on the loaded context, run an interactive reflection.
 
 - **Mid-conversation soft surfacing (max 1 per session):** if the user mentions a topic that strongly matches an open TODO not yet mentioned this session, do **one** soft callback: "顺便,你 [date] 写过 [item] 还 open — 要不要本周 commit?" Confidence threshold is high (phrase or strong-token overlap); do not reach for tenuous matches. If user confirms commitment → mark for closure-pending or promotion at wrap-up. If user declines → do not surface again this session.
 - **No proactive list dump.** The TODO list is for *matching*, not narration. Never volunteer "btw here are N open TODOs" outside Step 0 digest or explicit user request.
-- **Closure write-back at wrap-up.** When the user explicitly confirms in conversation that a TODO is done or killed (Step 0 closure / stale prompt or mid-session), accumulate the closures and at the end of the Output step. Two paths, two source types:
+- **Closure write-back at wrap-up.** When the user explicitly confirms in conversation that a TODO is done or killed (Step 0 closure / stale prompt or mid-session), accumulate the closure into the **pending Scribe operations** list (see "Pre-Output: Raw Capture" below). Do NOT do direct `Edit` from the orchestrator: that bypasses the `mechanical_capture` cost-partition contract and creates duplicate write paths. Two paths, two source types — both dispatched as Scribe `gtd_entry` operations at wrap-up:
   - **Done path (user completed the item):**
-    - GTD-source (`source` under `$OV/gtd/`): `Edit` to change `[ ]` → `[x]` on the source line.
-    - Reflection-source (`source` under `$OV/reflections/`): `Edit` to prepend `DONE <effective-date>: ` to the bullet text on the source line.
+    - GTD-source (`source` under `$OV/gtd/`): pending op `gtd_entry` with `operation_kind: toggle_done`, `target_file: <source>`, `line_no: <line>`, `expected_text: <bullet text from list --json>`.
+    - Reflection-source (`source` under `$OV/reflections/`): pending op `gtd_entry` with `operation_kind: prefix_line`, `target_file: <source>`, `line_no: <line>`, `expected_text: <bullet text>`, `prefix: "DONE <effective-date>: "`.
   - **Kill path (user abandons the item):**
-    - GTD-source: `Edit` to change `[ ]` → `[~]` on the source line. `[~]` is the killed marker per `todos.py` STATE_MAP; preserves the audit distinction from `[x]` (done).
-    - Reflection-source: `Edit` to prepend `KILLED <effective-date>: ` to the bullet text. The scanner excludes both `DONE ` and `KILLED ` prefixes from open scans.
-  - **Line-drift guard:** before each `Edit`, re-read the source line at the recorded `line` number. If the bullet text no longer matches what `list --json` reported (the user manually edited mid-session), **skip that closure** and note it under Anomalies — do not risk overwriting unrelated content.
-  - Do these edits **once at the end**, not mid-conversation, to avoid jumping out of the dialogue.
+    - GTD-source: pending op `gtd_entry` with `operation_kind: toggle_killed`. `[~]` is the killed marker per `todos.py` STATE_MAP; preserves the audit distinction from `[x]` (done). Orchestrator passes the marker glyph as a parameter.
+    - Reflection-source: pending op `gtd_entry` with `operation_kind: prefix_line`, `prefix: "KILLED <effective-date>: "`. The scanner excludes both `DONE ` and `KILLED ` prefixes from open scans.
+  - **Line-drift guard:** the Scribe re-reads the source line at the recorded `line_no` at dispatch time and verifies `expected_text` matches. If it does not match (the user manually edited mid-session), the Scribe aborts that operation with a "line drifted" error; the orchestrator notes the skipped closure under Anomalies in the wrap-up. The orchestrator does NOT do this verification itself.
+  - Dispatch all accumulated closures at the Pre-Output stage, not mid-conversation — keeps the dialogue uninterrupted and routes mechanical writes through the cheap tier.
 
 ### 0. Continuity Check (if not the first session)
 
@@ -267,7 +282,7 @@ Present **at most one item per category**, woven into the conversation per `prot
 
 - **Last Next Action callback** (most recent prior session's first item, if from a different day): "Last time, you intended to [action]. How did that go?" Accept any answer without judgment — missed actions are data points, not failures.
 - **Closure candidate** (if any): "I noticed you mentioned [X] in [date] — does that mean [TODO Y] is done?" If user confirms → add to closure-pending list (write-back at wrap-up).
-- **Stale prompt** (if any): "[Item] has been open ~Nd with no movement. Kill, or promote to GTD with a real deadline?" If user picks "kill" → add to kill-path closures (per the write-back rules above: GTD `[~]`, reflection `KILLED <date>: ` prefix). If "promote" → ask for due date and area, then at wrap-up append `+ [ ] <text>  due:<date>  area:<#tag>` to the **active GTD file** (defined as the most recently modified `.md` file in `$OV/gtd/` — `Bash: ls -t "$OV"/gtd/*.md | head -1`).
+- **Stale prompt** (if any): "[Item] has been open ~Nd with no movement. Kill, or promote to GTD with a real deadline?" If user picks "kill" → add to kill-path closures (per the write-back rules above). If "promote" → ask for due date and area, then accumulate a pending Scribe op: `gtd_entry` with `operation_kind: add`, `target_file: <active GTD file>`, `text: <item>`, structured fields `due: <date>`, `area: <#tag>`. The active GTD file is the most recently modified `.md` file in `$OV/gtd/` (`Bash: ls -t "$OV"/gtd/*.md | head -1`); resolve at accumulation time and pass as `target_file`. Dispatch happens at Pre-Output. Do NOT append directly from the orchestrator.
 
 Skip rules:
 - Previous session was **today**: skip the Next Action callback.
@@ -361,8 +376,8 @@ Lightweight capture of dining experiences for personal preference learning + fut
 - 1-2 句话: 必点菜, 服务/ambiance, 同行
 - 推断 from context (else 1-line confirm): City / 类型 / Platform (OT/R/W/DD) / Credit used
 
-**Append to the dining log**:
-Use the `Edit` tool to add one row to the user's dining-log table under `$OV/travel/`, with all columns filled (评分 + 再去 mandatory; the dash placeholder only for missing data the user can't recall).
+**Accumulate as a pending Scribe operation** (do NOT `Edit` directly from the orchestrator):
+- Pending op: `dining_row` with `target_file: <user's dining-log file under $OV/travel/>`, structured row fields (date, restaurant, city, type, score, 再去, health flags, platform, credit), `raw_content` for the 必点·备注 free-text column. 评分 + 再去 mandatory; dash placeholder only for missing data the user can't recall. Dispatch happens at Pre-Output. The Scribe reads the file's schema header at dispatch time and formats the row to match exactly.
 
 **Cross-doc sync triggers** (silent unless flagged for user):
 - If 评分 ≥ 8 AND 再去 = Y AND restaurant NOT in the regional catalog rotation → flag user: "Add to rotation?"
@@ -385,6 +400,31 @@ One specific, actionable next step tied to a goal. **Resurface before generating
 4. **If no match AND queue is bloated (≥5 active P0/P1)**: do not add. Say "Open queue is already at [N] active items. Today doesn't need to add — pick one from the list to commit to this week instead?" Surface 2-3 candidates, let user choose.
 
 Not generic advice — something the user can do today or this week. Match user's language (Chinese for Chinese topics).
+
+## Pre-Output: Raw Capture (Cloud-Native Mode)
+
+Before writing the reflection file, dispatch the Scribe agent for every accumulated capture operation from this session. Under the cloud-native architecture, chat is the user's authoring surface; the orchestrator must record raw input rather than only synthesizing it into the reflection. Do this work via the Scribe, not yourself: transcribing chat input on `core_intelligence` is a known cost antipattern.
+
+The orchestrator accumulates pending Scribe operations during the session (it does NOT write directly). Sources of accumulated ops:
+
+| Source step | Scribe operation | When to accumulate |
+|---|---|---|
+| Step 0 closure write-back (TODO Awareness rule) | `gtd_entry` (`toggle_done` / `toggle_killed` / `prefix_line`) | User confirmed a TODO done or killed (GTD-source toggle; reflection-source prefix) |
+| Step 0 stale prompt → promote | `gtd_entry` (`add`) | User picked "promote" with due date and area |
+| Step 6 Dining Pulse | `dining_row` | User shared a restaurant visit |
+| Any step where user dictates a daily-note-style narrative for a date | `daily_note` | Narrative covers events for a date whose daily-note file is missing or lacks the new content |
+| Any step where a person is mentioned with bio context AND no person note exists | `people_stub` | Verify with `uv run scripts/people.py "<name>"` before adding; only accumulate if no match returned |
+| User explicitly says "save this" / "记一下" with no typed slot fit | `generic` | Orchestrator picks a `$OV/drafts/` path and confirms with user before adding to pending list |
+
+**Skip condition (per op):** the corresponding file already captures the content, or the user provided only reflection-mode input (questions, feelings, abstract discussion) for that surface. Do not invent content.
+
+**Dispatch all accumulated ops at this stage.** For each pending op, call the Scribe with the operation-specific fields documented in `.claude/agents/scribe.md` ("Operations" section). Do NOT pre-rewrite user text before passing it; the Scribe applies verbatim + light-format rules.
+
+Where pending ops target independent files, dispatch the Scribe calls in parallel (single message, multiple `Agent` tool calls) for latency.
+
+If the Scribe returns a clarification request (missing schema reference, line drift on a closure, ambiguous target file), resolve it: ask the user if needed and re-dispatch, or note the skipped op under Anomalies in the reflection's Session Meta. Do not silently fall back to direct orchestrator writes.
+
+After all Scribes return, proceed to Output.
 
 ## Output
 

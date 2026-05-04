@@ -35,6 +35,7 @@ Five-tier model. Directory is the tier; location carries the certification level
 | Structural query | `Grep` with path/glob scoped to tier directory |
 | Daily note by date | `Read $OV/daily-notes/YYYY-MM-DD.md` |
 | Note by title | `Grep` for title then `Read` the file |
+| Person note by name | `Bash: uv run scripts/people.py "<name>"` |
 
 - Semantic-primary search. Content queries start with `uv run scripts/semantic.py query`, not Grep. Grep is for structural queries only.
 - Local-first reads. Read from `$OV/` via Read + Grep + semantic.py.
@@ -45,7 +46,7 @@ Prioritize by validation depth, not origin. Trust criterion: alloy (default) < w
 
 - No em dashes in written output. Use colons, semicolons, parentheses, or restructure.
 - No H1 headings inside markdown files. The filename is the title; the body opens with metadata or `##`. Filenames are space-separated title-case.
-- Daily notes are user-authored. The system reads them; it does not modify them.
+- Daily notes are user-authored. System reads, does not modify. **Exception**: user-dictated raw content → dispatch `scribe` (verbatim cheap-tier; see `.claude/agents/scribe.md`).
 - Cite sources. Reference notes by `[[Title]]`. Never claim the user wrote something without a source.
 - Match the user's language. Chinese for Chinese-language topics; English otherwise. Reading-intensive output in Chinese.
 - `$OV` is the canonical persistence store, not auto-memory. Write to `profile/`: user facts (`profile/identity.md`), goals (`profile/directions.md`), private policy or preferences (`profile/<topic>.md`). Other persistence: validated knowledge to `$OV/wiki/`, session insights to `$OV/reflections/`, project context to `profile/directions.md` or daily notes. `$OV/personal/` is L2 raw-domain assets only (photos, events under `$OV/personal/raw/`); do not put config there. Auto-memory is fallback only, reserved for items that fit no $OV tier (rare cross-conversation orchestration nudges). On recall, search $OV first via `scripts/semantic.py query` + Grep; consult auto-memory only when $OV returns nothing.
@@ -87,7 +88,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 
 ## Agent Teams
 
-Agent definitions live in `.claude/agents/`; portable role metadata lives in `harness/agents.toml`; model profiles live in `harness/models.toml`. Team (12): Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Scout, Reader, Meeting, Librarian, Privacy-Reviewer. For dispatch routing, see `protocols/orchestrator.md`.
+Agent definitions live in `.claude/agents/`; portable role metadata lives in `harness/agents.toml`; model profiles live in `harness/models.toml`. Team (13): Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Scout, Reader, Meeting, Librarian, Privacy-Reviewer, Scribe. For dispatch routing, see `protocols/orchestrator.md`.
 
 ## Runtime Portability
 

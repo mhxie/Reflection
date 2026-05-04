@@ -6,7 +6,7 @@ Root instructions for Codex and other non-Claude runtimes. Claude Code reads
 This system is **the Atelier** — a workshop wrapping the user's **œuvre**
 (accumulating body of work, kept under `$OV/`). The user is the **Painter**;
 agents collectively are **le cercle**. For the full vocabulary and the
-12-operator archetype map, see `CLAUDE.md` § Vocabulary.
+13-operator archetype map, see `protocols/atelier.md`.
 
 Codex can also discover the repo-scoped `atelier` skill in `.agents/skills/atelier/`.
 

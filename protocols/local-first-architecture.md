@@ -111,7 +111,7 @@ The trust engine and the wiki schema only see the `$OV/wiki/` subtree. Everythin
 
 `$OV/` is the only copy of the user's knowledge layer. There is no remote mirror, no two-way sync, no idempotency ledger. The filesystem may sync devices (Google Drive, iCloud, etc.); that is outside the system's concern.
 
-Daily notes (`$OV/daily-notes/YYYY-MM-DD.md`) are user-authored. The system reads them; it does not write to them. Curator dispatches that target a daily-note path are refused.
+Daily notes (under `$OV/daily-notes/`) are user-authored. By default the system reads them; it does not write to them. Curator dispatches that target a daily-note path are refused. **Exception (cloud-native capture):** when the user dictates raw daily-note content through chat, the Scribe agent (`mechanical_capture` profile, `daily_note` operation) records it verbatim. This is the only path by which the system writes to a daily note; the orchestrator does not transcribe directly.
 
 All other tiers can be written by the orchestrator after user approval. The Curator drafts proposals; the orchestrator owns `Write` and `Edit` and applies them to a `target_path` under `$OV/`.
 

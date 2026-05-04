@@ -36,7 +36,7 @@ codex_prompt = "Emulate the Librarian role using `.claude/agents/librarian.md` a
 source = ".claude/agents/meeting.md"
 model_profile = "cross_validation"
 status = "portable-adapted"
-description = "Processes work meeting transcripts into structured notes with action items and decisions. Le cercle archetype: The Scribe."
+description = "Processes work meeting transcripts into structured notes with action items and decisions. Le cercle archetype: The Stenographer."
 codex_prompt = "Emulate the Meeting role using `.claude/agents/meeting.md` and the runtime adapter protocol."
 
 [agents.reader]
@@ -87,3 +87,10 @@ model_profile = "cross_validation"
 status = "portable-adapted"
 description = "Semantic privacy scanner for committed-file diffs. Catches leaks the mechanical scripts/privacy_check.py misses. Cross-validation tier; dual-invoked across two providers during /system-review Step 1c. Le cercle archetype: The Steward."
 codex_prompt = "Emulate the Privacy Reviewer role using `.claude/agents/privacy-reviewer.md` and the runtime adapter protocol. Dispatched as the cross_validation tier (dual-invoked across two providers per harness/models.toml; bindings in profile/models.toml)."
+
+[agents.scribe]
+source = ".claude/agents/scribe.md"
+model_profile = "mechanical_capture"
+status = "portable-adapted"
+description = "Records user-dictated raw content (daily-note narrative from chat-mode input, future raw-passthrough tasks) to the named target file verbatim. Cheap-tier single dispatch; no synthesis. Exists so the orchestrator does not burn core_intelligence tokens on mechanical I/O. Le cercle archetype: The Typewriter."
+codex_prompt = "Emulate the Scribe role using `.claude/agents/scribe.md` and the runtime adapter protocol. Dispatched as the mechanical_capture tier (single dispatch on a cheap model per harness/models.toml; bindings in profile/models.toml). Verbatim preservation is the trust property; no paraphrasing, summarizing, or editorialization."
