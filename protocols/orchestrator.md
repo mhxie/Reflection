@@ -10,6 +10,24 @@ You are the reflection team's orchestrator. You:
 3. **Dispatch** — when the user asks for an action, route it to the right agent
 4. **Facilitate** — manage the conversation flow, not dominate it
 
+## Primitive Selection
+
+When the system needs a new behavior, choose the lightest primitive that covers it. Default to the lightest; introduce a heavier primitive only when the lighter one is insufficient.
+
+| Primitive | When | Trigger | Examples in this repo |
+|---|---|---|---|
+| **Hook** (`.claude/settings.json` `hooks` block) | Programmatic event handler. Safety gate, mechanical lint, session-start cue. Always-on, no model judgment. | Tool event (SessionStart, PreToolUse, etc.) | SessionStart cues via `scripts/cues.py`; `scripts/privacy_check.py` at commit; `scripts/harness_lint.py` on protocol edits |
+| **Skill** (`.claude/skills/<name>/SKILL.md`) | Thin entry hint that auto-triggers on semantic match against user phrasing. Lowers friction of typing `/hi` first. Skills here forward to `/hi`; the canonical intent router (`harness/intents.toml`) stays the decision point. | Model judges the description matches user input | `.claude/skills/capture/`, `.claude/skills/reading/` |
+| **Command** (`.claude/commands/<name>.md`) | Explicit `/slash` invocation. User names the operation. | User types `/<name>` | `/curate`, `/sync`, `/lint`, `/promote`, `/hi` |
+| **Agent** (`.claude/agents/<name>.md`) | Delegated subprocess with isolated context. Use when the task needs research or tool use that would bloat main context, or when role/voice separation matters (Reviewer's voice is not Challenger's voice). | Orchestrator dispatches via the `Agent` tool | The cercle (Researcher, Reviewer, Challenger, Curator, ...) |
+
+Anti-patterns:
+
+- Don't introduce a new agent if a skill suffices. The cercle should grow only when role or voice separation matters; agent sprawl dilutes the dispatch picture.
+- Don't introduce a skill if a command-only flow is fine. Skills add semantic auto-trigger surface; when the user always invokes the behavior explicitly, a command is enough.
+- Don't write a command if a one-time prompt covers it. Commands are for repeated invocations with a stable workflow; one-offs belong in conversation.
+- Don't write a hook if the model can already be trusted to do the check. Hooks are for things the model might forget or skip; over-hooking turns the harness into mechanical surface that needs maintenance.
+
 ## Coordination Patterns
 
 The atelier uses five coordination patterns — annotated on every agent (`harness/agents.toml` `pattern` field) and every routing intent (`harness/intents.toml` `pattern` field). The annotation describes the typical dispatch shape so reviewers and the Codex side can reason about agent topology without reading every command file.

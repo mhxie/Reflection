@@ -119,6 +119,19 @@ Protocols, agent specs, and shared docs describe how the system works **now**. G
 
 This rule is enforced by `protocols/antipatterns.md` → #10 Legacy framing in living docs, scanned by the Evolver self-check and Reviewer System modes on Tier 2+ changes.
 
+## Editing discipline
+
+When making edits inside this repo (code, protocols, agents, commands, scripts, or markdown content):
+
+- **Match existing style and conventions.** Mirror surrounding indentation, naming, comment style, prose voice, and structure. Wiki entries are not daily-note voice; daily-note voice is not protocol voice. Reading the few neighboring lines is cheaper than imposing a foreign style.
+- **Surgical changes only.** Don't "improve" adjacent code, comments, or formatting that wasn't part of the request. Every changed line should trace to what was asked. If a line changed for any other reason, undo it or surface it in the response.
+- **Surface, don't silently fix.** If you notice unrelated dead code, pre-existing bugs, broken links, or style issues, mention them so the user can decide; don't bundle a silent fix with an unrelated edit.
+- **Clean up your own orphans, not others'.** When your changes orphan imports, variables, links, or sections, remove those. Don't remove pre-existing dead material unless explicitly asked.
+
+These rules apply to agent edits on the user's behalf. Direct user edits to their own working tree are user discretion; the rules shape what an agent does when delegated to edit.
+
+Reviewer-side detection of violations: `protocols/antipatterns.md` § 8 (Scope creep past the stated criterion).
+
 ## Lint enforcement (planned)
 
 `scripts/repo_lint.py` (TBD) will check:
