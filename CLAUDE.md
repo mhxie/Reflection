@@ -12,6 +12,7 @@ These rules apply to every turn, every agent. Violations are bugs.
 
 - Never hallucinate note content. If search returns nothing, say so.
 - Never hardcode private names, private repo URLs, employers, org names, or multi-word filename stems from `$OV/` in committed files. `scripts/privacy_check.py` enforces the filename-stem half in `/lint` and `/system-review`.
+- **Path placeholders.** Docs use `<paths.<name>>` defined in `harness/paths.toml` + `paths.local.toml`; resolve each placeholder by looking up `<name>` in the canonical table. Localized shadow wikis use `<paths.wiki_localized.<lang>>`. Renames edit the registry; `scripts/rewrite_paths.py` handles renames + templatize. Resolve to concrete vault paths in user-facing output.
 
 ## Knowledge Layers
 
@@ -20,12 +21,12 @@ Five-tier model. Directory is the tier; location carries the certification level
 | Tier | Location | Meaning |
 |---|---|---|
 | L5 | (reserved) | Universally certified |
-| L4 | `$OV/wiki/*.md`, `$OV/wiki-cn/*.md` | Locally certified, schema-structured, TrustRank-scored |
-| L3 | `$OV/papers/`, `$OV/preprints/` + Readwise | Peer-reviewed, high-citation |
-| L2 | `$OV/daily-notes/`, `$OV/reflections/`, `$OV/research/`, `$OV/agent-findings/`, `$OV/drafts/`, `$OV/gtd/`, `$OV/travel/`, `$OV/health/`, `$OV/work/`, `$OV/archive/`, `$OV/immigration/`, `$OV/finance/` | Working: free-writes, reflections, research, drafts |
-| L1 | Readwise inbox, `$OV/cache/`, `$OV/readwise/` | Raw capture |
+| L4 | `<paths.wiki>/*.md` (+ localized shadows per `paths.local.toml`) | Locally certified, schema-structured, TrustRank-scored |
+| L3 | `<paths.papers>/`, `<paths.preprints>/` + Readwise | Peer-reviewed, high-citation |
+| L2 | every L2 surface in `harness/paths.toml` (daily-notes, reflections, research, agent-findings, wip, gtd, travel, health, work, people, archive, abroad, finance) | Working: free-writes, reflections, research, drafts |
+| L1 | Readwise inbox, `<paths.cache>/`, `<paths.readwise>/` | Raw capture |
 
-`$OV/` is the source of truth. Daily notes are user-authored locally. `$OV/cache/` holds ephemeral fetches; `$OV/readwise/` mirrors Readwise. There is no remote note-store mirror.
+`$OV/` is the source of truth. Daily notes are user-authored locally. `<paths.cache>/` holds ephemeral fetches; `<paths.readwise>/` mirrors Readwise. `<paths.zettelm>/` is a transient mobile-capture submodule; `/sync` digests it into L2 then clears.
 
 ## Reading Rules
 
@@ -33,25 +34,25 @@ Five-tier model. Directory is the tier; location carries the certification level
 |---|---|
 | Content query | `Bash: uv run scripts/semantic.py query "<concept>" --top N` |
 | Structural query | `Grep` with path/glob scoped to tier directory |
-| Daily note by date | `Read $OV/daily-notes/YYYY-MM-DD.md` |
+| Daily note by date | `Read <paths.daily_notes>/YYYY-MM-DD.md` |
 | Note by title | `Grep` for title then `Read` the file |
 | Person note by name | `Bash: uv run scripts/people.py "<name>"` |
 
 - Semantic-primary search. Content queries start with `uv run scripts/semantic.py query`, not Grep. Grep is for structural queries only.
 - Local-first reads. Read from `$OV/` via Read + Grep + semantic.py.
 
-Prioritize by validation depth, not origin. Trust criterion: alloy (default) < wiki entry under `$OV/wiki/` < `#solo-flight`. Legacy `#ai-reflection` tags are searchable alloy. Full taxonomy in `protocols/epistemic-hygiene.md`.
+Prioritize by validation depth, not origin. Trust: alloy (default) < wiki entry under `<paths.wiki>/` < `#solo-flight`. Legacy `#ai-reflection` tags are searchable alloy. Full taxonomy in `protocols/epistemic-hygiene.md`.
 
 ## Writing Rules
 
 - No em dashes in written output. Use colons, semicolons, parentheses, or restructure.
 - No H1 headings inside markdown files. The filename is the title; the body opens with metadata or `##`. Filenames are space-separated title-case.
 - Daily notes are user-authored. System reads, does not modify. **Exception**: user-dictated raw content → dispatch `scribe` (verbatim cheap-tier; spec in `.claude/agents/scribe.md`).
-- Cite sources. Reference notes by `[[Title]]`. Never claim the user wrote something without a source.
+- Cite sources. L2 alloy (daily notes, reflections, wip) uses GitHub-style `[Display](<relative-path>)` (angle brackets handle spaces); display text MUST equal the linked file's title. Wiki under `<paths.wiki>/` keeps Obsidian `[[Title]]` / `[[Title#^cn]]` for the trust engine. Never claim the user wrote something without a source.
 - Match the user's language. Chinese for Chinese-language topics; English otherwise. Reading-intensive output in Chinese.
-- `$OV` is the canonical persistence store, not auto-memory. Write to `profile/`: user facts (`profile/identity.md`), goals (`profile/directions.md`), private policy or preferences (`profile/<topic>.md`). Other persistence: validated knowledge to `$OV/wiki/`, session insights to `$OV/reflections/`, project context to `profile/directions.md` or daily notes. `$OV/personal/` is L2 raw-domain assets only (photos, events under `$OV/personal/raw/`); do not put config there. Auto-memory is fallback only, reserved for items that fit no $OV tier (rare cross-conversation orchestration nudges). On recall, search $OV first via `scripts/semantic.py query` + Grep; consult auto-memory only when $OV returns nothing.
+- `$OV` is the canonical persistence store, not auto-memory. Write to `profile/`: user facts (`identity.md`), goals (`directions.md`), private policy (`profile/<topic>.md`). Validated knowledge → `<paths.wiki>/`; session insights → `<paths.reflections>/`; project context → `profile/directions.md` or daily notes. `<paths.personal>/` is L2 raw-domain assets only (photos, events under `<paths.personal>/raw/`); no config. Auto-memory is fallback only, for items that fit no $OV tier. On recall: $OV first via `scripts/semantic.py query` + Grep; auto-memory only when $OV returns nothing.
 
-Session reflections go to `$OV/reflections/YYYY-MM-DD-*.md` (local files). Include `### Full Text` for external content analyzed in session.
+Session reflections go to `<paths.reflections>/YYYY-MM-DD-*.md` (local files). Include `### Full Text` for external content analyzed in session.
 
 Late-sleep rule: before 03:00 local, "today" = previous calendar day. Read both effective and calendar date notes when they differ.
 
@@ -66,10 +67,10 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 ## Coaching Style
 
 - Ask questions, don't lecture. Depth progressions: `protocols/coaching-progressions.md`.
-- Criteria-first dispatch. Before multi-step agent dispatches, state the user-verifiable success criterion. If the request has multiple reasonable readings, surface 2-3 readings and your default before acting. Pattern in `protocols/orchestrator.md`.
-- Track eras and directions. Moments catalogued in `protocols/pattern-library.md`.
-- Respect the amenity floor per life area; floor definition in `protocols/session-scoring.md`.
-- Epistemic hygiene: write-first nudge (invite user to jot their position before AI digs in). Respect AI-free zones. Full hygiene taxonomy in `protocols/epistemic-hygiene.md`.
+- Criteria-first dispatch. Before multi-step dispatches, state the user-verifiable success criterion. If the request has multiple readings, surface 2-3 + your default first. Pattern in `protocols/orchestrator.md`.
+- Track eras / directions. Moments in `protocols/pattern-library.md`.
+- Respect the amenity floor per life area; `protocols/session-scoring.md`.
+- Epistemic hygiene: write-first nudge; respect AI-free zones. Full taxonomy in `protocols/epistemic-hygiene.md`.
 - Recency matters. Flag goals >1 year old as potentially stale.
 - Be honest about uncertainty. Never speculate when you can search.
 
@@ -80,33 +81,21 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 | `/hi` | Universal entry point with intent router |
 | `/curate` | Goal-aware triage of Readwise inbox |
 | `/introspect` | Build self-model from notes |
-| `/lint` | Structural + corpus-level checks on `$OV/wiki/` |
+| `/lint` | Structural + corpus-level checks on `<paths.wiki>/` |
 | `/promote` | Create L4 wiki entry from L2 sources |
 | `/prm` | Audit relationship health and support system robustness |
 | `/civ` | Civ-style life-management dashboard |
-| `/dine` | Recommend 3 restaurants (Intent A); track workplace catering deliveries against a weekly menu PDF (Intent B); log a meal you just ate, parsing receipt images if provided (Intent C) |
+| `/dine` | Restaurant recs (A); workplace catering tracking (B); meal logging with receipt parse (C) |
+| `/sync` | Digest the mobile-capture submodule into L2; enrich with backlinks; clear zettelm |
 
 ## Agent Teams
 
-Agent definitions in `.claude/agents/`; voices/metadata in `harness/agents.toml`; model identities in `harness/models.toml`. Team (15): Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Scout, Reader, Scholar, Meeting, Librarian, Privacy-Reviewer, Forgetter, Scribe. Dispatch routing in `protocols/orchestrator.md`.
+Agent definitions: `.claude/agents/`; voices/metadata: `harness/agents.toml`; models: `harness/models.toml`. Team (13 active): Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Scout, Reader, Scholar, Privacy-Reviewer, Forgetter, Scribe. Dormant (defined, dispatched only on explicit intent match — not in default rotation): Meeting, Librarian. Dispatch routing: `protocols/orchestrator.md`.
 
 ## Runtime Portability
 
-Codex reads `AGENTS.md`; Claude Code reads this file. Keep shared behavior provider-neutral. Model, capability, command, and role contracts live in `harness/models.toml`, `harness/capabilities.toml`, `harness/commands.toml`, `harness/agents.toml`, and `protocols/runtime-adapters.md`.
+Codex reads `AGENTS.md`; Claude Code reads this file. Provider-neutral contracts live in `harness/*.toml` and `protocols/runtime-adapters.md`.
 
 ## Reference
 
-Detailed specifications loaded on demand by agents that need them:
-
-- `protocols/orchestrator.md` — workflow patterns, dispatch table, collaboration matrix
-- `protocols/runtime-adapters.md` — Claude Code and Codex portability contract
-- `protocols/wiki-schema.md` — L4 wiki entry format, claim markers, anchors
-- `protocols/atelier.md` — system identity vocabulary register (cercle archetype map, glossary)
-- `protocols/local-first-architecture.md` — full five-tier model, $OV/ directory layout
-- `protocols/drive-zk-ingestion.md` — Drive top-level (raw landing) → `$OV/` (structured repository) workflow + mv-default rules
-- `protocols/raw-indexing.md` — cross-cutting clickable indexes over `$OV/<domain>/raw/` (wikilink-style backlinks, structure, dup handling)
-- `protocols/epistemic-hygiene.md` — validation-depth taxonomy, failure modes
-- `protocols/harness-assumptions.md` — model-era assumption registry, audit checklist
-- `protocols/session-log.md` — session event log format
-- `sources/readwise.md`, `sources/scholar.md`, `sources/local-papers.md` — external corpus queries
-- `scripts/` — trust.py, lint.py, semantic.py, session_log.py
+Protocols index: `protocols/README.md`. Source-handling teaching docs: `sources/`. Tooling: `scripts/`. Deferred specs: `protocols/specs/`.
