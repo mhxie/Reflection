@@ -13,43 +13,45 @@ The model has **five layers (L1–L5), numbered by depth of crystallization.** H
 ```
     L5 — Foundation                   (reserved — textbook-level, universally certified)
     ────────────────────────────
-    L4 — Locally certified            $OV/wiki/
+    L4 — Locally certified            <paths.wiki>/
           authoritative knowledge     anchored, schema-validated, TrustRank-scored
     ────────────────────────────
-    L3 — Externally certified         $OV/papers/ + Readwise (curated)
+    L3 — Externally certified         <paths.papers>/ + Readwise (curated)
           peer-reviewed or high-citation receipts
     ────────────────────────────
-    L2 — Working / half-baked         $OV/daily-notes/, $OV/reflections/,
-          alloy by default            $OV/research/, $OV/preprints/,
-                                      $OV/agent-findings/, $OV/drafts/, $OV/gtd/
+    L2 — Working / half-baked         <paths.daily_notes>/, <paths.reflections>/,
+          alloy by default            <paths.research>/, <paths.preprints>/,
+                                      <paths.agent_findings>/, <paths.wip>/, <paths.gtd>/
     ────────────────────────────
     L1 — Raw capture                  Readwise inbox,
-          fast, sloppy, ephemeral     $OV/cache/, $OV/readwise/ inbox
+          fast, sloppy, ephemeral     <paths.cache>/, <paths.readwise>/ inbox
 ```
 
 Promotion is **opportunistic and upward:** L1 capture crystallizes into an L2 draft or reflection; a recurring L2 thought earns an L4 wiki entry once it has anchors and claims; L3 receipts flow in from scout fetches and Readwise curation. There is no demotion workflow — invalidation is additive (bi-temporal markers in wiki entries), not destructive.
 
 ### L1 — Raw capture
 
-The fast, sloppy, ephemeral layer. Readwise's inbox holds external content (articles, podcasts, papers); `$OV/cache/` holds web fetches and other transient artifacts. No guarantees about structure or durability. Promotion upward is opportunistic.
+The fast, sloppy, ephemeral layer. Readwise's inbox holds external content (articles, podcasts, papers); `<paths.cache>/` holds web fetches and other transient artifacts. No guarantees about structure or durability. Promotion upward is opportunistic.
 
 ### L2 — Working / half-baked
 
-The alloy layer. Most of the user's active thinking lives here: daily free-writes (`$OV/daily-notes/`), session reflections (`$OV/reflections/`), user-initiated research reports (`$OV/research/`), arxiv preprints and paper reviews (`$OV/preprints/`), promoted agent synthesis briefs (`$OV/agent-findings/`), working drafts (`$OV/drafts/`), and active planning (`$OV/gtd/`). Alloy by default; the validation-depth taxonomy lives in `protocols/epistemic-hygiene.md`. Fully searchable, citable, but not certified. The substrate from which wiki entries are distilled.
+The alloy layer. Most of the user's active thinking lives here: daily free-writes (`<paths.daily_notes>/`), session reflections (`<paths.reflections>/`), user-initiated research reports (`<paths.research>/`), arxiv preprints and paper reviews (`<paths.preprints>/`), promoted agent synthesis briefs (`<paths.agent_findings>/`), working drafts (`<paths.wip>/`), and active planning (`<paths.gtd>/`). Alloy by default; the validation-depth taxonomy lives in `protocols/epistemic-hygiene.md`. Fully searchable, citable, but not certified. The substrate from which wiki entries are distilled.
 
-Older topic directories (career, research, people, etc.) carried over from earlier knowledge systems are parked in `$OV/archive/` and stay there until individual notes are surfaced upward.
+Older topic directories (career, research, people, etc.) carried over from earlier knowledge systems are parked in `<paths.archive>/` and stay there until individual notes are surfaced upward.
+
+**Transient capture inbox.** `<paths.zettelm>/` is a git submodule (synced from a mobile capture app) that holds short-lived, self-authored content awaiting digest: date-stamped narratives, ad-hoc thoughts, voice recordings, photos, PDFs. It is not its own tier — contents are enriched and routed by `/sync` into the appropriate persistent L2 destinations (`daily-notes/<date>.md` for narrative, `<domain>/raw/` for attachments) and then deleted from zettelm. Nothing should be expected to survive long-term inside `zettelm/`.
 
 ### L3 — Externally certified
 
-Peer-reviewed papers, high-citation work, and curated reading corpus. Lives in `$OV/papers/` (local PDFs and reading artifacts) plus the Readwise-curated side of `$OV/readwise/`. The canonical id for papers is `s2:` / `arxiv:` / `doi:`; for articles, `url:` or a Readwise document id. L3 receipts are the anchor points for L4 wiki claims — an `@anchor` marker in a wiki entry points at an L3 receipt.
+Peer-reviewed papers, high-citation work, and curated reading corpus. Lives in `<paths.papers>/` (local PDFs and reading artifacts) plus the Readwise-curated side of `<paths.readwise>/`. The canonical id for papers is `s2:` / `arxiv:` / `doi:`; for articles, `url:` or a Readwise document id. L3 receipts are the anchor points for L4 wiki claims — an `@anchor` marker in a wiki entry points at an L3 receipt.
 
 The teaching doc that explains how agents query the papers directory lives at `sources/local-papers.md` (an execution-layer doc in the atelier repo).
 
 ### L4 — Locally certified (wiki)
 
-The slow, structured, authoritative layer. Lives in plain Markdown files under `$OV/wiki/`. Each file follows `wiki-schema.md`. Each file is parseable by `scripts/trust.py` and produces a per-note trust score. Cross-references between wiki entries are `@cite` markers, which become edges in the trust graph.
+The slow, structured, authoritative layer. Lives in plain Markdown files under `<paths.wiki>/`. Each file follows `wiki-schema.md`. Each file is parseable by `scripts/trust.py` and produces a per-note trust score. Cross-references between wiki entries are `@cite` markers, which become edges in the trust graph.
 
-**Directory is the certification.** A note is a wiki entry by virtue of living under `$OV/wiki/`. There is no `#compiled-truth` or `#wiki` tag; the trust engine walks the directory and treats every file inside it as a wiki entry. The rest of `$OV/` stays alloy by default — the trust engine does not touch it. This gives the trust engine a single, fast directory traversal as its working set and avoids tag-collision with the user's existing tagging conventions.
+**Directory is the certification.** A note is a wiki entry by virtue of living under `<paths.wiki>/`. There is no `#compiled-truth` or `#wiki` tag; the trust engine walks the directory and treats every file inside it as a wiki entry. The rest of `$OV/` stays alloy by default — the trust engine does not touch it. This gives the trust engine a single, fast directory traversal as its working set and avoids tag-collision with the user's existing tagging conventions.
 
 L4 is the only tier where:
 
@@ -66,9 +68,9 @@ Universally certified knowledge — textbook-level material that the user consid
 Two roots:
 
 - **System layer** — the `atelier/` repo (this directory). Orchestrator config, agents, protocols, scripts, source-handling teaching docs, and `sources/cite.py`. Version-controlled; no personal data.
-- **Vault layer** — the user's note root, addressed as `$OV/`. A flat set of tier-labeled directories: `wiki/` (L4), `papers/` / `preprints/` (L3), `readwise/` (L1→L3 mirror), `daily-notes/` / `reflections/` / `research/` / `agent-findings/` / `drafts/` / `gtd/` / `travel/` / `health/` / `work/` / `immigration/` / `finance/` (L2), `cache/` (L1), and `archive/` (parked notes).
+- **Vault layer** — the user's note root, addressed as `$OV/`. A flat set of tier-labeled directories: `wiki/` (L4), `papers/` / `preprints/` (L3), `readwise/` (L1→L3 mirror), `daily-notes/` / `reflections/` / `research/` / `agent-findings/` / `wip/` / `gtd/` / `travel/` / `health/` / `work/` / `people/` / `abroad/` / `finance/` (L2), `cache/` (L1), and `archive/` (parked notes).
 
-Vault paths use `$OV/` (e.g., `$OV/wiki/`, `$OV/papers/`); each user sets `$OV` to their note root (typical: `export OV="$HOME/notes"`). Repo-internal paths (`scripts/`, `protocols/`, `sources/cite.py`, `frameworks/`) stay project-relative and require no env var. The vault may live anywhere on disk (Google Drive, iCloud, a plain local folder); the system only needs `$OV` to point at it.
+Vault paths use `$OV/` (e.g., `<paths.wiki>/`, `<paths.papers>/`); each user sets `$OV` to their note root (typical: `export OV="$HOME/notes"`). Repo-internal paths (`scripts/`, `protocols/`, `sources/cite.py`, `frameworks/`) stay project-relative and require no env var. The vault may live anywhere on disk (Google Drive, iCloud, a plain local folder); the system only needs `$OV` to point at it.
 
 ## Directory Layout (canonical)
 
@@ -98,42 +100,46 @@ $OV/                                (vault root — set via env var)
 ├── reflections/                    # L2 — session reflection files
 ├── research/                       # L2 — user-initiated research reports
 ├── agent-findings/                 # L2 — promoted scout briefs and agent synthesis
-├── drafts/                         # L2 — working drafts
+├── wip/                            # L2 — work-in-progress, long-form drafts
 ├── gtd/                            # L2 — active planning (year goals, trackers)
 ├── travel/, health/, work/         # L2 — domain-specific working notes
+├── people/                         # L2 — person notes (DL-tagged)
+├── abroad/                         # L2 — abroad-life domain (immigration, residency)
+├── finance/                        # L2 — finance domain
 ├── cache/                          # L1 — ephemeral raw web fetches and snapshots
+├── zettelm/                        # transient capture submodule (digested by /sync, then cleared)
 └── archive/                        # parked notes (surfaced opportunistically)
 ```
 
-The trust engine and the wiki schema only see the `$OV/wiki/` subtree. Everything else is alloy or receipts and the trust engine does not touch it.
+The trust engine and the wiki schema only see the `<paths.wiki>/` subtree. Everything else is alloy or receipts and the trust engine does not touch it.
 
 ## Source of Truth
 
 `$OV/` is the only copy of the user's knowledge layer. There is no remote mirror, no two-way sync, no idempotency ledger. The filesystem may sync devices (Google Drive, iCloud, etc.); that is outside the system's concern.
 
-Daily notes (under `$OV/daily-notes/`) are user-authored. By default the system reads them; it does not write to them. Curator dispatches that target a daily-note path are refused. **Exception (cloud-native capture):** when the user dictates raw daily-note content through chat, the Scribe agent (`daily_note` operation) records it verbatim. This is the only path by which the system writes to a daily note; the orchestrator does not transcribe directly.
+Daily notes (under `<paths.daily_notes>/`) are user-authored. By default the system reads them; it does not write to them. Curator dispatches that target a daily-note path are refused. **Exception (cloud-native capture):** when the user dictates raw daily-note content through chat, the Scribe agent (`daily_note` operation) records it verbatim. This is the only path by which the system writes to a daily note; the orchestrator does not transcribe directly.
 
 All other tiers can be written by the orchestrator after user approval. The Curator drafts proposals; the orchestrator owns `Write` and `Edit` and applies them to a `target_path` under `$OV/`.
 
 ## Migration Strategy: Opportunistic, Not Big-Bang
 
-There is no bulk migration of existing notes into the wiki layer. Older topic directories that are no longer active sit in `$OV/archive/`. The wiki layer grows organically:
+There is no bulk migration of existing notes into the wiki layer. Older topic directories that are no longer active sit in `<paths.archive>/`. The wiki layer grows organically:
 
-- New wiki entries are written to `$OV/wiki/` directly (Curator drafts; orchestrator writes after approval).
-- Existing notes (`$OV/archive/` or anywhere else in L1/L2) are surfaced to L4 **only when they are about to become anchors for a new wiki claim** — at that point the user (or Curator) extracts the relevant claims, structures them per the schema, writes the wiki entry, and the original note remains in place as an L1/L2 capture record (untouched).
+- New wiki entries are written to `<paths.wiki>/` directly (Curator drafts; orchestrator writes after approval).
+- Existing notes (`<paths.archive>/` or anywhere else in L1/L2) are surfaced to L4 **only when they are about to become anchors for a new wiki claim** — at that point the user (or Curator) extracts the relevant claims, structures them per the schema, writes the wiki entry, and the original note remains in place as an L1/L2 capture record (untouched).
 - There is no goal to hoist the entire vault into the wiki layer. L1 and L2 remain the home for daily notes, session reflections, drafts, and most thinking. Most notes will never be in L4 — that is correct, not a failure.
 
 The expected steady-state ratio is roughly: hundreds of L1/L2 notes for every L4 wiki entry. L4 is the slow, careful, anchored kernel. L1 and L2 are the fast surface.
 
 ## Per-Agent Contract
 
-| Agent | L1/L2 working layer | L4 wiki (`$OV/wiki/`) | L3 receipts |
+| Agent | L1/L2 working layer | L4 wiki (`<paths.wiki>/`) | L3 receipts |
 |---|---|---|---|
-| **Researcher** | Local-only, semantic-primary. `Bash: uv run scripts/semantic.py query` for content queries; `Grep` + `Read` for structural queries. | Reads `$OV/wiki/` with grep directly. | Reads `$OV/readwise/`, `$OV/papers/` directly. |
-| **Curator** | Drafts note proposals (compactions, merges, new notes, rewrites); the orchestrator writes after user approval (Curator has no `Write` tool). | Drafts wiki entries with `target_path: $OV/wiki/<slug>.md`. The orchestrator writes the file after approval, then runs `scripts/trust.py --note <path>` to verify structural integrity and report initial scores. | Unchanged. |
-| **Synthesizer** | Reads capture-layer briefs from Researcher; produces drafts the orchestrator writes to `$OV/reflections/`. | Reads wiki trust scores when available to weight evidence. | Unchanged. |
+| **Researcher** | Local-only, semantic-primary. `Bash: uv run scripts/semantic.py query` for content queries; `Grep` + `Read` for structural queries. | Reads `<paths.wiki>/` with grep directly. | Reads `<paths.readwise>/`, `<paths.papers>/` directly. |
+| **Curator** | Drafts note proposals (compactions, merges, new notes, rewrites); the orchestrator writes after user approval (Curator has no `Write` tool). | Drafts wiki entries with `target_path: <paths.wiki>/<slug>.md`. The orchestrator writes the file after approval, then runs `scripts/trust.py --note <path>` to verify structural integrity and report initial scores. | Unchanged. |
+| **Synthesizer** | Reads capture-layer briefs from Researcher; produces drafts the orchestrator writes to `<paths.reflections>/`. | Reads wiki trust scores when available to weight evidence. | Unchanged. |
 | **Reviewer** | Continues to gate write-backs. Gates wiki writes as well. A `@pass: reviewer | status: verified` marker is added to a claim only after Reviewer signs off. | Unchanged. |
-| **Scout** | Unchanged. | Unchanged. | Writes promoted briefs to `$OV/agent-findings/` (not the ephemeral `$OV/cache/`). |
+| **Scout** | Unchanged. | Unchanged. | Writes promoted briefs to `<paths.agent_findings>/` (not the ephemeral `<paths.cache>/`). |
 
 ## Cross-References
 

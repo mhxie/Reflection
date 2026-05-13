@@ -99,7 +99,7 @@ Send a **single** assistant message containing both tool calls:
   ```bash
   bash scripts/review.sh
   ```
-  (Use `bash scripts/review.sh codex` or `bash scripts/review.sh direct` for one leg only; `gemini` is a legacy mode kept for users with the gemini CLI.) Reports land in `$OV/cache/review-<timestamp>-{codex,direct}.md`. The script runs both reviewers in parallel, blocks on `wait`, includes untracked files in the diff sent to each, and treats a missing CLI / unset api_env as a soft-skip.
+  (Use `bash scripts/review.sh codex` or `bash scripts/review.sh direct` for one leg only; `gemini` is a legacy mode kept for users with the gemini CLI.) Reports land in `<paths.cache>/review-<timestamp>-{codex,direct}.md`. The script runs both reviewers in parallel, blocks on `wait`, includes untracked files in the diff sent to each, and treats a missing CLI / unset api_env as a soft-skip.
 
 ### 3. Synchronous wait (invoker contract)
 
@@ -113,7 +113,7 @@ This is a contract at the *invoker* level, not enforced by the script. The scrip
 
 ### 4. Synthesize
 
-Only after both dispatches have returned. Read the two report files under `$OV/cache/review-<timestamp>-{codex,direct}.md`, combine with the internal reviewer's handoff, and present.
+Only after both dispatches have returned. Read the two report files under `<paths.cache>/review-<timestamp>-{codex,direct}.md`, combine with the internal reviewer's handoff, and present.
 
 **External verdict mapping for system reviews:** External reviewers (codex, direct-api) may emit `APPROVED_WITH_NOTES`. System reviews do not admit a notes-only verdict; treat external `APPROVED_WITH_NOTES` as `NEEDS_REVISION` for the merge ladder. The "notes" themselves still surface as concerns in the synthesis output. This applies only when synthesizing system reviews; session reviews preserve the original verdict.
 

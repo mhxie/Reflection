@@ -12,7 +12,7 @@ Inspired by the general lesson: a behavioral workaround for an older model in a 
 
 | Class | Definition | Example | Staleness Signal |
 |-------|-----------|---------|-----------------|
-| **Voice Assignment** | Which voice tier each role binds to | Researcher = deep tier | New model release, benchmark shift, cost change |
+| **Voice Assignment** | Which voice band each role binds to | Researcher = deep band | New model release, benchmark shift, cost change |
 | **Token/Context Budget** | Context window sizing, loading limits | "last 3 reflections" | Context window expansion |
 | **Temporal Threshold** | Time-based triggers and warnings | "7 days stale" for profile | User behavior data |
 | **Turn Budget** | maxTurns per agent | Evolver=25 | Model efficiency changes |
@@ -24,13 +24,13 @@ Inspired by the general lesson: a behavioral workaround for an older model in a 
 
 `harness/agents.toml` is the canonical source of truth for the per-agent `voices` keyed inline table (`{native = "X", direct = "Y"}` or single-leg variants). `harness/models.toml` declares model identities (committed; just names + comments). Provider/model **bindings** (model id, endpoint URL, env var, request extras) live in the gitignored `profile/models.toml`; loaders merge schema + bindings at runtime. `harness_lint.py` validates that every agent's voices reference identities that exist in the schema. The table below is the audit-trigger registry only: it does not restate the per-agent voices (read agents.toml for those), it lists what staleness signal would force a re-evaluation per role family.
 
-Voice tier vocabulary used in this file:
+Voice band vocabulary used in this file:
 - **deep** — flagship pair (e.g., highest-cognition Anthropic + highest-cognition direct-api)
 - **mid** — mid-tier pair (cross-provider, cheaper than deep but still substantive)
 - **cheap** — minimal pair (mechanical I/O, verbatim preservation)
 - **external** — cross-provider audit pair (no Anthropic leg by design)
 
-| Agent | Current voice tier | Re-test When |
+| Agent | Current voice band | Re-test When |
 |-------|----|-------------|
 | Researcher | deep | A cheaper tier matches the primary on reading comprehension benchmarks |
 | Synthesizer | deep | A cheaper tier matches the primary on synthesis quality |

@@ -25,11 +25,11 @@ Skip when:
 
 | Index scope | Location pattern |
 |---|---|
-| Single domain (immigration only) | `$OV/<domain>/<category>-index.md` |
-| Cross-domain identity-level | `$OV/personal/<category>-index.md` |
-| Per-holder (when household has multiple subjects) | `$OV/personal/<holder>/<category>-index.md` |
+| Single domain (one-domain scope) | `$OV/<domain>/<category>-index.md` |
+| Cross-domain identity-level | `<paths.personal>/<category>-index.md` |
+| Per-holder (when household has multiple subjects) | `<paths.personal>/<holder>/<category>-index.md` |
 
-Index lives in working tier (`$OV/<domain>/` or `$OV/personal/`), never under `raw/`. Raw stays unedited per ingestion protocol.
+Index lives in working tier (`$OV/<domain>/` or `<paths.personal>/`), never under `raw/`. Raw stays unedited per ingestion protocol.
 
 ## Required structure
 
@@ -84,8 +84,8 @@ sources:
 每次 <category> 类文件事件 (renewal / 新办 / loss / transfer):
 
 1. 表格加新行,旧行 status 改 🔴 superseded / expired
-2. raw/ 对应子目录加新文件 (per drive-zk-ingestion)
-3. 触发 cross-domain (e.g., DMV / payroll / health portal / immigration timeline)
+2. raw/ 对应子目录加新文件
+3. 触发 cross-domain (e.g., DMV / payroll / health portal / abroad timeline)
 4. `last_verified` frontmatter 更新
 
 ## Cross-references
@@ -95,11 +95,11 @@ sources:
 
 ## Wikilink rules
 
-- **Use vault-relative paths.** Wikilink resolvers expect paths from the vault root, not from the index file's directory. Write `[[immigration/raw/<sub>/<file>.pdf]]`, not `[[../immigration/...]]`.
-- **Include extension for non-md files.** PDFs, JPEGs, PNGs need the suffix to resolve: `[[immigration/raw/<sub>/<file>.pdf]]`. Markdown files omit `.md`: `[[immigration/timeline]]`.
+- **Use vault-relative paths.** Wikilink resolvers expect paths from the vault root, not from the index file's directory. Write `[[abroad/raw/<sub>/<file>.pdf]]`, not `[[../abroad/...]]`.
+- **Include extension for non-md files.** PDFs, JPEGs, PNGs need the suffix to resolve: `[[abroad/raw/<sub>/<file>.pdf]]`. Markdown files omit `.md`: `[[abroad/timeline]]`.
 - **Multi-file cells separator: ` · `** (U+00B7 middle dot, not comma). Reads cleanly when the cell has 3+ links.
 - **Spaces in paths are fine** inside `[[]]` — no escaping needed. Folder names with parentheses (`Photos (2)`) work; avoid square brackets in paths since they collide with link syntax.
-- **For directory-level references** (no specific file), use plain backticks not wikilinks: `` `immigration/raw/PERM/voe-versions/` ``. Wikilinks don't address folders.
+- **For directory-level references** (no specific file), use plain backticks not wikilinks: `` `<domain>/raw/<sub>/` ``. Wikilinks don't address folders.
 
 ## Multi-copy / duplicate handling
 
@@ -119,7 +119,7 @@ When the same logical document exists as multiple files (Drive-era duplicates, i
 
 ## Example: credentials index
 
-The canonical implementation lives under `$OV/personal/` (gitignored) as an `<identity>-index.md` covering identification documents. Concrete holder names, jurisdictions, document types, and copy locations stay in the private vault and are out of scope for this committed protocol.
+The canonical implementation lives under `<paths.personal>/` (gitignored) as an `<identity>-index.md` covering identification documents. Concrete holder names, jurisdictions, document types, and copy locations stay in the private vault and are out of scope for this committed protocol.
 
 Generic structural elements (use as template):
 

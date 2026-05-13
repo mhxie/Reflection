@@ -83,6 +83,13 @@ status = "portable-adapted"
 description = "Goal-aware content curation and inbox triage."
 codex_prompt = "Run the /curate workflow using `.claude/commands/curate.md` and the runtime adapter protocol."
 
+[commands.sync]
+source = ".claude/commands/sync.md"
+category = "knowledge"
+status = "portable-adapted"
+description = "Digest the mobile-capture submodule into the persistent L2 destinations and stage zettelm deletions."
+codex_prompt = "Run the /sync workflow using `.claude/commands/sync.md` and the runtime adapter protocol."
+
 [commands.promote]
 source = ".claude/commands/promote.md"
 category = "knowledge"

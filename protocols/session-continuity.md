@@ -9,8 +9,8 @@ Each session should feel like a chapter in an ongoing conversation, not a standa
 ### Reading the Thread
 
 At the start of every session, load:
-1. **Last 3 reflection/review files** from `$OV/reflections/`
-1b. **Last session log** from `$OV/sessions/` (most recent file) — read the `## Anomalies` and `## Continuity` sections only, for process continuity (which agents worked, which searches succeeded, which gates passed). Do not load the full log to avoid context bloat.
+1. **Last 3 reflection/review files** from `<paths.reflections>/`
+1b. **Last session log** from `<paths.sessions>/` (most recent file) — read the `## Anomalies` and `## Continuity` sections only, for process continuity (which agents worked, which searches succeeded, which gates passed). Do not load the full log to avoid context bloat.
 2. **Profile files** (identity.md, directions.md)
 3. **Today's daily note** (current context)
 
@@ -36,13 +36,13 @@ Sessions leave artifacts that future sessions can read:
 
 | File | Purpose | Read By |
 |------|---------|---------|
-| `$OV/reflections/YYYY-MM-DD-reflection.md` | Daily insights | Next reflect session |
-| `$OV/reflections/YYYY-MM-DD-review.md` | Goal progress | Next review session |
-| `$OV/reflections/YYYY-MM-DD-weekly.md` | Weekly patterns | Next weekly session |
-| `$OV/reflections/YYYY-MM-DD-decision-*.md` | Decision records | Future decision/review sessions |
-| `$OV/reflections/YYYY-MM-DD-exploration.md` | Open threads | Next explore session |
-| `$OV/reflections/YYYY-MM-DD-energy-audit.md` | Energy patterns | Next energy audit |
-| `$OV/sessions/YYYY-MM-DD-<type>.md` | Session process log | Meta-reflection, Evolver, next session (excerpts) |
+| `<paths.reflections>/YYYY-MM-DD-reflection.md` | Daily insights | Next reflect session |
+| `<paths.reflections>/YYYY-MM-DD-review.md` | Goal progress | Next review session |
+| `<paths.reflections>/YYYY-MM-DD-weekly.md` | Weekly patterns | Next weekly session |
+| `<paths.reflections>/YYYY-MM-DD-decision-*.md` | Decision records | Future decision/review sessions |
+| `<paths.reflections>/YYYY-MM-DD-exploration.md` | Open threads | Next explore session |
+| `<paths.reflections>/YYYY-MM-DD-energy-audit.md` | Energy patterns | Next energy audit |
+| `<paths.sessions>/YYYY-MM-DD-<type>.md` | Session process log | Meta-reflection, Evolver, next session (excerpts) |
 | `profile/identity.md` | User profile | Every session |
 | `profile/directions.md` | Goals | Every goal-related session |
 

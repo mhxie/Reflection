@@ -1,0 +1,24 @@
+# Per-user path registry overrides.
+#
+# Copy this file to `harness/paths.local.toml` (gitignored) and edit.
+# Values here are layered on top of `harness/paths.toml` at session start.
+#
+# Two common uses:
+#   1. Add a second-language wiki (e.g., Chinese / Japanese).
+#   2. Override a tier path for a sandbox / test vault.
+#
+# Resolution rule (same as canonical): values resolve under `$OV` unless
+# they start with `/`. So `wip = "wip"` resolves to `$OV/wip/`.
+
+[paths.wiki_localized]
+# Uncomment for a Chinese wiki at $OV/wiki-cn/
+# zh = "wiki-cn"
+#
+# Or a Japanese wiki:
+# ja = "wiki-ja"
+
+# Optional: override individual tier paths if your vault layout differs from
+# the canonical convention. Anything not redefined here uses the canonical
+# value from harness/paths.toml.
+# [paths]
+# wip = "drafts"   # legacy vault that hasn't migrated yet

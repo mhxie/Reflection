@@ -4,5 +4,20 @@
   },
   "permissions": {
     "allow": []
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run scripts/cues.py --hook",
+            "statusMessage": "Loading session cues",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   }
 }

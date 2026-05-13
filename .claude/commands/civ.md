@@ -292,4 +292,4 @@ Ad hoc. Identical output on unchanged vault.
 
 ## Evolution
 
-Persistent era score ledger and historical snapshots are out of scope. If demand emerges, evolve toward `$OV/civ/` state directory. The 3 pending consistency tests in the user's resource framework note may change the terminal value structure; the dashboard adapts when those resolve.
+Persistent era score ledger and historical snapshots are out of scope. If demand emerges, evolve toward `<paths.civ>/` state directory. The 3 pending consistency tests in the user's resource framework note may change the terminal value structure; the dashboard adapts when those resolve.

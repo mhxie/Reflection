@@ -10,16 +10,16 @@ The system's narrative register draws from the impressionist atelier (master + s
 | user | **the Painter** | (you) |
 | vault root | **the œuvre** | `$OV/` |
 | agents collectively | **le cercle** | `.claude/agents/` |
-| daily reflection | **impression** | `$OV/daily-notes/YYYY-MM-DD.md` |
-| weekly review | **étude** | `$OV/reflections/*-weekly.md` |
-| wiki entry (L4) | **tableau** | `$OV/wiki/<Title>.md` |
-| L2 working note | **sketch** | `$OV/drafts/`, `$OV/research/`, etc. |
-| decision journal | **commission** | `$OV/gtd/decisions/` |
+| daily reflection | **impression** | `<paths.daily_notes>/YYYY-MM-DD.md` |
+| weekly review | **étude** | `<paths.reflections>/*-weekly.md` |
+| wiki entry (L4) | **tableau** | `<paths.wiki>/<Title>.md` |
+| L2 working note | **sketch** | `<paths.wip>/`, `<paths.research>/`, etc. |
+| decision journal | **commission** | `<paths.gtd>/decisions/` |
 | long-running theme | **série** | (e.g., Monet's haystacks across years) |
-| archive | **carnets** | `$OV/archive/` |
-| Readwise inbox | **rough drawer** | `$OV/readwise/` |
+| archive | **carnets** | `<paths.archive>/` |
+| Readwise inbox | **rough drawer** | `<paths.readwise>/` |
 | session | **sitting** | (a `/hi` invocation) |
-| session log | **bench notes** | `$OV/sessions/*.md` |
+| session log | **bench notes** | `<paths.sessions>/*.md` |
 | promote (L2 → L4) | **exhibit** / **mount** on the cimaise | `/promote` |
 
 ## Le cercle — 15 specialist operators

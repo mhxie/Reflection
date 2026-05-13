@@ -1,13 +1,13 @@
 # Perks & Trip Status
 
-Read-only dashboard. Surfaces open decisions, upcoming deadlines, and data gaps from existing trackers in `$OV/finance/` and `$OV/travel/`. Use on revisit to avoid re-reading multiple files.
+Read-only dashboard. Surfaces open decisions, upcoming deadlines, and data gaps from existing trackers in `<paths.finance>/` and `<paths.travel>/`. Use on revisit to avoid re-reading multiple files.
 
 ## Load
 
 Discover and read markdown trackers under:
-- `$OV/finance/*.md`
-- `$OV/travel/*.md`
-- `$OV/planning/*.md` (if present)
+- `<paths.finance>/*.md`
+- `<paths.travel>/*.md`
+- `<paths.planning>/*.md` (if present)
 
 Today: `date +%Y-%m-%d`. If a folder is empty, skip it.
 

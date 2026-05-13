@@ -24,7 +24,7 @@ When uncertain → mv into `$OV` (don't delete). `$OV` is the destination either
 
 After mv into `$OV`, classify each file by future utility — this determines destination subtree and whether to write a digest:
 
-### Low-value → `$OV/archive/<category>/`
+### Low-value → `<paths.archive>/<category>/`
 
 Pure backup, no digest, no expectation of revisit. Categories follow existing archive structure (`career/`, `courses/`, `practical/`, `people/`, etc.). Examples:
 - Old insurance applications past their effective date
@@ -52,33 +52,32 @@ Examples:
 Ask: *would future-me grep for this file's content?*
 - Yes → high-value, raw + digest.
 - No, but could matter for an edge case (audit, dispute) → low-value, archive raw only.
-- No → consider whether to keep at all (some files truly belong in `$OV/cache/` or trash).
+- No → consider whether to keep at all (some files truly belong in `<paths.cache>/` or trash).
 
 Don't dump raw directly into working tier subdirectories (`reports/`, `research/`). The working tier is for digests. Raw stays in `raw/` siblings.
 
 ### Lifecycle: closed domains demote to archive
 
-When a domain is no longer an active phase of life (e.g., PhD finished, prior employer fully off-boarded with no PERM tail, retired hobby), `mv` the entire working-tier directory to `$OV/archive/<domain>/`. This preserves digests (README, timeline.md) as historical snapshots while removing the implicit "active reference" status.
+When a domain is no longer an active phase of life (e.g., a degree program finished, a prior employer fully off-boarded with no remaining process tails, a retired hobby), `mv` the entire working-tier directory to `<paths.archive>/<domain>/`. This preserves digests (README, timeline.md) as historical snapshots while removing the implicit "active reference" status.
 
-Example: `$OV/education/` → `$OV/archive/education/` after PhD completion + start of full-time work. The raw + digests come along intact.
+Example: `<paths.education>/` → `<paths.archive>/education/` after PhD completion + start of full-time work. The raw + digests come along intact.
 
 Don't pre-archive: a domain stays in working tier as long as it has live followups, ongoing decisions, or recent file additions.
 
-## Domain mapping
+## Domain routing
 
-| Drive top-level | $OV subdirectory | Notes |
-|---|---|---|
-| `Housing/` | `$OV/housing/raw/` | per-residence subfolder preserved |
-| `Medical/` | `$OV/health/raw/` | domain name differs (Medical → health); document this in the relevant README |
-| `Immigration/` | `$OV/immigration/raw/` (TBD) | route per content; H1B / DS-2019 / OPT etc. |
-| `Career/` | `$OV/career/raw/` (TBD) | offer letters, paystubs, 401k |
-| `Travel/` | `$OV/travel/raw/` (TBD) | itineraries, perks ledger backing |
-| `Finance/` | `$OV/finance/raw/` (TBD) | tax returns, brokerage statements |
-| `Education/` | `$OV/education/raw/` (TBD) | degrees, transcripts |
-| `Personal/` | (per content; possibly `$OV/personal/raw/`) | mixed; route per file |
-| `~/Downloads/<domain>/` | route per content to appropriate `$OV` domain | transient by nature; mv into `$OV` eagerly |
+At ingestion the agent routes per content semantics, the source folder name, and the existing `$OV/` directory structure (canonical L2 layout: `protocols/local-first-architecture.md`). For most domains the destination is obvious from the Drive folder name plus the file content; let the agent decide.
 
-When a Drive top-level domain folder maps to a `$OV` subdirectory with a different name (e.g., `Medical/` → `$OV/health/`), document the mapping in `$OV/<domain>/README.md` so future passes don't duplicate.
+A few aliases are not derivable from folder name alone and are committed here so independent runs converge on the same destination:
+
+| Drive top-level | $OV subdirectory |
+|---|---|
+| `Medical/` | `<paths.health>/` |
+| `Immigration/` | `<paths.abroad>/` |
+
+Anything more specific (per-document subfolder conventions, archival rules, document-type taxonomies) belongs in the per-domain `$OV/<domain>/README.md` (gitignored, user-private), not in this protocol.
+
+`~/Downloads/<domain>/` content is transient by nature; route per content to the appropriate `$OV/` domain and `mv` eagerly.
 
 ## Ingestion workflow
 
@@ -102,21 +101,21 @@ Each `$OV/<domain>/README.md` documents:
 - Cross-domain references (e.g., housing references health for atopic-march cluster).
 - Non-principles (e.g., "not a wiki tier").
 
-Use `$OV/health/README.md` and `$OV/housing/README.md` as the templates.
+Use `<paths.health>/README.md` and `<paths.housing>/README.md` as the templates.
 
 ## Naming hygiene in `$OV/<domain>/raw/`
 
 - **Preserve original filenames** when possible. Original names retain provenance (timestamps, source-system IDs).
-- **Preserve subfolder structure** when source is well-organized (e.g., `Housing/Naya 2021_22/` → `$OV/housing/raw/Naya 2021_22/`).
+- **Preserve subfolder structure** when source is well-organized (e.g., `Housing/<complex>-<year_range>/` → `<paths.housing>/raw/<complex>-<year_range>/`).
 - **Loose / orphaned files**: group into `_search/` or by-date subfolders inside raw to avoid clutter.
-- **Format-conversion siblings**: name with same stem, different extension. Example: `2024-10-28-pamf-skinprick.HEIC` (original) + `2024-10-28-pamf-skinprick.jpg` (transcode). Markdown links to the readable one.
+- **Format-conversion siblings**: name with same stem, different extension. Example: `<YYYY-MM-DD>-<clinic>-<procedure>.HEIC` (original) + `<YYYY-MM-DD>-<clinic>-<procedure>.jpg` (transcode). Markdown links to the readable one.
 
 ## Privacy boundaries
 
 - `$OV/` is gitignored. Personal data (landlord names, MRNs, addresses, lease amounts, IDs) lives in `$OV` safely. The committed repo never sees it.
 - Protocols / committed files (this file included) describe the **structure** generically. No personal names, no addresses, no employer names. `scripts/privacy_check.py` enforces the filename-stem half during `/lint` and `/system-review`.
 - Encrypted vaults (1Password, etc.) are **out of scope**: never extract credentials from there into `$OV` plain text.
-- Non-self entities (companion's medical, foster pets, etc.) get their own subdirectory under the domain (e.g., `$OV/health/pet/`). Same protocol applies internally; cross-links from main self-line note "see also" but don't merge data.
+- Non-self entities (companion's medical, foster pets, etc.) get their own subdirectory under the domain (e.g., `<paths.health>/pet/`). Same protocol applies internally; cross-links from main self-line note "see also" but don't merge data.
 
 ## Audit / recovery
 
@@ -138,8 +137,8 @@ The audit walks `$OV/` and surfaces six categories of finding (advisory only; ne
 
 | # | Category | What it flags | Action |
 |---|---|---|---|
-| 1 | Missing READMEs | Working-tier domains with no `README.md`. Protocol mandates one per domain (see "Per-domain README" above). | Write the README using `$OV/health/README.md` or `$OV/housing/README.md` as a template. |
-| 2 | Raw without digest | `<domain>/raw/<sub>/` clusters where no `.md` in the working tier mentions `<sub>` by name. Substring heuristic; false negatives possible if a digest references its source by a synonym. | Either write a digest, or accept low-value status and `mv` the cluster to `$OV/archive/<category>/`. |
+| 1 | Missing READMEs | Working-tier domains with no `README.md`. Protocol mandates one per domain (see "Per-domain README" above). | Write the README using `<paths.health>/README.md` or `<paths.housing>/README.md` as a template. |
+| 2 | Raw without digest | `<domain>/raw/<sub>/` clusters where no `.md` in the working tier mentions `<sub>` by name. Substring heuristic; false negatives possible if a digest references its source by a synonym. | Either write a digest, or accept low-value status and `mv` the cluster to `<paths.archive>/<category>/`. |
 | 3 | Archive ↔ working-tier overlap | Archive subtrees whose normalized name matches a working-tier domain (e.g., `archive/practical/health-admin` ↔ `health/`). Often pre-protocol residue duplicating active tiers. | Per-subtree decision: keep as historical archive, merge into the active working tier, or rename to disambiguate. Audit surfaces; user decides. |
 | 4 | Root orphans + empty `.md` | `.md` files at `$OV/` root other than `README.md`; 0-byte `.md` files in working tiers. Empty `.md` under `archive/` aggregated as a count (pre-ingestion stubs, not new debt). | Move root orphans into a tier dir; delete or fill empty stubs. |
 | 5 | Suspicious top-level dirs | Finder-duplicate names (` 2`, ` (2)`), empty dirs, skeleton dirs (no README, fewer than 3 entries). | Rename, remove, or build out. |
@@ -159,5 +158,5 @@ Findings are *advisory*, not auto-fixable. The audit reports gaps; consolidation
 - [[local-first-architecture.md]] — L1-L5 tier model, where this protocol slots in (raw landing → L1, structured `$OV` markdown → L2).
 - [[raw-indexing.md]] — downstream pattern: cross-cutting clickable indexes over `$OV/<domain>/raw/`, the navigational layer for ingested archives.
 - [[epistemic-hygiene.md]] — validation-depth taxonomy applies after ingestion.
-- `$OV/housing/README.md`, `$OV/health/README.md` — current implementations of this protocol.
+- `<paths.housing>/README.md`, `<paths.health>/README.md` — current implementations of this protocol.
 - `scripts/zk_audit.py` — post-ingestion hygiene audit (see "Post-ingestion verification" above).

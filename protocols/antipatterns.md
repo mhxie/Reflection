@@ -60,7 +60,7 @@ The same fact or threshold is encoded in two or more places.
 
 ### 7. Behavior coupled to location
 Assumes "if it lives in directory X it will be treated as Y" without enforcement.
-- Detect: directory-based semantics (`$OV/wiki/`, `$OV/cache/`, `$OV/reflections/`) without a script or guard that checks them.
+- Detect: directory-based semantics (`<paths.wiki>/`, `<paths.cache>/`, `<paths.reflections>/`) without a script or guard that checks them.
 - Remediate: add a `scripts/` check, or document the coupling explicitly so it is visible to future changes.
 
 ### 8. Scope creep past the stated criterion
@@ -77,3 +77,8 @@ A script, hook, or check runs but does not catch the thing it claims to catch.
 Narrates a past system state inside a forward-living doc instead of describing current behavior. Protocols, agent specs, and shared docs answer "how does the system work?", not "how did it used to work?". Git is the archive for that.
 - Detect: the diff introduces (or leaves untouched while editing nearby lines) phrasings such as "earlier version", "previously", "no longer", "legacy ... retired", "deprecated", "formerly", or version-only carve-outs ("in v1 we ...", "for v1") in `protocols/`, `.claude/agents/`, `harness/`, `CLAUDE.md`, `AGENTS.md`, or `README.md`.
 - Remediate: state the current rule in present tense and delete the historical narration. Genuinely-deferred work goes in a single dedicated roadmap subsection (the pattern: `wiki-schema.md` → Open v2 Items), not as scattered "v1 only" parentheticals. Operational pointers to runtime artifacts the system still encounters (e.g., "`#ai-reflection` may appear on historical notes; treat as alloy") are not legacy framing because they describe a runtime condition, not system biography.
+
+### 11. Redundant cross-reference parentheticals
+Inline `(per X)` / `(see Y)` parentheticals that re-cite a relationship the current file or section has already established for the reader. Each restatement is decay surface; readers do not need the same pointer twice. Generalization of the harness-side rule against inline rationale pollution.
+- Detect: a parenthetical reference to another file or section whose link or relationship is already declared at the top of the current file, in a `## Cross-references` section, or in an immediately-preceding sentence. Bare `(per X)` / `(see Y)` without an anchor (section name, function name, specific line) is the most likely offender — anchored references like `(see X.md § Y)` carry their own information and are usually fine.
+- Remediate: delete the parenthetical. Establish the cross-file relationship once, at the point the reader first needs it. Keep parentheticals only when they cite a non-obvious rule whose source genuinely is not established elsewhere in the same file.

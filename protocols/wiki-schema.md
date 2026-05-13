@@ -1,16 +1,16 @@
 # Wiki Schema
 
-The structural format for a note that lives under `$OV/wiki/`. Location is the certification: a note is a wiki entry by virtue of being in `$OV/wiki/`, not by carrying any tag. Wiki entries are parseable by `scripts/trust.py` and have claim-level granularity in the trust graph. Notes outside `$OV/wiki/` are alloy by default (see `epistemic-hygiene.md`).
+The structural format for a note that lives under `<paths.wiki>/`. Location is the certification: a note is a wiki entry by virtue of being in `<paths.wiki>/`, not by carrying any tag. Wiki entries are parseable by `scripts/trust.py` and have claim-level granularity in the trust graph. Notes outside `<paths.wiki>/` are alloy by default (see `epistemic-hygiene.md`).
 
 ## Why Location, Not Tag
 
-Earlier drafts of this design used a `#compiled-truth` tag to mark notes that followed the schema. The tag is dropped. `$OV/` is a real markdown vault with hundreds of pre-existing notes; carving out a structural sub-tier by tag inside that vault would conflict with the user's existing tagging conventions and force the trust engine to filter every note in the vault. A dedicated subdirectory is cleaner: `$OV/wiki/` is the trust-engine-visible region; everything else in `$OV/` is alloy. The trust engine walks one directory; the user has free use of every other tag.
+Earlier drafts of this design used a `#compiled-truth` tag to mark notes that followed the schema. The tag is dropped. `$OV/` is a real markdown vault with hundreds of pre-existing notes; carving out a structural sub-tier by tag inside that vault would conflict with the user's existing tagging conventions and force the trust engine to filter every note in the vault. A dedicated subdirectory is cleaner: `<paths.wiki>/` is the trust-engine-visible region; everything else in `$OV/` is alloy. The trust engine walks one directory; the user has free use of every other tag.
 
 The `#solo-flight` tag survives this rename — it lives orthogonally to the schema and marks unstructured pure-human capture, which is location-independent (see `epistemic-hygiene.md`).
 
 ## Session-Visible Markers
 
-Because wiki entries live under `$OV/wiki/` and nothing outside that directory participates in the trust graph, a reader scanning a session (the orchestrator, a subagent, or the user skimming chat) has no visible cue that a referenced file is wiki-grade. The file-path prefix `$OV/wiki/` is the cue. When agents cite a wiki entry in session output, they cite by path (`$OV/wiki/<title>.md`), not by bare note title, so the certification is legible inline. Notes outside `$OV/wiki/` continue to be cited as `[[Note Title]]`. A `[[Note Title]]` reference in any session output is alloy by default; a `$OV/wiki/...` path reference is wiki-grade. Mixing the two forms in one citation (e.g., `[[$OV/wiki/foo]]`) is a schema violation the Reviewer flags.
+Because wiki entries live under `<paths.wiki>/` and nothing outside that directory participates in the trust graph, a reader scanning a session (the orchestrator, a subagent, or the user skimming chat) has no visible cue that a referenced file is wiki-grade. The file-path prefix `<paths.wiki>/` is the cue. When agents cite a wiki entry in session output, they cite by path (`<paths.wiki>/<title>.md`), not by bare note title, so the certification is legible inline. Notes outside `<paths.wiki>/` continue to be cited as `[[Note Title]]`. A `[[Note Title]]` reference in any session output is alloy by default; a `<paths.wiki>/...` path reference is wiki-grade. Mixing the two forms in one citation (e.g., `[[<paths.wiki>/foo]]`) is a schema violation the Reviewer flags.
 
 ## Why Claim-Level
 
@@ -20,7 +20,7 @@ atelier's wiki entries are structured around claims, not paragraphs. Each claim 
 
 ## Note Structure
 
-A wiki entry has three required sections and lives in `$OV/wiki/`. The full layer model is documented in `protocols/local-first-architecture.md`.
+A wiki entry has three required sections and lives in `<paths.wiki>/`. The full layer model is documented in `protocols/local-first-architecture.md`.
 
 ```markdown
 # Note Title
@@ -85,7 +85,7 @@ The `^c1` marker is a **sibling of the claim text**, not a sibling of the fenced
 
 **Citing a claim from an alloy note.** Use the block-ID form: `[[Note Title#^c1]]`. This is how learning packs, daily notes, session reflections, and any other alloy content under `$OV/` should point at a specific wiki claim when they want fine-grained navigation.
 
-**Citing a claim from session output (orchestrator or subagent chat).** Keep using the path form described in "Session-Visible Markers" above: `$OV/wiki/Note Title.md [C1]`. The session-visible path citation is about legibility of the certification tier in chat, not about click-through navigation, so block IDs are not involved.
+**Citing a claim from session output (orchestrator or subagent chat).** Keep using the path form described in "Session-Visible Markers" above: `<paths.wiki>/Note Title.md [C1]`. The session-visible path citation is about legibility of the certification tier in chat, not about click-through navigation, so block IDs are not involved.
 
 **Citing a claim from another wiki entry's `@cite`.** Use the same `#^cn` block-ID form: `@cite: [[Note Title#^c1]] | valid_at: ...`. The trust parser extracts the note title and claim number from this syntax, and a wikilink-aware viewer renders it as a clickable link that navigates to the claim. This is the unified notation: one syntax works for both the trust graph and viewer navigation.
 
@@ -98,7 +98,7 @@ The `^c1` marker is a **sibling of the claim text**, not a sibling of the fenced
 - **Sub-claim granularity is a smell, not a feature.** If you find yourself wanting `^c1-part2` or `^c1a`, the claim is actually two claims and should be split. Splitting preserves the trust-graph granularity: each half gets its own anchors, its own Reviewer pass, its own score. A sub-block ID would let authors evade that pressure and produce "one big claim with five unrelated anchors" notes — precisely the pattern claim-level granularity exists to prevent.
 - **Summary doesn't need one.** The bare `[[wiki-entry]]` link already opens the note at the top. A `^summary` block ID would be redundant navigation to the same destination.
 - **Revision Log doesn't need one.** Revision log entries are historical metadata, not things anyone cites from elsewhere. If a specific revision matters enough to cite, promote its substance to a claim or a standalone note.
-- **Lint stays trivial.** A single regex (`\^c[0-9]+$`) validates every block ID in `$OV/wiki/`. Mixing id families would force `/lint` to maintain a taxonomy of which shapes are allowed where.
+- **Lint stays trivial.** A single regex (`\^c[0-9]+$`) validates every block ID in `<paths.wiki>/`. Mixing id families would force `/lint` to maintain a taxonomy of which shapes are allowed where.
 
 A block ID outside the `^cn` family in a wiki entry is a schema violation that `/lint` flags as ERROR (distinct from the WARN for merely missing `^cn` markers on claims).
 
@@ -137,9 +137,9 @@ Every `@anchor` marker claims "this external source existed and supported this c
 
 | Anchor type | Durable evidence (L3) | Ephemeral cache (L1) | Last resort |
 |---|---|---|---|
-| `url:` | **Readwise** (by `readwise:` document ID) | `$OV/cache/web-*.md` (current session only) | WebFetch |
-| `gist:` | **Readwise** (save the gist URL) | `$OV/cache/web-*.md` | WebFetch |
-| `s2:` / `arxiv:` / `doi:` | `$OV/papers/` (local PDF + review notes) | — | `sources/cite.py` |
+| `url:` | **Readwise** (by `readwise:` document ID) | `<paths.cache>/web-*.md` (current session only) | WebFetch |
+| `gist:` | **Readwise** (save the gist URL) | `<paths.cache>/web-*.md` | WebFetch |
+| `s2:` / `arxiv:` / `doi:` | `<paths.papers>/` (local PDF + review notes) | — | `sources/cite.py` |
 | `isbn:` | (no local evidence expected) | — | Manual verification |
 
 **The `readwise:` field.** Optional on all anchor types, recommended on `url:` and `gist:` anchors. Contains the Readwise document ID (e.g., `01kk0zpka139am1v9jftnae9dw`). When present, the full source content can be retrieved via `readwise reader-get-document-details --document-id <id>` regardless of whether the URL is still live. Readwise snapshots web content at save time and stores it permanently.
@@ -148,7 +148,7 @@ Every `@anchor` marker claims "this external source existed and supported this c
 1. Check if the URL is already in Readwise: `readwise reader-search-documents --query "<url>"`
 2. If not, save it: `readwise reader-create-document --url "<url>" --tags anchor-evidence`
 3. Add the document ID to the anchor marker: `| readwise: <id>`
-4. Optionally snapshot to `$OV/cache/web-<slug>.md` for current-session agent use (ephemeral; will be cleaned up)
+4. Optionally snapshot to `<paths.cache>/web-<slug>.md` for current-session agent use (ephemeral; will be cleaned up)
 
 Tag convention: Readwise saves that back wiki anchors carry the `anchor-evidence` tag. This makes them discoverable via `readwise reader-list-documents --tag anchor-evidence`.
 
@@ -169,7 +169,7 @@ An internal pointer to another wiki entry. This is an **edge** in the trust grap
 
 The `#^cn` suffix points at a specific claim via its block ID. A wikilink-aware viewer renders this as a single clickable link that navigates directly to the claim. `scripts/trust.py` parses the note title and claim number from the same syntax. Without the suffix, the citation points at the note as a whole and uses the note-level aggregate score as the upstream signal.
 
-`@cite` markers must resolve. A `@cite` to a note that does not exist in `$OV/wiki/`, or a `@cite` with a `#^cn` suffix to a non-existent claim, is a **dangling internal cite** — caught by structural-integrity check, fails the floor.
+`@cite` markers must resolve. A `@cite` to a note that does not exist in `<paths.wiki>/`, or a `@cite` with a `#^cn` suffix to a non-existent claim, is a **dangling internal cite** — caught by structural-integrity check, fails the floor.
 
 ### `@pass`
 
@@ -224,7 +224,7 @@ Once the personalized PageRank has run, apply the floor. **For this check, "pass
 
 ```
 for each claim Ci in note N:
-    if N lives under $OV/wiki/
+    if N lives under <paths.wiki>/
        and N passes structural integrity (items 1-10)
        and N has at least one @pass: reviewer | status: verified
     then:
@@ -255,13 +255,13 @@ A note **passes structural integrity** if all of the following hold. `scripts/tr
 
 **Required (enforced by trust.py from Phase B onward):**
 
-1. The note's file path is under `$OV/wiki/`.
+1. The note's file path is under `<paths.wiki>/`.
 2. The note has a `## Claims` section.
 3. Every claim heading matches `### [Cn] <text>` with `n` sequential starting from 1.
 4. Every claim has at least one paragraph of body text.
 5. Every fenced `anchors` block parses: every line is either blank, a comment, or matches `@anchor:` / `@pass:` (and optionally `@cite:` for backward compatibility) with valid pipe-separated fields. Bare `@cite:` lines outside fences parse as markers when they appear in the `## Claims` section after a claim heading.
 6. Every `@anchor` has a recognized type and a `valid_at`.
-7. Every `@cite` resolves: the target note exists in `$OV/wiki/`. If a `#^cn` suffix is given, the target claim exists in the target note.
+7. Every `@cite` resolves: the target note exists in `<paths.wiki>/`. If a `#^cn` suffix is given, the target claim exists in the target note.
 8. Every `@pass` has a recognized agent and status.
 9. `valid_at` is a valid ISO date <= today.
 10. If `invalid_at` is present, it is a valid ISO date > the corresponding `valid_at`.
@@ -287,17 +287,19 @@ Documented here so they do not get lost between sessions.
 - **Note-level aggregation alternatives.** Weighted mean by claim length, anchor count, or claim age. v1 is unweighted mean.
 - **Claim invalidation.** Currently a marker can be invalidated. A whole claim cannot — there is no `[Cn]` invalidation syntax. If a claim becomes wrong, the v1 workflow is to invalidate all its markers and add a Revision Log entry. v2 may add `### [Cn] ~~Claim text~~` strikethrough as a structural signal.
 
-## Chinese Shadow (`wiki-cn`)
+## Localized Shadow Wikis
 
-Every wiki entry in `$OV/wiki/` has a Chinese shadow copy in `$OV/wiki-cn/` with the same filename. The shadow is generated automatically by `/promote` (Phase 4) and can be regenerated on demand.
+Every wiki entry in `<paths.wiki>/` may have one or more **localized shadow copies** in a sibling directory (e.g., a `wiki-cn` directory for Chinese, `wiki-ja` for Japanese — naming is user-private). Shadow paths are configured in `harness/paths.local.toml` under `[paths.wiki_localized]`; the canonical `harness/paths.toml` ships with no shadows defined, so OSS users opt in by language.
+
+Shadows are generated by `/promote` (Phase 4) when a localized target is configured, and can be regenerated on demand. They share the filename of the source English entry, by convention.
 
 Translation rules:
-- Translate all prose (Summary, claim text, body paragraphs, Revision Log) to Chinese
-- DO NOT translate: technical terms, code identifiers, URLs, file paths, `@anchor`/`@pass`/`@cite` markers, `^cn` block IDs
+- Translate all prose (Summary, claim text, body paragraphs, Revision Log) into the target language
+- DO NOT translate: technical terms, code identifiers, URLs, file paths, `@anchor`/`@pass`/`@cite` markers, block IDs
 - Keep the `# Title` in English (filename must match the English version)
-- Prepend: `> 本文为 [[English Title]] 的中文版本。核心技术术语保留英文原文。`
+- Prepend a localized backreference, e.g. for Chinese: `> 本文为 [[English Title]] 的中文版本。核心技术术语保留英文原文。`
 
-The CN shadow is not part of the trust graph: `scripts/trust.py` only scans `$OV/wiki/`. The CN version is for reading convenience. It does not need its own anchors or reviewer passes.
+The CN shadow is not part of the trust graph: `scripts/trust.py` only scans `<paths.wiki>/`. The CN version is for reading convenience. It does not need its own anchors or reviewer passes.
 
 **Sync requirement:** When the English source is updated, the CN shadow must be regenerated. `scripts/lint.py` enforces this with two checks:
 - `cn-shadow-missing` (WARN): English entry exists but no CN shadow

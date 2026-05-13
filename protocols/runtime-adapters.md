@@ -18,8 +18,12 @@ workflow.
 
 | Runtime | Reads | Native surface | Status |
 |---|---|---|---|
-| Claude Code | `CLAUDE.md` | `.claude/agents/`, `.claude/commands/` | Primary interactive harness |
+| Claude Code | `CLAUDE.md` | `.claude/agents/`, `.claude/commands/`, `.claude/skills/` (entry hints only; not authoritative dispatch) | Primary interactive harness |
 | Codex | `AGENTS.md` | `.agents/skills/atelier/`, Codex CLI, Codex review | Portable harness |
+
+`.claude/skills/` is a Claude Code-only surface holding **entry hints**, not authoritative dispatch. Claude Code matches a skill's frontmatter description against user phrasing semantically — the LLM judges relevance, not substring. On a match the skill forwards into `/hi`; the canonical intent router in `harness/intents.toml` is still the single decision point for which agents run. Codex does not read `.claude/skills/`; Codex reaches the same flows through `python3 scripts/atelier.py run <command>` or by reading `.claude/commands/<name>.md` directly. Skill exposure is therefore additive on the Claude Code side and produces zero divergence on the Codex side.
+
+`scripts/harness_lint.py` enforces structural invariants only: skill name matches its directory, frontmatter has a non-empty description that mentions `/hi` (delegation), and the skill name corresponds to an existing `intents.<name>` row. Coherence between the skill's prose description and the intent it exposes is human-curated — substring-checking an LLM-judged trigger surface would be the wrong tool.
 
 Claude Code remains the most complete native surface because the command files
 currently use Claude constructs such as `AskUserQuestion` and `Agent(...)`.

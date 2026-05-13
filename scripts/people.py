@@ -2,7 +2,7 @@
 """
 people.py: Look up person notes by name fragment.
 
-Why this exists: $OV/archive/people/ contains many files named with
+Why this exists: $OV/people/ contains many files named with
 embedded spaces (e.g., "Pinyin Pinyin.md"). Ad-hoc `find ... | xargs grep`
 silently splits filenames on whitespace and returns false negatives, so
 "the vault has no note for X" assertions made through that pipeline are
@@ -41,9 +41,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paths import vault_root, fmt  # type: ignore[import-not-found]  # noqa: E402
+from _paths import fmt, tier  # type: ignore[import-not-found]  # noqa: E402
 
-PEOPLE_DIR = vault_root() / "archive" / "people"
+PEOPLE_DIR = tier("people")
 HEAD_LINES = 30  # the bio block sits at the top of every person note
 
 _NAME_FIELD = os.environ.get("ATELIER_PEOPLE_NAME_FIELD", "").strip()
@@ -83,7 +83,7 @@ def scan(query: str) -> list[dict]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="scripts/people.py",
-        description="Search $OV/archive/people/ by name fragment.",
+        description="Search $OV/people/ by name fragment.",
     )
     parser.add_argument("query", help="Name fragment.")
     parser.add_argument("--json", action="store_true", help="JSON output.")

@@ -8,10 +8,10 @@ At session end, immediately before (or alongside) the reflection file write. The
 
 ## Storage
 
-- **File:** `$OV/sessions/YYYY-MM-DD-<type>.md`
+- **File:** `<paths.sessions>/YYYY-MM-DD-<type>.md`
 - **Types:** reflection, review, weekly, decision, exploration, energy-audit, reading, curate, introspect, meeting, deep-dive, system-review, prm
 - **Collisions:** If multiple sessions of the same type run on the same day, append a sequence number: `YYYY-MM-DD-reflection-2.md`
-- **Tier:** L2, same as `$OV/reflections/` and `$OV/daily-notes/`
+- **Tier:** L2, same as `<paths.reflections>/` and `<paths.daily_notes>/`
 - **Write method:** Local `Write` only. No user approval needed (system-facing artifact). If the write fails, warn and continue; do not block the session.
 
 ## Format
@@ -95,7 +95,7 @@ Session logs are plain markdown with structured headings. No special tooling req
 
 | Artifact | Purpose | Audience |
 |----------|---------|----------|
-| `$OV/reflections/YYYY-MM-DD-*.md` | Session conclusions, insights, next actions | User (human-readable) |
-| `$OV/sessions/YYYY-MM-DD-*.md` | Session process, agent dispatches, search effectiveness | System (Evolver, continuity) |
+| `<paths.reflections>/YYYY-MM-DD-*.md` | Session conclusions, insights, next actions | User (human-readable) |
+| `<paths.sessions>/YYYY-MM-DD-*.md` | Session process, agent dispatches, search effectiveness | System (Evolver, continuity) |
 
 Session logs do not replace reflection files. They are a parallel, system-facing record.

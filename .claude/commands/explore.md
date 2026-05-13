@@ -9,7 +9,7 @@ Free-form exploration session for when the user doesn't have a specific question
 ## Prerequisites
 
 1. Read `profile/identity.md` for context.
-2. Read the most recent reflection file from `$OV/reflections/`.
+2. Read the most recent reflection file from `<paths.reflections>/`.
 
 ## The Exploration Process
 
@@ -55,7 +55,7 @@ Let the user pick which spark interests them. Then:
 
 ## Output
 
-**File:** `$OV/reflections/YYYY-MM-DD-exploration.md`
+**File:** `<paths.reflections>/YYYY-MM-DD-exploration.md`
 
 ```markdown
 # Exploration — YYYY-MM-DD
@@ -90,4 +90,4 @@ After writing the exploration file, emit a session log:
 
 ## Wrap Up
 
-The exploration file in `$OV/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them.
+The exploration file in `<paths.reflections>/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them.

@@ -38,7 +38,7 @@ Failures are ranked by severity. Handle at the lowest level possible.
 ### Synthesizer
 - **No research brief received**: Read `$OV/` directly (bypass normal contract). Prefix output with `[DEGRADED: No research brief, synthesizing from direct reads]`.
 - **Research brief has critical gaps**: Acknowledge gaps explicitly in output rather than filling with speculation.
-- **Write failure to `$OV/reflections/`**: Abort with a clear error — this is the primary write path and there is no further fallback. Report the filesystem error to the user.
+- **Write failure to `<paths.reflections>/`**: Abort with a clear error — this is the primary write path and there is no further fallback. Report the filesystem error to the user.
 
 ### Reviewer
 - **Cannot verify citation**: Mark as `UNVERIFIED` rather than `FAIL`. Distinguish "wrong" from "couldn't check".
@@ -46,7 +46,7 @@ Failures are ranked by severity. Handle at the lowest level possible.
 - **Source note missing from `$OV/`**: Mark `UNVERIFIED`. Reviewer cannot fetch missing notes. An UNVERIFIED mark is the correct outcome.
 
 ### Challenger
-- **No recent entries in `$OV/daily-notes/`**: Use the latest reflection file in `$OV/reflections/` as context instead.
+- **No recent entries in `<paths.daily_notes>/`**: Use the latest reflection file in `<paths.reflections>/` as context instead.
 - **No contradictions found**: This is fine — not every session has contradictions. Don't force them.
 - **User emotional state unclear**: Default to neutral register.
 
@@ -56,9 +56,9 @@ Failures are ranked by severity. Handle at the lowest level possible.
 - **No clear framework fit**: Use first principles thinking — always available.
 
 ### Curator
-- **Content loss in merge**: Run Content Preservation Checklist (see `curator.md`). Scan snapshot files in `$OV/cache/<operation>-*.md` for `![`, `http`, `[[`, table syntax before finalizing. If any media is found in snapshots but missing from output, block the proposal until fixed.
-- **Snapshot missing at dispatch time**: If the orchestrator could not produce a snapshot at `$OV/cache/<operation>-<slug>.md` for any source note (the local source could not be copied), abort the operation. Do not proceed with partial sources.
-- **Source note disappears mid-session**: The dispatch-time snapshot in `$OV/cache/` is authoritative. Continue working from the snapshot — the loss of the original is informational only. This is exactly what the snapshot step exists to protect against.
+- **Content loss in merge**: Run Content Preservation Checklist (see `curator.md`). Scan snapshot files in `<paths.cache>/<operation>-*.md` for `![`, `http`, `[[`, table syntax before finalizing. If any media is found in snapshots but missing from output, block the proposal until fixed.
+- **Snapshot missing at dispatch time**: If the orchestrator could not produce a snapshot at `<paths.cache>/<operation>-<slug>.md` for any source note (the local source could not be copied), abort the operation. Do not proceed with partial sources.
+- **Source note disappears mid-session**: The dispatch-time snapshot in `<paths.cache>/` is authoritative. Continue working from the snapshot — the loss of the original is informational only. This is exactly what the snapshot step exists to protect against.
 - **Size overflow**: Use 15KB as a working limit for individual notes — split larger drafts into numbered parts with cross-link headers.
 - **Image/media count mismatch**: If the output media count does not match the snapshot media count, the proposal is invalid. Re-scan snapshot files and fix before presenting to user.
 - **Local write failure**: Surface the filesystem error to the user; the orchestrator owns `Write`/`Edit` and is the only writer. Curator never writes.
@@ -71,8 +71,8 @@ Failures are ranked by severity. Handle at the lowest level possible.
 ## Session Continuity
 
 If a session is interrupted:
-1. Check `$OV/reflections/` for partial output from today.
-2. Check today's daily note (`$OV/daily-notes/YYYY-MM-DD.md`) for a session write-back the user may have authored. The system never writes to daily notes, so any content there is user-authored; resume from where the user left off.
+1. Check `<paths.reflections>/` for partial output from today.
+2. Check today's daily note (`<paths.daily_notes>/YYYY-MM-DD.md`) for a session write-back the user may have authored. The system never writes to daily notes, so any content there is user-authored; resume from where the user left off.
 3. Resume from the last completed step rather than restarting.
 4. If unclear what was done, ask the user.
 
@@ -82,7 +82,7 @@ If a session is interrupted:
 - Readwise calls: 30 seconds before reporting `/curate` as degraded
 - Web searches: 15 seconds before skip
 - Agent handoffs: No timeout (rely on maxTurns)
-- Local writes (`$OV/reflections/`, `$OV/drafts/`, `$OV/cache/`): 5 seconds
+- Local writes (`<paths.reflections>/`, `<paths.wip>/`, `<paths.cache>/`): 5 seconds
 
 ## Escalation Rules
 

@@ -20,17 +20,17 @@ Applies to: anything written collaboratively with the system, anything the syste
 
 ### Wiki entry (location-based)
 
-A note that lives under `$OV/wiki/` and follows the **wiki schema** (defined in `protocols/wiki-schema.md`): explicit `## Claims` section, each claim carrying its own anchor set, structured `@anchor` / `@cite` / `@pass` markers with bi-temporal `valid_at` / `invalid_at` semantics, and structural integrity verified by lint. **The certification is the location, not a tag.** Anything in `$OV/wiki/` is a wiki entry by definition, and the trust engine treats it as one. No `#compiled-truth` tag, no `#wiki` tag — the directory walk is the contract.
+A note that lives under `<paths.wiki>/` and follows the **wiki schema** (defined in `protocols/wiki-schema.md`): explicit `## Claims` section, each claim carrying its own anchor set, structured `@anchor` / `@cite` / `@pass` markers with bi-temporal `valid_at` / `invalid_at` semantics, and structural integrity verified by lint. **The certification is the location, not a tag.** Anything in `<paths.wiki>/` is a wiki entry by definition, and the trust engine treats it as one. No `#compiled-truth` tag, no `#wiki` tag — the directory walk is the contract.
 
 Applies to: notes the user wants the system to treat as authoritative in the local-first knowledge layer. These are the only notes that participate in TrustRank propagation.
 
-This design choice (location over tag) has a reason: `$OV/` is the user's pre-existing markdown vault with hundreds of notes and an established tagging convention. Adding a structural sub-tier by tag would conflict with that convention and force the trust engine to filter every note in the vault. A dedicated subdirectory (`$OV/wiki/`) is cleaner — the trust engine walks one directory; the user's other tags stay free.
+This design choice (location over tag) has a reason: `$OV/` is the user's pre-existing markdown vault with hundreds of notes and an established tagging convention. Adding a structural sub-tier by tag would conflict with that convention and force the trust engine to filter every note in the vault. A dedicated subdirectory (`<paths.wiki>/`) is cleaner — the trust engine walks one directory; the user's other tags stay free.
 
 ### `#solo-flight` (rare)
 
 The narrowest, most certified tier: an unstructured free-write the user produced **without any AI assistance whatsoever** — no draft from the system, no prior conversation with the system that fed into it, no LLM-summarized source material. A genuine independent calibration unit.
 
-Applies to: periodic (monthly or quarterly) free-writes the user does deliberately to check for drift between AI-assisted and unassisted thought. Also applies to any captured raw thought the user wants to mark as load-bearing un-touched-by-AI for later comparison. `#solo-flight` is location-independent — it can live anywhere the user captures unmediated thought (a daily note, a separate notebook, or any markdown file outside `$OV/wiki/`).
+Applies to: periodic (monthly or quarterly) free-writes the user does deliberately to check for drift between AI-assisted and unassisted thought. Also applies to any captured raw thought the user wants to mark as load-bearing un-touched-by-AI for later comparison. `#solo-flight` is location-independent — it can live anywhere the user captures unmediated thought (a daily note, a separate notebook, or any markdown file outside `<paths.wiki>/`).
 
 `#solo-flight` is rare on purpose. If everything is solo-flight, the tag means nothing. If nothing is solo-flight, there is no calibration tier and drift cannot be detected.
 
@@ -107,7 +107,7 @@ This is fine. The taxonomy is honest about it. The point of `#solo-flight` is no
 
 ## How This Connects to the Rest of the System
 
-- **Tag taxonomy** lives here. The wiki schema (`wiki-schema.md`) defines the structure for files under `$OV/wiki/`. The trust engine (Phase B, `scripts/trust.py`) reads only the `$OV/wiki/` subtree.
-- **Knowledge tiers (L1–L5)** are defined in `local-first-architecture.md` and describe *where* a note lives. They are orthogonal to the validation-depth categories above. Wiki entries live at L4 (`$OV/wiki/`). Alloy notes live anywhere from L1 to L3 (daily notes, session reflections, the rest of the vault, curated receipts). `#solo-flight` notes are usually captured in the L1 daily-note layer. To avoid confusion: the L1–L5 axis is "knowledge storage / certification level," the alloy / wiki entry / `#solo-flight` axis is "validation depth."
+- **Tag taxonomy** lives here. The wiki schema (`wiki-schema.md`) defines the structure for files under `<paths.wiki>/`. The trust engine (Phase B, `scripts/trust.py`) reads only the `<paths.wiki>/` subtree.
+- **Knowledge tiers (L1–L5)** are defined in `local-first-architecture.md` and describe *where* a note lives. They are orthogonal to the validation-depth categories above. Wiki entries live at L4 (`<paths.wiki>/`). Alloy notes live anywhere from L1 to L3 (daily notes, session reflections, the rest of the vault, curated receipts). `#solo-flight` notes are usually captured in the L1 daily-note layer. To avoid confusion: the L1–L5 axis is "knowledge storage / certification level," the alloy / wiki entry / `#solo-flight` axis is "validation depth."
 - **Search behavior** changes: no exclusion rule based on `#ai-reflection`. Use trust scores (when available) or recency + relevance (when not).
-- **Curator and Researcher** behavior: Curator drafts wiki entries to `$OV/wiki/`; Researcher routes wiki queries to the local layer.
+- **Curator and Researcher** behavior: Curator drafts wiki entries to `<paths.wiki>/`; Researcher routes wiki queries to the local layer.

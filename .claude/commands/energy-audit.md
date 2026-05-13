@@ -13,7 +13,7 @@ Deep assessment of where your energy goes — physical, mental, emotional, and s
 
 ## Context Loading
 
-1. **Read the last 14 daily notes from the local vault** to track energy patterns: `Read $OV/daily-notes/<today>.md` back through `Read $OV/daily-notes/<14-days-ago>.md` (one `Read` per date). For dates missing from the vault, report the gap.
+1. **Read the last 14 daily notes from the local vault** to track energy patterns: `Read <paths.daily_notes>/<today>.md` back through `Read <paths.daily_notes>/<14-days-ago>.md` (one `Read` per date). For dates missing from the vault, report the gap.
 2. **Search for energy-related notes:**
    - `Grep(pattern: "累|疲惫|精力", path: "$OV/")` — Chinese exhaustion markers (local, exact).
    - `Grep(pattern: "运动|健康|睡眠", path: "$OV/")` — Chinese health markers (local, exact).
@@ -67,7 +67,7 @@ Present findings as:
 
 ## Output
 
-**File:** `$OV/reflections/YYYY-MM-DD-energy-audit.md`
+**File:** `<paths.reflections>/YYYY-MM-DD-energy-audit.md`
 
 ```markdown
 # Energy Audit — YYYY-MM-DD
@@ -107,4 +107,4 @@ After writing the energy audit file, emit a session log:
 
 ## Wrap Up
 
-The energy audit file in `$OV/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them. Tell the user the audit has been saved and where to find it.
+The energy audit file in `<paths.reflections>/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them. Tell the user the audit has been saved and where to find it.

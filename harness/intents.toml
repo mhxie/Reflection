@@ -38,19 +38,10 @@
 #                             (informational; the actual dispatch shape is
 #                             still the orchestrator's call)
 #
-# Design note (per the cached "intent table is meta-harness; design for
-# staleness" principle): keep the schema minimal and stable. Resist fields
-# that encode current-model assumptions (e.g., model ids, token budgets,
-# specific tool names). Coordination pattern is annotation; lint validates
-# the value set, not behavior.
-#
-# No-branching contract on `pattern`: this field is documentation. No code
-# path in `scripts/`, no agent prompt, and no orchestrator instruction may
-# branch on its value (e.g., `if pattern == "agent-team": auto_parallelize()`).
-# To add behavior keyed on coordination shape, propose a separate field with
-# explicit semantics; do not extend `pattern` with new values to enable a
-# runtime check. The 5-value enum is intentionally a closed set; expansion
-# requires a separate wave with explicit governance.
+# Design note: keep the schema minimal and stable. Resist fields that encode
+# current-model assumptions (model ids, token budgets, specific tool names).
+# `pattern` is annotation only — see `protocols/orchestrator.md` § Pattern
+# field contract for the no-branching rule and the closed 5-value enum.
 
 # Capture also matches on input shape, not only literal phrases: a date-prefixed
 # factual narrative without analytical question (e.g., `5/4 早上去了 X, 中午
@@ -58,6 +49,9 @@
 # orchestrator decides on shape via the routing prose in `.claude/commands/hi.md`
 # → "Always-on Routing Announcement" / "Semantic match". Keep `patterns` for
 # explicit phrases; do not add structural placeholders here.
+#
+# Entry-hint skill: `.claude/skills/capture/SKILL.md` (forwards into `/hi`;
+# see `protocols/runtime-adapters.md` § Runtime Surfaces).
 [intents.capture]
 patterns = [
     "记一下",
@@ -87,6 +81,11 @@ parallel = false
 # (`"read this"`, `"read it"`, `"let's read"`, `"read with"`) so the reading
 # intent fires on natural-language reading triggers without stealing other
 # intents' phrases.
+#
+# Entry-hint skill: `.claude/skills/reading/SKILL.md` (forwards into `/hi`;
+# see `protocols/runtime-adapters.md` § Runtime Surfaces). The skill's
+# description enumerates "do NOT trigger" cases because URL presence alone is
+# not a clean primary-intent signal.
 [intents.reading]
 patterns = [
     "http://",
@@ -96,7 +95,9 @@ patterns = [
     "read this",
     "read it",
     "read with",
-    "discuss",
+    "discuss this",
+    "discuss this article",
+    "let's discuss",
 ]
 mode = "read-and-discuss"
 agents = ["reader", "researcher"]
@@ -141,8 +142,34 @@ pattern = "agent-team"
 expected_subagent_count = 2
 parallel = true
 
+# Sync digests the mobile-capture submodule $OV/zettelm/ into the persistent
+# L2 destinations (daily-notes/<date>.md for narrative; <domain>/raw/ for
+# attachments), enriches with backlinks, appends a 3-prompt footer to the
+# most recent daily note, then stages zettelm deletions for the user to
+# commit. Procedure: .claude/commands/sync.md.
+#
+# Priority 28: between explore (22) and forget (25) on one side and meeting
+# (30) on the other, so explicit "sync" / "digest zettelm" beats the
+# fallback reflection but does not steal from meeting / reading / capture.
+[intents.sync]
+patterns = [
+    "sync",
+    "digest zettelm",
+    "digest mobile",
+    "process zettelm",
+    "sync mobile notes",
+    "fleeting digest",
+]
+mode = "sync"
+agents = ["researcher", "curator", "challenger", "scribe", "reviewer"]
+profile_reads = []
+priority = 28
+pattern = "orchestrator-subagent"
+expected_subagent_count = 5
+parallel = false
+
 # Forget routes to a Forgetter decay sweep over a bounded scope. Default
-# scope is $OV/drafts/ unless the user names a different path. Forgetter
+# scope is $OV/wip/ unless the user names a different path. Forgetter
 # proposes; never deletes. See .claude/agents/forgetter.md.
 [intents.forget]
 patterns = [
@@ -152,7 +179,8 @@ patterns = [
     "what should I forget",
     "clean up notes",
     "prune",
-    "scan my drafts",
+    "scan my wip",
+    "scan my drafts",  # legacy alias; pre-rename muscle memory
 ]
 mode = "decay-scan"
 agents = ["forgetter"]
@@ -162,13 +190,11 @@ pattern = "generator-verifier"
 expected_subagent_count = 1
 parallel = false
 
-# The nine sub-mode intents below cover what used to be standalone
-# slash commands (/weekly, /review, /decision, /energy-audit, /explore,
-# /curate, /introspect, /lint, /promote). They remain reachable as direct
-# slashes for muscle memory, and now also via `/hi <natural language>`.
-# Each row points at the procedure file in `.claude/commands/<name>.md`;
-# the orchestrator reads and follows that file when the intent matches.
-# See `.claude/commands/hi.md` "Sub-mode procedures" for the mode → file map.
+# Sub-mode intents (/weekly, /review, /decision, /energy-audit, /explore,
+# /curate, /introspect, /lint, /promote): reachable as direct slashes for
+# muscle memory, and via `/hi <natural language>`. Each row points at the
+# procedure file in `.claude/commands/<name>.md`. See `.claude/commands/hi.md`
+# "Sub-mode procedures" for the mode → file map.
 
 # Weekly review of the past 7 days. Procedure: .claude/commands/weekly.md.
 # Higher priority than `reading` (40) so explicit "weekly" / "this week"
@@ -241,6 +267,7 @@ patterns = [
     "help me decide",
     "help me think through",
     "torn between",
+    "torn on whether",
     "decision journal",
     "make a decision",
 ]

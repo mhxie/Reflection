@@ -1,0 +1,64 @@
+# Portable path registry.
+#
+# Canonical logical-name → physical-path mapping for every L1–L4 surface in
+# the user's vault. Committed. Generic shape that every OSS user inherits.
+#
+# Renames happen here. A tier rename (e.g., `drafts` → `wip`) used to touch
+# every doc that mentioned the path; now it's one edit in this file. The
+# `harness_lint.py path-literal` check enforces no committed `.md` hardcodes
+# an `$OV/<segment>/` literal whose `<segment>` is not in this registry.
+#
+# Per-user extensions (localized wikis, sandbox overrides, additional tiers
+# private to one user's vault) belong in `harness/paths.local.toml`
+# (gitignored). The runtime merges canonical + local at session start.
+#
+# Resolution rule: every value resolves under `$OV` unless it starts with
+# `/` (absolute path). The leading `$OV/` is implicit; do not repeat it.
+# So `wip = "wip"` resolves to `$OV/wip/`. Use `$OV/` prefix only when you
+# explicitly need to denote vault-root anchoring in prose; the registry
+# itself stores bare segment paths.
+
+[paths]
+# L4 — locally certified (wiki). Primary surface is always `wiki`; localized
+# variants live under `[paths.wiki_localized]` per user.
+wiki            = "wiki"
+
+# L3 — externally certified
+papers          = "papers"
+preprints       = "preprints"
+readwise        = "readwise"
+
+# L2 — working / half-baked. The persistent surfaces.
+daily_notes     = "daily-notes"
+reflections     = "reflections"
+research        = "research"
+agent_findings  = "agent-findings"
+wip             = "wip"
+gtd             = "gtd"
+travel          = "travel"
+health          = "health"
+work            = "work"
+people          = "people"
+abroad          = "abroad"
+finance         = "finance"
+personal        = "personal"
+housing         = "housing"
+education       = "education"
+planning        = "planning"
+civ             = "civ"
+archive         = "archive"
+sessions        = "sessions"
+
+# L2 transient — mobile-capture submodule, digested then cleared by /sync.
+zettelm         = "zettelm"
+
+# L1 — raw capture
+cache           = "cache"
+
+[paths.wiki_localized]
+# Empty by default. OSS users add their second-language wiki here, e.g.:
+#   zh = "wiki-cn"
+#   ja = "wiki-ja"
+# Per-user values go in `harness/paths.local.toml` so the canonical file
+# stays generic. Scripts call `wiki_dirs()` which returns the primary
+# `wiki` directory plus every entry in this table.

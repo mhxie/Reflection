@@ -89,10 +89,10 @@ PY
 CODEX_API_MODEL=$(printf '%s' "$CODEX_MODEL_INFO" | cut -f1)
 CODEX_REASONING=$(printf '%s' "$CODEX_MODEL_INFO" | cut -f2)
 
-# Default payload cap: 400KB (~100K tokens at chars/4). Set to 0 to disable.
-# Catches the obvious failure mode: a fresh log/dump file accidentally left
-# untracked is included verbatim by build_diff and balloons the API request.
-PAYLOAD_CAP="${ATELIER_REVIEW_MAX_BYTES:-409600}"
+# Default: no payload cap. /system-review is the safety net; capping it is the
+# worst place to save tokens. Override with ATELIER_REVIEW_MAX_BYTES=<n> if you
+# want a guard against accidentally including a huge untracked log/dump file.
+PAYLOAD_CAP="${ATELIER_REVIEW_MAX_BYTES:-0}"
 mkdir -p "$OUT_DIR"
 
 # Abort if working tree is clean.
@@ -173,18 +173,20 @@ run_codex() {
     return 127
   fi
   echo "[codex] running ($CODEX_MODEL → $CODEX_API_MODEL, reasoning=${CODEX_REASONING:-default}) → $out (errors → $err)" >&2
-  # codex exec review --uncommitted picks up untracked files natively.
+  # codex CLI made `--uncommitted` mutually exclusive with the `[PROMPT]`
+  # positional arg (the flag tells codex to read the diff itself, conflicting
+  # with explicit prompt feeding). We need both: the custom rubric AND the
+  # uncommitted-bundle content. Resolved by dropping `--uncommitted` and
+  # piping `$PROMPT + build_diff()` via stdin — matches the direct-api
+  # leg's pattern and includes untracked files explicitly via build_diff().
+  #
   # Model identity from external-reviewer voices in harness/agents.toml;
   # provider model id + reasoning effort from profile/models.toml.
-  # The custom review prompt ($PROMPT) is piped on stdin via the `-` PROMPT
-  # arg per `codex exec review --help`. (Earlier --full-auto flag was
-  # invalid for the review subcommand; codex was running its built-in rubric
-  # instead of ours, silently.)
-  local codex_args=(exec review --uncommitted)
+  local codex_args=(exec review)
   [ -n "$CODEX_API_MODEL" ] && codex_args+=(-m "$CODEX_API_MODEL")
   [ -n "$CODEX_REASONING" ] && codex_args+=(-c "model_reasoning_effort=\"$CODEX_REASONING\"")
   codex_args+=(-)
-  printf '%s' "$PROMPT" | codex "${codex_args[@]}" > "$out" 2> "$err"
+  { printf '%s\n\n--- DIFF (includes untracked) ---\n' "$PROMPT"; build_diff; } | codex "${codex_args[@]}" > "$out" 2> "$err"
   local rc=$?
   if [ $rc -eq 0 ]; then
     echo "[codex] done → $out"

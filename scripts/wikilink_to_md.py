@@ -6,7 +6,7 @@ Transforms:
   [[Foo|Bar]] resolves          → [Bar](relative/Foo.md)
   [[Foo#Section]] resolves      → [Foo](relative/Foo.md#section-slug)
   [[Foo#^block]] resolves       → [Foo](relative/Foo.md)         (block id dropped)
-  [[<full-date>]]               → [YYYY-MM-DD](daily-notes/YYYY-MM-DD.md)
+  [[<full-date>]]               → [YYYY-MM-DD](daily-notes/YYYY/MM/YYYY-MM-DD.md)
                                   if file exists, else plain ISO text
   [[2025]] / [[123]]            → 2025 / 123                     (strip; no pure-num tags)
   [[]]                          → (stripped)
@@ -196,7 +196,9 @@ def transform_wikilink(inner: str, source_rel: Path, idx: dict[str, list[Path]])
     parsed = parse_date(target)
     if parsed:
         iso = parsed.strftime("%Y-%m-%d")
-        daily_rel = Path("daily-notes") / f"{iso}.md"
+        year = parsed.strftime("%Y")
+        month = parsed.strftime("%m")
+        daily_rel = Path("daily-notes") / year / month / f"{iso}.md"
         if (OV / daily_rel).exists():
             display = alias or iso
             return md_link(display, relative_path(daily_rel, source_rel))

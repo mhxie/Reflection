@@ -47,7 +47,7 @@ You are triaging a content inbox against the user's active goals and directions.
 
    Cite the guest in the relevance reason, not the host (the host is the same every episode). Flag any auto-transcript as potentially misrendering proper nouns; do not write a guest name to the triage file without high confidence.
 
-4. Write the ranked list to `$OV/cache/triage-YYYY-MM-DD.md` with format:
+4. Write the ranked list to `<paths.cache>/triage-YYYY-MM-DD.md` with format:
 
    ```markdown
    # Triage: YYYY-MM-DD

@@ -73,7 +73,7 @@ When any area drops below its floor, flag it: "[Area] is below amenity floor —
 
 ## Trend Tracking
 
-When writing session score cards, also check previous sessions in `$OV/reflections/` for comparison:
+When writing session score cards, also check previous sessions in `<paths.reflections>/` for comparison:
 
 ```markdown
 ## Trend

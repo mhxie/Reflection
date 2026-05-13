@@ -2,7 +2,7 @@
 """
 staleness.py: Active forgetting for L2 working-layer content.
 
-Scans L2 directories (agent-findings, drafts, gtd, preprints, reflections)
+Scans L2 directories (agent-findings, wip, gtd, preprints, reflections)
 and scores each note by staleness. Flags candidates for archival, compaction,
 or promotion to L4.
 
@@ -24,7 +24,7 @@ Exit code: 0 always (staleness is advisory, never blocking).
 CLI:
     scripts/staleness.py                 human report
     scripts/staleness.py --json          structured output
-    scripts/staleness.py --dir zk/drafts scan a single L2 directory
+    scripts/staleness.py --dir zk/wip   scan a single L2 directory
 
 Paths are project-relative. Run from the repo root.
 """
@@ -40,21 +40,23 @@ from datetime import date, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paths import vault_root  # type: ignore[import-not-found]  # noqa: E402
+from _paths import tier, vault_root  # type: ignore[import-not-found]  # noqa: E402
 
 _OV = vault_root()
 
 # L2 directories to scan (daily-notes excluded: capture stream, not working
 # knowledge). health excluded: longitudinal records, different lifecycle.
+# Paths resolve via the canonical path registry so renames in harness/paths.toml
+# propagate automatically.
 L2_DIRS = [
-    _OV / "agent-findings",
-    _OV / "drafts",
-    _OV / "gtd",
-    _OV / "preprints",
-    _OV / "reflections",
+    tier("agent_findings"),
+    tier("wip"),
+    tier("gtd"),
+    tier("preprints"),
+    tier("reflections"),
 ]
 
-WIKI_DIR = _OV / "wiki"
+WIKI_DIR = tier("wiki")
 
 # Thresholds (staleness score units, roughly "days-equivalent").
 STALE_THRESHOLD = 90

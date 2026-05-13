@@ -87,9 +87,11 @@ used_by = [
     "commands.hi",
     "commands.introspect",
     "commands.prm",
+    "commands.sync",
     "intents.introspect",
     "intents.meeting",
     "intents.reflection",
+    "intents.sync",
 ]
 
 [agents.curator]
@@ -104,8 +106,10 @@ pattern = "orchestrator-subagent"
 used_by = [
     "commands.hi",
     "commands.promote",
+    "commands.sync",
     "intents.meeting",
     "intents.promote",
+    "intents.sync",
 ]
 
 [agents.evolver]
@@ -204,6 +208,7 @@ used_by = [
     "commands.hi",
     "commands.prm",
     "commands.promote",
+    "commands.sync",
     "intents.decision",
     "intents.energy-audit",
     "intents.explore",
@@ -211,6 +216,7 @@ used_by = [
     "intents.reading",
     "intents.reflection",
     "intents.review",
+    "intents.sync",
     "intents.talk",
     "intents.weekly",
 ]
@@ -229,9 +235,11 @@ used_by = [
     "commands.introspect",
     "commands.prm",
     "commands.promote",
+    "commands.sync",
     "commands.system-review",
     "intents.introspect",
     "intents.reflection",
+    "intents.sync",
 ]
 
 [agents.scout]
@@ -302,7 +310,9 @@ codex_prompt = "Emulate the Scribe role using `.claude/agents/scribe.md` and the
 pattern = "solo"
 used_by = [
     "commands.hi",
+    "commands.sync",
     "intents.capture",
+    "intents.sync",
 ]
 
 [agents.external-reviewer]

@@ -43,8 +43,8 @@ Run these searches in parallel over the local `$OV/` vault. Local grep is instan
 9. `Grep(pattern: "学习", path: "$OV/")` — Chinese learning notes
 
 **Recent Context:**
-10. `Read $OV/daily-notes/<today>.md` — today
-11. `Read $OV/daily-notes/<yesterday>.md` — yesterday
+10. `Read <paths.daily_notes>/<today>.md` — today
+11. `Read <paths.daily_notes>/<yesterday>.md` — yesterday
 12. Recent planning: `Bash: find "$OV"/daily-notes "$OV"/reflections "$OV"/gtd -type f -name "*.md" -mtime -30 | xargs grep -l -i "plan" 2>/dev/null`
 
 Deduplicate results by file path. Prioritize files with recent mtimes. **Semantic pass:** for conceptual angles grep cannot phrase ("curiosity vectors", "intellectual taste", "what am I drawn to"), run `Bash: uv run scripts/semantic.py query "<concept>" --top 10`. Reframe and retry if thin.
@@ -62,7 +62,7 @@ This step goes beyond mechanical extraction. Look for:
 
 **Intellectual taste** (what you engage deeply with vs. skim):
 - Topics that recur across daily notes without being declared goals
-- Articles/papers you chose to deep-read vs. archive (check triage files in `$OV/cache/triage-*.md`)
+- Articles/papers you chose to deep-read vs. archive (check triage files in `<paths.cache>/triage-*.md`)
 - Discussion tangents that repeatedly surface in reflection sessions
 - Aesthetic preferences in how you evaluate ideas (from research-profile patterns)
 

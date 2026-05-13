@@ -866,6 +866,97 @@ def check_harness_readme() -> list[Finding]:
     return findings
 
 
+def check_claude_skills(intents: dict[str, dict[str, Any]]) -> list[Finding]:
+    """Validate Claude Code entry-hint skills under `.claude/skills/`.
+
+    Skills are non-authoritative entry hints: Claude Code matches the skill's
+    frontmatter description against user phrasing semantically (LLM-judged,
+    not substring), and on a match the skill forwards into `/hi` where the
+    canonical intent router in `harness/intents.toml` decides dispatch.
+
+    Because triggering is semantic, this lint deliberately does NOT enforce
+    that the skill's description contain any specific list of phrases — that
+    would be substring-thinking against an LLM-judged surface. Coherence
+    between a skill's prose description and the intent it exposes is a
+    human-curated property, not a mechanical one.
+
+    Structural invariants only:
+      - Each `.claude/skills/<name>/SKILL.md` parses, has frontmatter, and
+        `name` matches the directory name.
+      - The skill's frontmatter declares a non-empty `description`.
+      - The description mentions `` `/hi` `` in backtick-wrapped form
+        (proves the delegation pattern is documented at the trigger surface
+        — the skill must forward into the router rather than dispatch
+        directly). Backticks anchor the token so `/history`, `/hire`, etc.
+        do not satisfy the check.
+      - The skill name corresponds to an existing `intents.<name>` row
+        (orphan skills with no router intent are a drift signal).
+    """
+    findings: list[Finding] = []
+    skills_dir = ROOT / ".claude" / "skills"
+    if not skills_dir.is_dir():
+        return findings
+
+    for skill_dir in sorted(p for p in skills_dir.iterdir() if p.is_dir()):
+        skill_name = skill_dir.name
+        skill_path = skill_dir / "SKILL.md"
+        if not skill_path.exists():
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "claude-skill-missing-file",
+                    rel(skill_dir),
+                    f"skill directory `{skill_name}` has no SKILL.md",
+                )
+            )
+            continue
+
+        fields = parse_agent_frontmatter(skill_path)
+        declared_name = fields.get("name", "").strip()
+        if declared_name != skill_name:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "claude-skill-name",
+                    rel(skill_path),
+                    f"skill frontmatter `name: {declared_name!r}` does not match directory `{skill_name}`",
+                )
+            )
+
+        description = fields.get("description", "")
+        if not description:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "claude-skill-description-missing",
+                    rel(skill_path),
+                    "skill frontmatter must declare a non-empty `description`",
+                )
+            )
+
+        if "`/hi`" not in description:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "claude-skill-no-delegation",
+                    rel(skill_path),
+                    "skill description must mention `` `/hi` `` (backtick-wrapped, delegation pattern: skill forwards into the intent router)",
+                )
+            )
+
+        if skill_name not in intents:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "claude-skill-orphan",
+                    rel(skill_path),
+                    f"skill `{skill_name}` has no corresponding `intents.{skill_name}` row in harness/intents.toml",
+                )
+            )
+
+    return findings
+
+
 def check_atelier_skill() -> list[Finding]:
     findings: list[Finding] = []
     path = ROOT / ".agents" / "skills" / "atelier" / "SKILL.md"
@@ -904,6 +995,139 @@ def check_atelier_skill() -> list[Finding]:
                     "skill-reference",
                     rel(path),
                     f"skill must reference `{needle}`",
+                )
+            )
+    return findings
+
+
+def check_path_registry_drift() -> list[Finding]:
+    """Flag `$OV/<segment>/` literals in committed `.md` whose `<segment>`
+    is not registered in `harness/paths.toml`.
+
+    Why this exists: hardcoded `$OV/<x>/` literals scattered across docs
+    used to be the single biggest rename antipattern in the harness. A
+    tier rename (e.g., `drafts` → `wip`) touched a dozen files and risked
+    leaving stale paths in agent prompts. The path registry collapses
+    valid tier segments to one source of truth; this check enforces that
+    every `$OV/<segment>/` literal in a committed `.md` resolves to a
+    registry entry, so drift is caught at lint time and a rename becomes
+    a `paths.toml` edit + `scripts/rewrite_paths.py` invocation.
+
+    Scope: walks committed `.md` files under `CLAUDE.md`, `protocols/`,
+    `.claude/`, `harness/` (TOML is tracked separately by other checks).
+    `paths.local.toml` is gitignored and not consulted here — its entries
+    are per-user and not part of the universal contract.
+    """
+    findings: list[Finding] = []
+    paths_toml = ROOT / "harness" / "paths.toml"
+    if not paths_toml.is_file():
+        return findings  # registry absent; bootstrap state, skip the check
+    try:
+        with paths_toml.open("rb") as f:
+            data = tomllib.load(f)
+    except Exception as exc:
+        findings.append(
+            Finding(
+                "ERROR",
+                "paths-registry-parse",
+                rel(paths_toml),
+                f"could not parse harness/paths.toml: {exc}",
+            )
+        )
+        return findings
+
+    reg = (data.get("paths") or {})
+    # Canonical segments: every scalar value in [paths], plus the values
+    # of [paths.wiki_localized]. Map segment string → canonical name for
+    # the remediation hint.
+    valid_segments: dict[str, str] = {}
+    for k, v in reg.items():
+        if isinstance(v, str):
+            valid_segments[v] = k
+    for k, v in (reg.get("wiki_localized") or {}).items():
+        if isinstance(v, str):
+            valid_segments.setdefault(v, f"wiki_localized.{k}")
+
+    # Allow-list: legacy migrations or examples that explicitly need a
+    # bare segment. Keep empty unless a real exception emerges.
+    segment_allowlist: set[str] = set()
+
+    # Valid logical names: top-level keys in [paths] plus the dotted form
+    # `wiki_localized.<lang>` for shadow wikis.
+    valid_names: set[str] = set()
+    for k, v in reg.items():
+        if isinstance(v, str):
+            valid_names.add(k)
+    for k in (reg.get("wiki_localized") or {}).keys():
+        valid_names.add(f"wiki_localized.{k}")
+
+    literal_pat = re.compile(r"\$OV/([A-Za-z][A-Za-z0-9_-]*)/?")
+    # Placeholder form documented in CLAUDE.md "Path placeholders": match
+    # `<paths.X>` where X is either a simple name or a `wiki_localized.<lang>`
+    # dotted reference. Underscores are allowed (canonical names like
+    # `daily_notes`); hyphens are not (the registry uses snake_case for
+    # logical keys, hyphens only in physical segments).
+    placeholder_pat = re.compile(r"<paths\.([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)?)>")
+    roots = [
+        ROOT / "CLAUDE.md",
+        ROOT / "protocols",
+        ROOT / ".claude",
+        ROOT / "harness",
+    ]
+    # Scan both `.md` (docs read by the model) and `.toml` (description
+    # / comment fields that show up in `commands.toml`, `intents.toml`,
+    # etc.). A stale `$OV/<seg>/` literal in a TOML description is the
+    # same drift class as in a markdown doc.
+    scan_files: list[Path] = []
+    for root in roots:
+        if root.is_file() and root.suffix in (".md", ".toml"):
+            scan_files.append(root)
+        elif root.is_dir():
+            scan_files.extend(sorted(root.rglob("*.md")))
+            scan_files.extend(sorted(root.rglob("*.toml")))
+    for path in scan_files:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        unknown_literals: dict[str, int] = {}
+        for m in literal_pat.finditer(text):
+            seg = m.group(1)
+            if seg in valid_segments or seg in segment_allowlist:
+                continue
+            unknown_literals[seg] = unknown_literals.get(seg, 0) + 1
+        unknown_placeholders: dict[str, int] = {}
+        for m in placeholder_pat.finditer(text):
+            name = m.group(1)
+            if name in valid_names:
+                continue
+            # Allow any `wiki_localized.<lang>` since specific language
+            # codes live in per-user paths.local.toml; the canonical
+            # registry only declares the parent table.
+            if name.startswith("wiki_localized."):
+                continue
+            unknown_placeholders[name] = unknown_placeholders.get(name, 0) + 1
+        for seg, count in sorted(unknown_literals.items()):
+            findings.append(
+                Finding(
+                    "WARN",
+                    "paths-registry-drift",
+                    rel(path),
+                    f"`$OV/{seg}/` referenced {count}x but `{seg}` is not in "
+                    f"harness/paths.toml. Templatize via "
+                    f"`scripts/rewrite_paths.py --templatize`, or add the "
+                    f"segment to the registry.",
+                )
+            )
+        for name, count in sorted(unknown_placeholders.items()):
+            findings.append(
+                Finding(
+                    "WARN",
+                    "paths-placeholder-drift",
+                    rel(path),
+                    f"`<paths.{name}>` referenced {count}x but `{name}` is "
+                    f"not in harness/paths.toml. Add to the registry, or "
+                    f"fix the placeholder.",
                 )
             )
     return findings
@@ -1088,8 +1312,12 @@ def check_intents_registry(
     claude_agents: dict[str, Any],
     harness_agents: dict[str, Any],
 ) -> list[Finding]:
-    """Validate intent rows: agent references resolve, pattern values valid,
-    and overlapping patterns at the same priority are flagged.
+    """Validate intent rows: agent references resolve, pattern values valid.
+
+    Cross-intent pattern overlap detection (e.g., bare `"discuss"` in one
+    intent shadowing another's natural-language phrase) is intentionally NOT
+    in scope here — the priority graph resolves overlaps deterministically,
+    and a separate substring-collision lint would belong in its own pass.
 
     Agent references must resolve against BOTH registries:
       - `claude_agents` from `load_claude_agents()` (`.claude/agents/*.md`):
@@ -1309,12 +1537,16 @@ def check_intents_profile_reads(
     A renamed `profile/identity.md` would silently degrade routing context —
     the orchestrator's pre-read step would fail open. ERROR rather than WARN
     because silent degradation of a routing precondition is harder to debug
-    than a noisy false positive on a fresh clone.
+    than a noisy false positive — except on a fresh clone where `profile/` is
+    gitignored and absent, in which case the existence check is skipped (the
+    user has not yet run `/introspect` to populate it).
     """
     findings: list[Finding] = []
     if not intents:
         return findings
     profile_dir = ROOT / "profile"
+    if not profile_dir.exists():
+        return findings
     for intent_name, entry in sorted(intents.items()):
         if not isinstance(entry, dict):
             continue
@@ -1490,11 +1722,14 @@ def fix_used_by() -> int:
     for name in sorted(registry.keys()):
         refs = expected.get(name, [])
         formatted = _format_used_by_block(refs)
-        # Pattern: `[agents.<name>]` ... `used_by = [...]` (multi-line)
-        # Match the table block from its header up to the next `[agents.` or
-        # end of file, then within that match replace the used_by block.
+        # Pattern: `[agents.<name>]` ... `used_by = [...]` (multi-line).
+        # Walk past intermediate array fields like `kinds = [...]` and
+        # `voices = { ... }` by matching any character that is NOT the start of
+        # the next `[agents.` table header. The earlier `[^\[]*?` form forbade
+        # ALL `[` characters, so the regex never matched any agent that had an
+        # array field before `used_by`.
         section_re = re.compile(
-            rf"(\[agents\.{re.escape(name)}\][^\[]*?)(used_by\s*=\s*\[[^\]]*\])",
+            rf"(\[agents\.{re.escape(name)}\](?:(?!\[agents\.).)*?)(used_by\s*=\s*\[[^\]]*\])",
             re.DOTALL,
         )
 
@@ -1659,6 +1894,7 @@ def run_lints() -> list[Finding]:
     findings.extend(check_harness_readme())
     findings.extend(check_atelier_skill())
     findings.extend(check_scripts_zk_paths())
+    findings.extend(check_path_registry_drift())
     intents, intent_findings = load_intents()
     findings.extend(intent_findings)
     # Resolve intent agent references against both registries:
@@ -1671,6 +1907,7 @@ def run_lints() -> list[Finding]:
     findings.extend(check_intents_registry(intents, agents, harness_agents_data))
     findings.extend(check_intents_mode_mapping(intents))
     findings.extend(check_intents_profile_reads(intents))
+    findings.extend(check_claude_skills(intents))
     findings.extend(check_agent_pattern_and_used_by(intents, commands))
     findings.extend(check_doc_indirection_depth())
     findings.sort(key=lambda f: (SEVERITY_ORDER.get(f.severity, 99), f.code, f.where, f.message))

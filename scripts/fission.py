@@ -10,7 +10,7 @@ to fix any broken markdown refs.
 Axes:
   first-letter      Bucket A, B, …, Z, 0-9, CJK by stem[0]
   year-month        YYYY-MM/ from filename prefix YYYY-MM-DD-…
-  year-year-month   YYYY/YYYY-MM/ two-level (used by daily-notes)
+  year-month-split  YYYY/MM/ two-level (used by daily-notes)
 
 Usage:
   uv run scripts/fission.py --dir zk/wiki --axis first-letter --dry-run
@@ -53,10 +53,10 @@ def axis_year_month(path: Path) -> Optional[str]:
     return None
 
 
-def axis_year_year_month(path: Path) -> Optional[tuple[str, str]]:
+def axis_year_month_split(path: Path) -> Optional[tuple[str, str]]:
     m = re.match(r"^(\d{4})-(\d{2})", path.stem)
     if m:
-        return (m.group(1), f"{m.group(1)}-{m.group(2)}")
+        return (m.group(1), m.group(2))
     return None
 
 
@@ -64,7 +64,7 @@ AxisFn = Callable[[Path], Union[str, tuple[str, str], None]]
 AXES: dict[str, AxisFn] = {
     "first-letter": axis_first_letter,
     "year-month": axis_year_month,
-    "year-year-month": axis_year_year_month,
+    "year-month-split": axis_year_month_split,
 }
 
 

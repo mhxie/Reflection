@@ -2,7 +2,7 @@
 
 > **A personal workshop, published.** A reflective-thinking system built around [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and a local-first Zettelkasten — covering daily reflection, decision-making, deep reading, goal tracking, and knowledge crystallization. It is not a product, and not aiming to be one. The patterns are reusable; the configuration is bespoke. Read the code, fork what's useful, build your own.
 
-The system surrounds an **œuvre** — the accumulating body of notes, decisions, and reflections, kept locally under `$OV/`. Plain Markdown on disk; nothing leaves your machine. A 14-specialist agent team (le cercle) coordinates session work; a deterministic trust engine (`scripts/trust.py`) scores the wiki layer; `/lint` keeps the corpus self-consistent.
+The system surrounds an **œuvre** — the accumulating body of notes, decisions, and reflections, kept locally under `$OV/`. Plain Markdown on disk; nothing leaves your machine. A 15-specialist agent team (le cercle) coordinates session work; a deterministic trust engine (`scripts/trust.py`) scores the wiki layer; `/lint` keeps the corpus self-consistent.
 
 Capture what you learn. Reflect on what you think. Research what you don't know. Read deeply. Make decisions. Track goals across life chapters. Crystallize knowledge you trust.
 
@@ -46,7 +46,7 @@ If you read one thing in this repo, read these in order:
 4. **`scripts/trust.py`** — Personalized PageRank with external anchors as seeds. Stdlib-only, deterministic. ~700 lines including the schema parser. Adapt freely.
 5. **`scripts/semantic.py`** — pluggable embedder + store backends (BGE-M3 + LanceDB by default). The CLI contract is encoder-agnostic; the embedder choice is yours.
 6. **`scripts/lint.py` and `scripts/privacy_check.py`** — quality gates with structured JSON output. Lint enforces wiki schema integrity; privacy_check fails loud on placebo-pass conditions (empty vault, missing config).
-7. **`.claude/agents/*.md`** — fourteen role specs. Useful as a template for your own agent definitions.
+7. **`.claude/agents/*.md`** — fifteen role specs. Useful as a template for your own agent definitions.
 
 What's deliberately *not* portable: `profile/` (symlinked config), `$OV/personal/`, `$OV/wiki/` content, the impressionist vocabulary register (le cercle, the Painter, le œuvre), the bilingual English/Chinese behavior, the Era / Direction taxonomy, and the `/civ`, `/dine`, `/prm` commands which encode a bespoke life-area model. Strip those before adapting.
 
@@ -127,7 +127,7 @@ You can also go direct: `/review`, `/weekly`, `/decision`, `/explore`, `/energy-
 
 ## The Team
 
-Fourteen specialist agents (le cercle) work together during sessions. The orchestrator dispatches automatically; you can also talk to any of them directly:
+Fifteen specialist agents (le cercle) work together during sessions. The orchestrator dispatches automatically; you can also talk to any of them directly:
 
 - *"find notes about X"* — sends Researcher (the Observer)
 - *"read [[Article]] with critical lens"* — sends Reader
@@ -136,7 +136,7 @@ Fourteen specialist agents (le cercle) work together during sessions. The orches
 - *"recommend reading on Z"* — sends Librarian (the Cataloguer)
 - *"what's happening in the world on X"* — sends Scout (the Flâneur)
 
-Full cercle archetype map (Observer / Colorist / Arbiter / Critic / Structuralist / Collector / Flâneur / Reader / Cataloguer / Stenographer / Master / Steward / Conservator / Typewriter) lives in `protocols/atelier.md`.
+Full cercle archetype map (Observer / Colorist / Arbiter / Critic / Structuralist / Collector / Flâneur / Reader / Scholar / Cataloguer / Stenographer / Master / Steward / Conservator / Typewriter) lives in `protocols/atelier.md`.
 
 ## How It Works
 
@@ -147,7 +147,7 @@ Capture sources                  Local data layer ($OV/)
  markdown editor)                L3  $OV/papers/      ─ peer-reviewed
                                  L2  $OV/daily-notes/ + reflections/ +
                                      research/ + preprints/ +
-                                     agent-findings/ + drafts/ + …
+                                     agent-findings/ + wip/ + …
                                  L1  $OV/cache/, $OV/readwise/
 
                                          ^
@@ -158,7 +158,7 @@ Capture sources                  Local data layer ($OV/)
                      +-----------+-------+-------+-----------+
                      v           v               v           v
                 Le Cercle    Sessions     Frameworks    Trust engine
-                (14 agents)  (12 types)   (22 + xval)   (trust.py,
+                (15 agents)  (12 types)   (22 + xval)   (trust.py,
                      |           |               |        lint.py)
                      v           v               v
                 Protocols    $OV/reflections/   Cross-validation

@@ -126,12 +126,12 @@ Required fields:
 
 ## Contract: Orchestrator → Curator (Compact/Merge Dispatch)
 
-When dispatching the Curator for compact or merge operations, the orchestrator MUST take a **snapshot of each source note at dispatch time** under `$OV/cache/<operation>-<slug>.md`. The snapshot protects against mid-session mutation: the user may edit a note in their editor while the Curator is drafting. The Curator then works exclusively from those snapshots.
+When dispatching the Curator for compact or merge operations, the orchestrator MUST take a **snapshot of each source note at dispatch time** under `<paths.cache>/<operation>-<slug>.md`. The snapshot protects against mid-session mutation: the user may edit a note in their editor while the Curator is drafting. The Curator then works exclusively from those snapshots.
 
-To produce each snapshot: copy the local source file under `$OV/` to `$OV/cache/<operation>-<slug>.md`. Use the relative path slug (e.g., `compact-daily-notes-2026-04-05.md`) so the origin is obvious.
+To produce each snapshot: copy the local source file under `$OV/` to `<paths.cache>/<operation>-<slug>.md`. Use the relative path slug (e.g., `compact-daily-notes-2026-04-05.md`) so the origin is obvious.
 
 Dispatch prompt MUST include:
-- `snapshot_paths`: array of `$OV/cache/<operation>-<slug>.md` paths the orchestrator just created
+- `snapshot_paths`: array of `<paths.cache>/<operation>-<slug>.md` paths the orchestrator just created
 
 The Curator works exclusively from `snapshot_paths` — it never re-reads the originals. This preserves the "content recoverable even if the user deletes mid-session" property that makes the cache step load-bearing.
 
@@ -141,9 +141,9 @@ The Curator works exclusively from `snapshot_paths` — it never re-reads the or
 
 Required fields:
 - `operation`: compact | merge | create | replace | wiki-entry
-- `target_path`: (required for `wiki-entry`, optional otherwise) Local file path under `$OV/wiki/<slug>.md` where the orchestrator will write the draft after user approval. Curator cannot Write — it only proposes the path and body.
+- `target_path`: (required for `wiki-entry`, optional otherwise) Local file path under `<paths.wiki>/<slug>.md` where the orchestrator will write the draft after user approval. Curator cannot Write — it only proposes the path and body.
 - `notes_affected`: Array of note titles involved
-- `snapshot_paths`: (required for compact/merge) Array of `$OV/cache/<operation>-<slug>.md` snapshot file paths used as source. Orchestrator verifies these exist before accepting the proposal.
+- `snapshot_paths`: (required for compact/merge) Array of `<paths.cache>/<operation>-<slug>.md` snapshot file paths used as source. Orchestrator verifies these exist before accepting the proposal.
 - `media_inventory`: (required for compact/merge, omit for create/replace) `{images: count, tables: count, structured_blocks: count, embeds: count}` — counts from source notes. The orchestrator verifies these counts match the output.
 - `media_output_count`: (required for compact/merge) `{images: count, tables: count, structured_blocks: count, embeds: count}` — counts in the proposed output. Must match `media_inventory` or differences must be listed in `changes_summary`.
 - `external_content_flagged`: (required for compact/merge, omit for create/replace) boolean — true if any source notes contain content from external sources (forum quotes, others' experiences). If true, those sections must be clearly attributed in `proposed_content`.
@@ -164,7 +164,7 @@ Required fields:
 - `from`: `forgetter`
 - `to`: `orchestrator`
 - `type`: `decay-report`
-- `report_path`: absolute path under `$OV/agent-findings/decay-<YYYYMMDD-HHMMSS>.md` (where the agent wrote the report)
+- `report_path`: absolute path under `<paths.agent_findings>/decay-<YYYYMMDD-HHMMSS>.md` (where the agent wrote the report)
 - `mode`: `full` (sweep ran to completion) | `partial` (sweep early-terminated on `max_candidates` or `time_budget_s`)
 - `summary`: `{redundant: N, time_stale: N, contradicted: N, low_signal: N}` — counts per category
 
@@ -172,7 +172,7 @@ The orchestrator surfaces `report_path` to the user; the user reads the report d
 
 **Failed-write envelope** (`mode: failed-write`):
 
-When the report `Write` to `$OV/agent-findings/decay-<TS>.md` fails (disk full, permission denied, parent directory unwritable), Forgetter MUST return the accumulated findings inline rather than silently dropping the sweep:
+When the report `Write` to `<paths.agent_findings>/decay-<TS>.md` fails (disk full, permission denied, parent directory unwritable), Forgetter MUST return the accumulated findings inline rather than silently dropping the sweep:
 
 Required fields:
 - `from`: `forgetter`

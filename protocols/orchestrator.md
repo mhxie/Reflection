@@ -49,7 +49,7 @@ Verified by = [what the user can check to confirm]
 2. [Step] → verify: [check]
 ```
 
-Concrete transform, "Compact these notes" becomes: "Success = N notes in `$OV/` replaced by 1 compacted note with verbatim claim preservation. Verified by: user reads the resulting note. 1. Researcher finds N notes → verify: count matches user's expectation. 2. Orchestrator snapshots sources to `$OV/cache/` → verify: snapshots exist on disk. 3. Curator drafts compaction → verify: Gate 4 passes (size < 15KB, verbatim preservation). 4. Orchestrator writes the compacted file after approval → verify: file exists at the proposed `target_path`."
+Concrete transform, "Compact these notes" becomes: "Success = N notes in `$OV/` replaced by 1 compacted note with verbatim claim preservation. Verified by: user reads the resulting note. 1. Researcher finds N notes → verify: count matches user's expectation. 2. Orchestrator snapshots sources to `<paths.cache>/` → verify: snapshots exist on disk. 3. Curator drafts compaction → verify: Gate 4 passes (size < 15KB, verbatim preservation). 4. Orchestrator writes the compacted file after approval → verify: file exists at the proposed `target_path`."
 
 ## Note Writing
 
@@ -60,7 +60,7 @@ All note writes are local file writes under `$OV/`. There are two writing paths,
 
 The orchestrator must not transcribe raw user content itself; that burns deep-cognition tokens on mechanical I/O and is the failure mode the Scribe role exists to prevent.
 
-Daily notes (under `$OV/daily-notes/`) are user-authored. The system reads them by default and does not modify them. **Exception (cloud-native capture):** when the user dictates raw daily-note content through chat, dispatch the Scribe with `operation: daily_note` to record it verbatim. Curator dispatches targeting daily-note paths are still refused; only the Scribe writes daily notes, and only when the user is dictating.
+Daily notes (under `<paths.daily_notes>/`) are user-authored. The system reads them by default and does not modify them. **Exception (cloud-native capture):** when the user dictates raw daily-note content through chat, dispatch the Scribe with `operation: daily_note` to record it verbatim. Curator dispatches targeting daily-note paths are still refused; only the Scribe writes daily notes, and only when the user is dictating.
 
 ## Voice Dispatch
 
@@ -110,7 +110,7 @@ When a `direct`-leg's `api_env` is unset (key not provided in the runtime enviro
 
 ### Tier scales cardinality, not voice composition
 
-A "Tier N" gathering = N parallel copies of role-units. The `/system-review` review-ladder (Tier 1-4) governs how many reviewer-units run on a change. This is the only "tier" semantics in this repo. Tier never alters a role's bound voice composition; it only adds more role-units to the gathering. (Earlier prose in `protocols/harness-assumptions.md` may use "voice tier" loosely; that is not a separate ladder, it just means "the role's cognitive band of voices." Prefer "voice band" or just refer to the role's specific voices in `harness/agents.toml`.)
+A "Tier N" gathering = N parallel copies of role-units. The `/system-review` review-ladder (Tier 1-4) governs how many reviewer-units run on a change. This is the only "tier" semantics in this repo. Tier never alters a role's bound voice composition; it only adds more role-units to the gathering. The role's per-agent voice composition lives in `harness/agents.toml`.
 
 ## Reader → Scholar auto-promotion
 
@@ -119,7 +119,7 @@ Reader handles routine reads. Scholar handles dense theory, foundational papers,
 Route to **Scholar** if any of:
 
 - `word_count > 8000` (≈ 30 minute read)
-- source path under `$OV/papers/` or `$OV/preprints/` (L3 sources)
+- source path under `<paths.papers>/` or `<paths.preprints>/` (L3 sources)
 - frontmatter declares `difficulty: hard`
 
 Otherwise dispatch **Reader**.
@@ -141,7 +141,7 @@ Launch agents based on command type:
 | Read mode (via `/hi`) | Reader (1-4 instances by lens) + Researcher + Scout + Thinker (parallel) |
 | Work meeting transcript | Meeting (Executive mode — action items + decisions) |
 | `/curate` or `/hi triage inbox` | Ad-hoc agent (goal-aware Readwise triage — see `commands/curate.md`) |
-| `/forget` (intent) or `/hi scan my drafts` | Forgetter (mid-tier voices; bounded sweep, decay report under `$OV/agent-findings/`) |
+| `/forget` (intent) or `/hi scan my wip` | Forgetter (mid-tier voices; bounded sweep, decay report under `<paths.agent_findings>/`) |
 
 ### Phase 2: Synthesize
 - Synthesizer takes Researcher's brief and produces structured output
@@ -172,7 +172,7 @@ The user can request these actions during or after any session:
 ### Note Operations (→ Curator)
 | User Says | Action | Agent |
 |-----------|--------|-------|
-| "Compact my notes on X" | Researcher finds notes in `$OV/` → orchestrator snapshots each source to `$OV/cache/compact-<slug>.md` at dispatch time (local `cp`) → Curator drafts compaction → orchestrator writes after approval | Researcher → Curator |
+| "Compact my notes on X" | Researcher finds notes in `$OV/` → orchestrator snapshots each source to `<paths.cache>/compact-<slug>.md` at dispatch time (local `cp`) → Curator drafts compaction → orchestrator writes after approval | Researcher → Curator |
 | "Merge these notes" | Curator drafts merged note from snapshot files; orchestrator writes after approval | Curator |
 | "Summarize [[Note]]" | Produce a concise summary | Synthesizer |
 | "Write this insight as a new note" | Curator drafts a local note under the appropriate tier; orchestrator writes after approval | Curator |
@@ -182,7 +182,7 @@ The user can request these actions during or after any session:
 | User Says | Action | Agent |
 |-----------|--------|-------|
 | "Find notes about X" | `Bash: uv run scripts/semantic.py query "X" --top 10` (semantic-primary for content queries) then `Grep` for exact-string follow-ups | Researcher |
-| "What did I write about X last year?" | Filename-date filter on `$OV/daily-notes/` + `Grep`. Report the gap if a date range is missing locally. | Researcher |
+| "What did I write about X last year?" | Filename-date filter on `<paths.daily_notes>/` + `Grep`. Report the gap if a date range is missing locally. | Researcher |
 | "Are there related notes I'm forgetting?" | `Bash: uv run scripts/semantic.py query "<concept>" --top 10` — stub lexical-falls-through today, embedding-backed once the real-mode sentinel lands. Reframe and retry if thin. | Researcher |
 | "Show me everything tagged #X" | `Grep "#X"` over `$OV/` | Researcher |
 
@@ -232,13 +232,13 @@ The user can request these actions during or after any session:
 | "Change how [command] works" | Modify command | Evolver |
 
 ### Decay Operations (→ Forgetter)
-Bounded decay sweeps over `$OV/`. Forgetter never deletes; it writes a decay report to `$OV/agent-findings/decay-<ts>.md` and returns only the path. The orchestrator surfaces the report; the user reads it and decides. Every dispatch must specify `scope_path` (one directory under `$OV/`); `max_candidates` defaults to 20 and `time_budget_s` defaults to 300. The role spec is `.claude/agents/forgetter.md`.
+Bounded decay sweeps over `$OV/`. Forgetter never deletes; it writes a decay report to `<paths.agent_findings>/decay-<ts>.md` and returns only the path. The orchestrator surfaces the report; the user reads it and decides. Every dispatch must specify `scope_path` (one directory under `$OV/`); `max_candidates` defaults to 20 and `time_budget_s` defaults to 300. The role spec is `.claude/agents/forgetter.md`.
 
 | User Says | Action | Agent |
 |-----------|--------|-------|
-| "Scan my drafts for decay" | Dispatch Forgetter with `scope_path: $OV/drafts/`. Surface the decay report path. | Forgetter |
-| "What can I prune in my notes about X?" | Dispatch Forgetter with `scope_path` set to the topic-relevant directory (typically `$OV/drafts/` or `$OV/research/`). Surface report. | Forgetter |
-| "Are any of my wiki entries contradicted by newer notes?" | Dispatch Forgetter with `scope_path: $OV/wiki/`. Forgetter only flags Contradicted on L4; report routes Contradicted items to Challenger to probe before any rewrite. | Forgetter → Challenger |
+| "Scan my drafts for decay" / "Scan my wip" | Dispatch Forgetter with `scope_path: <paths.wip>/`. Surface the decay report path. | Forgetter |
+| "What can I prune in my notes about X?" | Dispatch Forgetter with `scope_path` set to the topic-relevant directory (typically `<paths.wip>/` or `<paths.research>/`). Surface report. | Forgetter |
+| "Are any of my wiki entries contradicted by newer notes?" | Dispatch Forgetter with `scope_path: <paths.wiki>/`. Forgetter only flags Contradicted on L4; report routes Contradicted items to Challenger to probe before any rewrite. | Forgetter → Challenger |
 | "Find redundant notes I should compact" | Dispatch Forgetter with the user's `scope_path` of choice (or ask). Redundant items in the report route to Curator after user approval. | Forgetter → Curator |
 
 ### Capture Operations (→ Scribe)
@@ -246,17 +246,17 @@ Cheap-tier verbatim recording. Scribe voices and operation contracts live in `ha
 
 | User dictates | Operation | Target tier |
 |---|---|---|
-| Date-stamped narrative for a day | `daily_note` | under `$OV/daily-notes/` |
-| Restaurant + score / 必点 | `dining_row` | the user's dining-log file under `$OV/travel/` |
-| Action item with deadline / area, or close-out toggle on an existing item | `gtd_entry` (`add` / `toggle_done` / `toggle_killed`) | most recently modified file under `$OV/gtd/` |
-| Person mentioned with bio context, no person note exists yet | `people_stub` | under `$OV/archive/people/` |
-| "Save this somewhere" — no typed slot fits | `generic` | orchestrator picks an `$OV/drafts/` path |
+| Date-stamped narrative for a day | `daily_note` | under `<paths.daily_notes>/` |
+| Restaurant + score / 必点 | `dining_row` | the user's dining-log file under `<paths.travel>/` |
+| Action item with deadline / area, or close-out toggle on an existing item | `gtd_entry` (`add` / `toggle_done` / `toggle_killed`) | most recently modified file under `<paths.gtd>/` |
+| Person mentioned with bio context, no person note exists yet | `people_stub` | under `<paths.people>/` |
+| "Save this somewhere" — no typed slot fits | `generic` | orchestrator picks an `<paths.wip>/` path |
 
 The Scribe is the only writer for these surfaces; the orchestrator does not duplicate the work after dispatch returns. Schemas (column layouts, field names, marker glyphs, header styles) are user-private and discovered from `$OV/` at dispatch time, not encoded here.
 
 **Zero-files recovery (orchestrator side, before dispatch):**
-- `gtd_entry` — if `$OV/gtd/` is empty, ask the user once for a default GTD filename and create the file in the dispatch context (or skip the dispatch and surface the question). Do not pass an empty `target_file` to the Scribe.
-- `generic` — if no `$OV/drafts/` path is obvious from content, propose `$OV/drafts/<short-slug>.md` and confirm with the user before dispatch.
+- `gtd_entry` — if `<paths.gtd>/` is empty, ask the user once for a default GTD filename and create the file in the dispatch context (or skip the dispatch and surface the question). Do not pass an empty `target_file` to the Scribe.
+- `generic` — if no `<paths.wip>/` path is obvious from content, propose `<paths.wip>/<short-slug>.md` and confirm with the user before dispatch.
 - `dining_row` / `daily_note` — if the canonical target file or directory does not exist, the Scribe will return a clarification request; route it back to the user to supply the path or filename rather than retrying with a guess.
 
 ## Agent Collaboration Matrix
@@ -268,7 +268,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | Chain | Trigger | Flow | Value |
 |-------|---------|------|-------|
 | **Research → Synthesize → Review** | Every session | Researcher → Synthesizer → Reviewer | Core quality pipeline |
-| **Synthesizer → Orchestrator write-back** | Synthesizer returns output and a session asks for a write-back | Synthesizer produces the draft; the orchestrator catches it, runs the Reviewer+Challenger gate, and writes the reflection file under `$OV/reflections/` (or another tier) after user approval. Synthesizer has no Write tool — write-back is always orchestrator-side. | Keeps the write-back decision and approval gate in one place |
+| **Synthesizer → Orchestrator write-back** | Synthesizer returns output and a session asks for a write-back | Synthesizer produces the draft; the orchestrator catches it, runs the Reviewer+Challenger gate, and writes the reflection file under `<paths.reflections>/` (or another tier) after user approval. Synthesizer has no Write tool — write-back is always orchestrator-side. | Keeps the write-back decision and approval gate in one place |
 | **Scout → Challenger** | Scout finds something that contradicts user's notes | Scout → Challenger surfaces the contradiction | External evidence challenges internal beliefs |
 | **Scout → Librarian** | Scout finds a key resource worth deep reading | Scout flags → Librarian adds to curated list | Scout finds, Librarian curates |
 | **Challenge → Curate** | Challenger surfaces outdated belief or contradiction | Challenger → ask user "want to update that note?" → Curator rewrites | Turns insight into note hygiene |
@@ -278,13 +278,13 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Researcher → Curator** (focused-session default) | Researcher finds many overlapping notes during a focused session about ONE topic; user wants a quick compaction suggestion ("compact my notes on X") | Researcher flags → Curator proposes compaction on the specific overlap set | Proactive note hygiene with low ceremony — the right call when the user is already mid-flow on the topic |
 | **Researcher → Forgetter** (corpus-sweep escalation) | User is doing a corpus cleanup / sweep session and wants systematic decay analysis on a broader scope ("find what I should forget", "scan my drafts for decay"), OR Researcher finds 3+ overlapping notes and the user explicitly asks to widen the lens beyond the current topic | Researcher's overlap signal (or the user's sweep intent) → orchestrator dispatches Forgetter with `scope_path` set to the topic or working directory → Forgetter writes decay report citing all four categories with evidence → orchestrator surfaces report path → user decides on per-item Curator compaction or other action | Bounded, evidence-cited sweep across categories beyond redundancy; the right call when the user wants thoroughness over speed |
 | **Forgetter → Curator** | Forgetter's decay report flags Redundant items | Orchestrator surfaces report → user approves redundant set → Curator drafts compaction → orchestrator writes after approval | Decay analysis becomes note hygiene; verbatim claim preservation enforced at Curator gate |
-| **Forgetter → Challenger** | Forgetter's decay report flags Contradicted items in `$OV/wiki/` | Orchestrator surfaces report → Challenger probes whether contradiction is genuine → if confirmed, Curator rewrites the wiki entry (claim update + Revision Log row) | Wiki entries get a verifier pair before mutation; Forgetter detects, Challenger probes, Curator rewrites |
+| **Forgetter → Challenger** | Forgetter's decay report flags Contradicted items in `<paths.wiki>/` | Orchestrator surfaces report → Challenger probes whether contradiction is genuine → if confirmed, Curator rewrites the wiki entry (claim update + Revision Log row) | Wiki entries get a verifier pair before mutation; Forgetter detects, Challenger probes, Curator rewrites |
 | **Meeting → Curator** | User approves meeting notes for saving | Meeting output → Curator drafts local note → orchestrator writes after approval | Turns transcript into permanent note |
 | **Reader → Synthesizer** | Multiple Reader lenses complete | Synthesizer combines all lens briefs into unified report | Multi-dimensional reading analysis |
 | **Reader → Challenger** | Reader surfaces a claim worth questioning | Challenger probes the claim against user's existing beliefs | Deepens engagement with the text |
 | **Reviewer + Challenger → Write-back** | Reading discussion ready for write-back | Reviewer checks grounding, Challenger checks completeness | Quality gate before writing to daily note |
 | **Evolver → Orchestrator → Review → Commit** | Evolver proposes a system change | Evolver makes changes (no commit) → returns `review_tier` to orchestrator → orchestrator dispatches reviewers → fixes issues → commits | Quality gate on system evolution (see Review Tiers) |
-| **Batch Compaction** | User asks to compact a topic area | Researcher finds all notes in `$OV/` → Orchestrator snapshots each source to `$OV/cache/compact-<slug>.md` at dispatch time → Curator drafts one output note at a time → orchestrator writes each after approval | Sequential: all snapshots must exist on disk before Curator starts |
+| **Batch Compaction** | User asks to compact a topic area | Researcher finds all notes in `$OV/` → Orchestrator snapshots each source to `<paths.cache>/compact-<slug>.md` at dispatch time → Curator drafts one output note at a time → orchestrator writes each after approval | Sequential: all snapshots must exist on disk before Curator starts |
 | **Pre-Output Raw Capture** | Reflection / coaching session about to write its reflection file, and the user dictated raw capture content during the session | Orchestrator collects raw user content per Capture surface (daily note, dining row, GTD, people stub, generic) → dispatches one Scribe per surface in parallel → all Scribe writes complete before the orchestrator writes the reflection file | Cost-partitioned: cheap-tier captures (Scribe), deep-cognition voices do not transcribe |
 
 ### Parallel Dispatches (A and B run simultaneously)

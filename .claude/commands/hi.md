@@ -8,7 +8,7 @@ Your reflection system. Uses a two-step decision tree with `AskUserQuestion` for
 
 Routing rules live in `harness/intents.toml` (canonical). Read that file at session start to know the dispatch shape per intent: trigger phrases (`patterns`), the dispatch sub-mode (`mode`), the agents the orchestrator is expected to dispatch (`agents`), and the matching priority. Do not duplicate those fields here; when adding or changing a routing rule, edit the TOML and let this file reference it.
 
-Each intent's `mode` field maps to a procedure: see the "Sub-mode procedures" table below for the canonical mapping (inline section names + paths to external command files). Detect the intent from `<context>`, skip the Step 1 menu, and route directly into the matching sub-mode. If no `<context>` is given, fall through to the Weekly Cue Check, then the Step 1 menu.
+Each intent's `mode` field maps to a procedure: see the "Sub-mode procedures" table below for the canonical mapping (inline section names + paths to external command files). Detect the intent from `<context>`, skip the Step 1 menu, and route directly into the matching sub-mode. If no `<context>` is given, fall through to the Session-Start Cue Check, then the Step 1 menu.
 
 ### Always-on Routing Announcement
 
@@ -39,7 +39,7 @@ Once an intent matches, the orchestrator's next step is to read and follow the p
 | `transcript-read` | inline: "If Read" / Reader auto-preprocesses transcripts |
 | `meeting-process` | inline: "If Act" / "Process Meeting" section below |
 | `daily-reflection` | inline: "Daily Reflection" section below |
-| `decay-scan` | dispatch the Forgetter agent (`.claude/agents/forgetter.md`) with the user-specified `scope_path`; default scope is `$OV/drafts/`. Forgetter writes the decay report and returns a path. |
+| `decay-scan` | dispatch the Forgetter agent (`.claude/agents/forgetter.md`) with the user-specified `scope_path`; default scope is `<paths.wip>/`. Forgetter writes the decay report and returns a path. |
 | `weekly-review` | `.claude/commands/weekly.md` |
 | `goal-review` | `.claude/commands/review.md` |
 | `decision-journal` | `.claude/commands/decision.md` |
@@ -49,6 +49,7 @@ Once an intent matches, the orchestrator's next step is to read and follow the p
 | `promote` | `.claude/commands/promote.md` |
 | `lint` | `.claude/commands/lint.md` (script-driven; no agent dispatch) |
 | `introspect` | `.claude/commands/introspect.md` |
+| `sync` | `.claude/commands/sync.md` |
 
 <!-- /sub-mode-procedures-map -->
 
@@ -60,11 +61,11 @@ When the user's input is "just write this down" (factual, no reflection sought),
 
 | Content shape | Scribe operation | Target tier |
 |---|---|---|
-| Date-stamped narrative for a day | `daily_note` | under `$OV/daily-notes/` |
-| Restaurant + score / 必点 | `dining_row` | the user's dining-log file under `$OV/travel/` |
-| New person mentioned with bio context, file does not exist | `people_stub` | under `$OV/archive/people/` |
-| Action item with deadline / area | `gtd_entry` (`add`) | most recently modified file under `$OV/gtd/` |
-| Anything else "just save this" | `generic` | orchestrator picks an appropriate path under `$OV/drafts/` |
+| Date-stamped narrative for a day | `daily_note` | under `<paths.daily_notes>/` |
+| Restaurant + score / 必点 | `dining_row` | the user's dining-log file under `<paths.travel>/` |
+| New person mentioned with bio context, file does not exist | `people_stub` | under `<paths.people>/` |
+| Action item with deadline / area | `gtd_entry` (`add`) | most recently modified file under `<paths.gtd>/` |
+| Anything else "just save this" | `generic` | orchestrator picks an appropriate path under `<paths.wip>/` |
 
 Resolve the exact target file path at dispatch time by inspecting the target directory for the user's existing structural conventions (subdirectory tree, filename style). Do not assume a layout; the user owns these conventions and they are private to `$OV/`. Confirm with the user once when multiple plausible targets exist; if the path is obvious from a quick directory listing, just dispatch.
 
@@ -73,29 +74,15 @@ Resolve the exact target file path at dispatch time by inspecting the target dir
 Resolve inline before dispatch:
 - `<effective-date>`: if local time < 03:00, use yesterday's calendar date; else today.
 
-Daily notes are user-authored under `$OV/daily-notes/`. The system reads them as-is; nothing pulls or mirrors them from anywhere else. The exact subdirectory layout and filename pattern are user-private; resolve them at runtime by listing the target directory. **Exception (cloud-native mode):** when the user provides daily-note-style narrative through `/hi <args>` or chat, the orchestrator dispatches the `scribe` agent to record it verbatim before writing the reflection file. See "Pre-Output: Raw Capture" below. The user is still the author; the scribe is the typewriter.
+Daily notes are user-authored under `<paths.daily_notes>/`. The system reads them as-is; nothing pulls or mirrors them from anywhere else. The exact subdirectory layout and filename pattern are user-private; resolve them at runtime by listing the target directory. **Exception (cloud-native mode):** when the user provides daily-note-style narrative through `/hi <args>` or chat, the orchestrator dispatches the `scribe` agent to record it verbatim before writing the reflection file. See "Pre-Output: Raw Capture" below. The user is still the author; the scribe is the typewriter.
 
-### Weekly Cue Check (before Step 1 menu, only when no `<context>` routed away)
+### Session-Start Cues
 
-```
-# macOS/BSD `date -j -f`. Linux: replace with `date -d "$latest_date" +%s`
-Bash: latest_weekly=$(ls "$OV"/reflections/*-weekly.md 2>/dev/null | sort | tail -1)
-if [ -n "$latest_weekly" ]; then
-  latest_date=$(basename "$latest_weekly" | cut -c1-10)
-  days_since=$(( ($(date +%s) - $(date -j -f '%Y-%m-%d' "$latest_date" +%s)) / 86400 ))
-else
-  days_since=999  # no weekly ever; treat as far past hard floor
-fi
-echo "days_since=$days_since latest=$latest_weekly"
-```
+Session-start cues (overdue weekly, pending zettelm captures, etc.) are surfaced out-of-band by a `SessionStart` hook in `.claude/settings.json` that runs `uv run scripts/cues.py --hook`. The script is silent in the common case and injects a system-reminder containing fired cues only when one or more thresholds trip. The orchestrator therefore does NOT need to run the cue check inline on every `/hi`; if a cue is relevant, it's already in context by the time the user types anything.
 
-| Condition | Branch | Action |
-|---|---|---|
-| `days_since` >10, or no weekly ever | Hard floor | "上次 weekly 是 N 天前 (or 还没跑过). 这周已经积累了 Apple Health / 信号 / 健康 cadence checks 没补齐. 建议先跑 `/weekly`. 现在跑吗?" Yes: route to `weekly.md`. No: proceed to Step 1. |
-| `days_since` >6 AND today is Sun or Mon | Soft cue | "提示: 上次 weekly 是 N 天前. 想现在跑 `/weekly` 把这周补齐吗?" Yes: route to `weekly.md`. No: proceed to Step 1. |
-| Otherwise | Fresh | Skip silently. Proceed to Step 1. |
+If a cue is present in the session reminder, the orchestrator MAY offer to route the user into the matching command (`/weekly`, `/sync`, etc.) before falling through to the Step 1 menu. Otherwise, proceed straight to Step 1.
 
-Surface at most once per `/hi` invocation. Do not nag. This is the only non-user-typed reason the orchestrator may suggest a different mode than the user implicitly chose.
+To **add** a new cue, append a `check_<name>(ov, today)` function in `scripts/cues.py` and register it in `CHECKS`. No edit to this file is needed; the hook picks it up automatically next session. To **debug** locally: `uv run scripts/cues.py --verbose` (per-check reasoning on stderr) or `uv run scripts/cues.py --hook` (dry-run the hook output).
 
 ## Step 1: Choose Mode
 
@@ -152,7 +139,7 @@ Based on Step 1, use a second `AskUserQuestion`:
 - **Curate Inbox:** Read and follow `.claude/commands/curate.md`
 - **Compact Notes:** Ask the user what topic or notes to compact. Then run the snapshot-first flow (see `protocols/orchestrator.md` → Note Operations → Compact Notes):
   1. **Researcher** identifies related notes in `$OV/` (semantic.py primary, Grep for structural).
-  2. **Orchestrator snapshots each source** to `$OV/cache/compact-<slug>-<n>.md` (local `cp`).
+  2. **Orchestrator snapshots each source** to `<paths.cache>/compact-<slug>-<n>.md` (local `cp`).
   3. Dispatch to **Curator** with `snapshot_paths: [...]` in the handoff. The Curator works exclusively from the snapshot files, runs the Content Preservation Checklist, and returns a draft.
   4. User approves each output note individually; the orchestrator writes the file after approval.
 - **Deep Dive:** Ask the user for a topic, then dispatch **four agents in parallel**:
@@ -174,20 +161,20 @@ Based on Step 1, use a second `AskUserQuestion`:
 
 #### Reader vs Scholar selection (applies to all three Read modes)
 
-Before dispatching the reading agent, apply the auto-promotion check from `protocols/orchestrator.md` → "Reader → Scholar auto-promotion". If any condition fires (`word_count > 8000`, source path under `$OV/papers/` or `$OV/preprints/`, frontmatter `difficulty: hard`), dispatch **Scholar** instead of Reader. Same lens framework, same prompt — only the bound voices differ. All three Read modes below use this selection.
+Before dispatching the reading agent, apply the auto-promotion check from `protocols/orchestrator.md` → "Reader → Scholar auto-promotion". If any condition fires (`word_count > 8000`, source path under `<paths.papers>/` or `<paths.preprints>/`, frontmatter `difficulty: hard`), dispatch **Scholar** instead of Reader. Same lens framework, same prompt — only the bound voices differ. All three Read modes below use this selection.
 
 #### Prefetch Step (Readwise podcasts, videos, articles; applies to all three Read modes)
 
 If the source is a Readwise podcast, video, or article (user provides a Readwise URL, `document_id`, or names a podcast), **cache the transcript once before dispatching any reading agent (Reader or Scholar)**. Independent fetches across parallel reading-agent instances are the failure mode this step exists to avoid (same reasoning as the paper cache).
 
 1. Resolve `document_id`. If the user gave a title, find it: `readwise reader-search-documents --query "<keywords>"` → pick the match.
-2. Snapshot content: `readwise reader-get-document-details --document-id <id> | jq -r '.content' > $OV/cache/rw-<id>.md`
-3. Pass `cache_path: $OV/cache/rw-<id>.md` to every reading-agent dispatch (Reader or Scholar). The convention is documented in `.claude/agents/reader.md` § "Readwise transcript cache"; Scholar follows the same convention.
+2. Snapshot content: `readwise reader-get-document-details --document-id <id> | jq -r '.content' > <paths.cache>/rw-<id>.md`
+3. Pass `cache_path: <paths.cache>/rw-<id>.md` to every reading-agent dispatch (Reader or Scholar). The convention is documented in `.claude/agents/reader.md` § "Readwise transcript cache"; Scholar follows the same convention.
 4. For podcasts specifically: also pass the guest name (parsed from title) and host name (from the `author` field) in the dispatch prompt so the reading agent doesn't have to re-infer for citation.
 
 #### Backup to Readwise (final step in every Read mode)
 
-After the reflection file is saved, fire one `readwise reader-create-document` call as a last-resort backup of the source. The reflection file in `$OV/reflections/` remains the durable artifact; this is just so the source itself is preserved if its origin URL ever rots.
+After the reflection file is saved, fire one `readwise reader-create-document` call as a last-resort backup of the source. The reflection file in `<paths.reflections>/` remains the durable artifact; this is just so the source itself is preserved if its origin URL ever rots.
 
 **Skip conditions (do NOT call the CLI):**
 - Input was a Readwise URL or `document_id` (already in Readwise; the Prefetch Step handled it).
@@ -242,7 +229,7 @@ Print the resulting Readwise URL or `document_id` to the user as a one-liner con
    - Fix any issues they surface before writing the reflection file
 
 5. **Save — Phase 5 (local reflection file):**
-   - Write the reflection file to `$OV/reflections/YYYY-MM-DD-reading-<slug>.md`
+   - Write the reflection file to `<paths.reflections>/YYYY-MM-DD-reading-<slug>.md`
    - Include full source text under `### Full Text` (see source-text persistence rule in CLAUDE.md)
    - No write-back to daily notes. The reflection file is the durable output.
 
@@ -279,13 +266,13 @@ Run a reflection session grounded in your notes and goals.
    - `profile/identity.md` — your self-model and intellectual taste
    - `profile/directions.md` — your goals and directions
 
-2. **Read recent reflections** (last 3 files from `$OV/reflections/` directory, sorted by date). If none exist, this is the first session — note that.
+2. **Read recent reflections** (last 3 files from `<paths.reflections>/` directory, sorted by date). If none exist, this is the first session — note that.
 
 3. **Pull fresh context from the vault:**
    - Determine the **effective date**: if current local time is before 03:00, use yesterday's date; otherwise use today's. This is the user's day boundary (late-sleep rule). All subsequent "today" references in this session use the effective date.
-   - `Read $OV/daily-notes/<effective-date>.md` — what you've done today. If the file is missing or empty, note that and proceed; the user may not have captured anything yet.
-   - If effective date differs from the calendar date (late-sleep active), also read `$OV/daily-notes/<calendar-date>.md` if it exists — the user may have captured something after midnight.
-   - `Read $OV/daily-notes/<effective-date - 1>.md` — what you did the day before.
+   - `Read <paths.daily_notes>/<effective-date>.md` — what you've done today. If the file is missing or empty, note that and proceed; the user may not have captured anything yet.
+   - If effective date differs from the calendar date (late-sleep active), also read `<paths.daily_notes>/<calendar-date>.md` if it exists — the user may have captured something after midnight.
+   - `Read <paths.daily_notes>/<effective-date - 1>.md` — what you did the day before.
    - For recent activity related to your themes, run `Bash: uv run scripts/semantic.py query "<theme>" --after "<7 days ago, YYYY-MM-DD>" --top 5` first — this is the primary content lookup. For structural follow-up (exact strings, known tags), list files modified in the last 7 days with `Bash: find "$OV"/daily-notes "$OV"/reflections -type f -name "*.md" -mtime -7 2>/dev/null | sort`, then `Grep` the theme keyword across those paths.
 
 4. **Load open TODO state (silent — orchestrator working memory):**
@@ -303,8 +290,8 @@ Based on the loaded context, run an interactive reflection.
 - **No proactive list dump.** The TODO list is for *matching*, not narration. Never volunteer "btw here are N open TODOs" outside Step 0 digest or explicit user request.
 - **Closure write-back at wrap-up.** When the user explicitly confirms in conversation that a TODO is done or killed (Step 0 closure / stale prompt or mid-session), accumulate the closure into the **pending Scribe operations** list (see "Pre-Output: Raw Capture" below). Do NOT do direct `Edit` from the orchestrator: that bypasses the Scribe cost-partition contract and creates duplicate write paths. Two paths, two source types — both dispatched as Scribe `gtd_entry` operations at wrap-up:
   - **Done path (user completed the item):**
-    - GTD-source (`source` under `$OV/gtd/`): pending op `gtd_entry` with `operation_kind: toggle_done`, `target_file: <source>`, `line_no: <line>`, `expected_text: <bullet text from list --json>`.
-    - Reflection-source (`source` under `$OV/reflections/`): pending op `gtd_entry` with `operation_kind: prefix_line`, `target_file: <source>`, `line_no: <line>`, `expected_text: <bullet text>`, `prefix: "DONE <effective-date>: "`.
+    - GTD-source (`source` under `<paths.gtd>/`): pending op `gtd_entry` with `operation_kind: toggle_done`, `target_file: <source>`, `line_no: <line>`, `expected_text: <bullet text from list --json>`.
+    - Reflection-source (`source` under `<paths.reflections>/`): pending op `gtd_entry` with `operation_kind: prefix_line`, `target_file: <source>`, `line_no: <line>`, `expected_text: <bullet text>`, `prefix: "DONE <effective-date>: "`.
   - **Kill path (user abandons the item):**
     - GTD-source: pending op `gtd_entry` with `operation_kind: toggle_killed`. `[~]` is the killed marker per `todos.py` STATE_MAP; preserves the audit distinction from `[x]` (done). Orchestrator passes the marker glyph as a parameter.
     - Reflection-source: pending op `gtd_entry` with `operation_kind: prefix_line`, `prefix: "KILLED <effective-date>: "`. The scanner excludes both `DONE ` and `KILLED ` prefixes from open scans.
@@ -322,7 +309,7 @@ Present **at most one item per category**, woven into the conversation per `prot
 
 - **Last Next Action callback** (most recent prior session's first item, if from a different day): "Last time, you intended to [action]. How did that go?" Accept any answer without judgment — missed actions are data points, not failures.
 - **Closure candidate** (if any): "I noticed you mentioned [X] in [date] — does that mean [TODO Y] is done?" If user confirms → add to closure-pending list (write-back at wrap-up).
-- **Stale prompt** (if any): "[Item] has been open ~Nd with no movement. Kill, or promote to GTD with a real deadline?" If user picks "kill" → add to kill-path closures (per the write-back rules above). If "promote" → ask for due date and area, then accumulate a pending Scribe op: `gtd_entry` with `operation_kind: add`, `target_file: <active GTD file>`, `text: <item>`, structured fields `due: <date>`, `area: <#tag>`. The active GTD file is the most recently modified `.md` file in `$OV/gtd/` (`Bash: ls -t "$OV"/gtd/*.md | head -1`); resolve at accumulation time and pass as `target_file`. Dispatch happens at Pre-Output. Do NOT append directly from the orchestrator.
+- **Stale prompt** (if any): "[Item] has been open ~Nd with no movement. Kill, or promote to GTD with a real deadline?" If user picks "kill" → add to kill-path closures (per the write-back rules above). If "promote" → ask for due date and area, then accumulate a pending Scribe op: `gtd_entry` with `operation_kind: add`, `target_file: <active GTD file>`, `text: <item>`, structured fields `due: <date>`, `area: <#tag>`. The active GTD file is the most recently modified `.md` file in `<paths.gtd>/` (`Bash: ls -t "$OV"/gtd/*.md | head -1`); resolve at accumulation time and pass as `target_file`. Dispatch happens at Pre-Output. Do NOT append directly from the orchestrator.
 
 Skip rules:
 - Previous session was **today**: skip the Next Action callback.
@@ -417,7 +404,7 @@ Lightweight capture of dining experiences for personal preference learning + fut
 - 推断 from context (else 1-line confirm): City / 类型 / Platform (OT/R/W/DD) / Credit used
 
 **Accumulate as a pending Scribe operation** (do NOT `Edit` directly from the orchestrator):
-- Pending op: `dining_row` with `target_file: <user's dining-log file under $OV/travel/>`, structured row fields (date, restaurant, city, type, score, 再去, health flags, platform, credit), `raw_content` for the 必点·备注 free-text column. 评分 + 再去 mandatory; dash placeholder only for missing data the user can't recall. Dispatch happens at Pre-Output. The Scribe reads the file's schema header at dispatch time and formats the row to match exactly.
+- Pending op: `dining_row` with `target_file: <user's dining-log file under <paths.travel>/>`, structured row fields (date, restaurant, city, type, score, 再去, health flags, platform, credit), `raw_content` for the 必点·备注 free-text column. 评分 + 再去 mandatory; dash placeholder only for missing data the user can't recall. Dispatch happens at Pre-Output. The Scribe reads the file's schema header at dispatch time and formats the row to match exactly.
 
 **Cross-doc sync triggers** (silent unless flagged for user):
 - If 评分 ≥ 8 AND 再去 = Y AND restaurant NOT in the regional catalog rotation → flag user: "Add to rotation?"
@@ -454,7 +441,7 @@ The orchestrator accumulates pending Scribe operations during the session (it do
 | Step 6 Dining Pulse | `dining_row` | User shared a restaurant visit |
 | Any step where user dictates a daily-note-style narrative for a date | `daily_note` | Narrative covers events for a date whose daily-note file is missing or lacks the new content |
 | Any step where a person is mentioned with bio context AND no person note exists | `people_stub` | Verify with `uv run scripts/people.py "<name>"` before adding; only accumulate if no match returned |
-| User explicitly says "save this" / "记一下" with no typed slot fit | `generic` | Orchestrator picks a `$OV/drafts/` path and confirms with user before adding to pending list |
+| User explicitly says "save this" / "记一下" with no typed slot fit | `generic` | Orchestrator picks a `<paths.wip>/` path and confirms with user before adding to pending list |
 
 **Skip condition (per op):** the corresponding file already captures the content, or the user provided only reflection-mode input (questions, feelings, abstract discussion) for that surface. Do not invent content.
 
@@ -470,7 +457,7 @@ After all Scribes return, proceed to Output.
 
 After the interactive session, write a reflection file:
 
-**File:** `$OV/reflections/YYYY-MM-DD-reflection.md`
+**File:** `<paths.reflections>/YYYY-MM-DD-reflection.md`
 ```markdown
 # Reflection — YYYY-MM-DD
 
@@ -523,7 +510,7 @@ After writing the reflection file, emit a session log. Two steps:
 ```
 Bash: uv run scripts/session_log.py --type reflection --duration <minutes>
 ```
-The script prints the file path (e.g., `$OV/sessions/2026-04-11-reflection.md`). It handles the late-sleep date rule and collision auto-increment.
+The script prints the file path (e.g., `<paths.sessions>/2026-04-11-reflection.md`). It handles the late-sleep date rule and collision auto-increment.
 
 **Step 2: Fill the skeleton.**
 Use `Edit` to populate each section of the skeleton from data you accumulated during the session:
@@ -541,4 +528,4 @@ If a section has no data, leave the table headers but add no rows. Do not invent
 
 ## Wrap Up
 
-The reflection file in `$OV/reflections/` is the durable session output. No write-back to daily notes — the user's daily note is their capture stream, read-only from the system's perspective. Tell the user the reflection has been saved and where to find it.
+The reflection file in `<paths.reflections>/` is the durable session output. No write-back to daily notes — the user's daily note is their capture stream, read-only from the system's perspective. Tell the user the reflection has been saved and where to find it.

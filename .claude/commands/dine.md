@@ -67,14 +67,14 @@ For missing slots, ask via `AskUserQuestion` or sequential 1-line prompts (which
 
 ## Step 2: Load data (parallel)
 
-The user's vault holds these catalogs under `$OV/travel/` and `$OV/finance/`. Discover the actual filenames via `Grep` on those directories at runtime; do not hardcode private filenames here.
+The user's vault holds these catalogs under `<paths.travel>/` and `<paths.finance>/`. Discover the actual filenames via `Grep` on those directories at runtime; do not hardcode private filenames here.
 
-- Regional dining catalog (rotation + Michelin wishlist + 场景索引), under `$OV/travel/`
-- Dining log (history with 评分 + 再去 + recency), under `$OV/travel/`
-- Credit-perks dining catalog (Cycle Tracking + city catalogs), under `$OV/travel/`
-- Perks ledger (current cycle credit status, for burn signal), under `$OV/finance/`
-- Restaurant gift cards (prepaid balances per restaurant, for soft "use it" signal), under `$OV/finance/`
-- For LA / NYC / other city: use the credit-perks catalog city section + the corresponding city Michelin guide under `$OV/archive/practical/travel/`
+- Regional dining catalog (rotation + Michelin wishlist + 场景索引), under `<paths.travel>/`
+- Dining log (history with 评分 + 再去 + recency), under `<paths.travel>/`
+- Credit-perks dining catalog (Cycle Tracking + city catalogs), under `<paths.travel>/`
+- Perks ledger (current cycle credit status, for burn signal), under `<paths.finance>/`
+- Restaurant gift cards (prepaid balances per restaurant, for soft "use it" signal), under `<paths.finance>/`
+- For LA / NYC / other city: use the credit-perks catalog city section + the corresponding city Michelin guide under `<paths.archive>/practical/travel/`
 
 **Missing-file fallback:** if any of these is absent, skip it silently and note the gap in the closing line ("scored without [missing source]"). The recommendation still produces; the user can decide whether to recreate the catalog.
 
@@ -190,7 +190,7 @@ For each attendance day, output one line in the format:
 
 ## Intent C: Meal Log Capture
 
-Append a row to the user's meal log file under `$OV/travel/` (filename specified in `profile/diet.md` § Catalog files; gitignored config). Co-equal capture path with `/hi` Dining Pulse.
+Append a row to the user's meal log file under `<paths.travel>/` (filename specified in `profile/diet.md` § Catalog files; gitignored config). Co-equal capture path with `/hi` Dining Pulse.
 
 ### C.1 Resolve source material
 
@@ -205,9 +205,9 @@ For images / PDFs, extract: restaurant name, items + spicy markers, subtotal / t
 
 Read `profile/diet.md` § Catalog files first to resolve the three filenames below; if `profile/diet.md` is missing or the section is empty, skip the catalog lookups and note that in the closing line.
 
-- `Grep` the city catalog file under `$OV/travel/` for the restaurant → derive `类型`, `City`, `⭐` if listed.
-- `Grep` the dining log file under `$OV/travel/` for the restaurant → first-time-or-not flag (used in 必点·备注 line if first time).
-- `Grep` the gift-card catalog file under `$OV/finance/` for the restaurant → if listed, expect a Credit slot of `Gift Card (no UR)` unless receipt says otherwise.
+- `Grep` the city catalog file under `<paths.travel>/` for the restaurant → derive `类型`, `City`, `⭐` if listed.
+- `Grep` the dining log file under `<paths.travel>/` for the restaurant → first-time-or-not flag (used in 必点·备注 line if first time).
+- `Grep` the gift-card catalog file under `<paths.finance>/` for the restaurant → if listed, expect a Credit slot of `Gift Card (no UR)` unless receipt says otherwise.
 - If any catalog file is missing, skip silently and note in the closing line.
 
 ### C.3 Auto-derive what you can
@@ -233,8 +233,8 @@ Before writing, plan side effects. Each is opt-in via the confirm prompt (see C.
 
 | Side effect | Trigger | Action |
 |---|---|---|
-| Meal log append | Always | Append row to the meal log file (under `$OV/travel/`, filename per `profile/diet.md`); bump `Last updated:` to today. |
-| Gift card update | Receipt shows gift-card balance line OR user volunteers balance | Update existing row in the gift-card catalog file (under `$OV/finance/`, filename per `profile/diet.md`): Balance + Last updated + Source; or insert new row if first time. |
+| Meal log append | Always | Append row to the meal log file (under `<paths.travel>/`, filename per `profile/diet.md`); bump `Last updated:` to today. |
+| Gift card update | Receipt shows gift-card balance line OR user volunteers balance | Update existing row in the gift-card catalog file (under `<paths.finance>/`, filename per `profile/diet.md`): Balance + Last updated + Source; or insert new row if first time. |
 | Perks Ledger nudge | Credit slot maps to a tracked cycle credit (CSR dining 3x UR, OpenTable H1/H2, Resy quarterly, Sapphire Tables) | Suggest update; cite which row's `Cycle subtotal` would change by +$<amount>. Do NOT auto-write; surface as a one-liner for the user to apply manually. |
 | Catalog promotion flag | 评分 ≥ 8 AND 再去 = Y AND restaurant not currently in the relevant city catalog file (per `profile/diet.md`) | One-line suggestion at the end: `→ 考虑 promote 到 <city catalog name> (评分 N + 再去 Y, 还没在 catalog)`. Do NOT write. |
 | Daily note | (never) | Daily notes are user-authored. Do NOT auto-create even if today's note is missing. |
@@ -274,14 +274,14 @@ One line:
 Intent A:
 - **Read-only on catalog docs (under Intent A)**: do NOT modify the regional dining catalog or the credit-perks catalog when handling a recommendation request. The dining log is also read-only under Intent A — appends route through Intent C (or `/hi` Dining Pulse).
 - **0 candidates after hard filter**: relax most-restrictive constraint by 1 step, retry; surface 1-2 closest matches with flag "relaxed: <constraint>"
-- **Always show credit-burn opportunity** if relevant (any perk-program H1/H2 cycle ≤ 60d deadline + unused, per the live perks ledger under `$OV/finance/`). Even if credit餐厅 doesn't match exact mood, surface as 4th line with format: `💡 Credit-burn alt: <restaurant> ($<amount> <half>, deadline <MM/DD>)`
+- **Always show credit-burn opportunity** if relevant (any perk-program H1/H2 cycle ≤ 60d deadline + unused, per the live perks ledger under `<paths.finance>/`). Even if credit餐厅 doesn't match exact mood, surface as 4th line with format: `💡 Credit-burn alt: <restaurant> ($<amount> <half>, deadline <MM/DD>)`
 - **Match user language**: Chinese-dominant if cuisine is Chinese; English if Western
 - **Keep output under 30 lines** (table + 2-3 line reasoning + 1 close line)
 - **No web search**: cuisine + restaurant data comes from local catalog files only
 
 Intent B:
 - **Read-only on the PDF**: never modify the catering PDF
-- **Read-only on daily notes**: daily notes are user-authored; the system surfaces picks for the user to record themselves and never writes to `$OV/daily-notes/`
+- **Read-only on daily notes**: daily notes are user-authored; the system surfaces picks for the user to record themselves and never writes to `<paths.daily_notes>/`
 - **Does not touch the dining log**: workplace catering is excluded by design (low signal density per memory)
 - **Per-day skip on parse failure**: if any one day's section fails to parse, skip that day with a logged warning; do not abort the whole batch
 - **No web search**: menu data comes from the PDF only

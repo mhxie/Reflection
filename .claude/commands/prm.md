@@ -1,21 +1,21 @@
 # PRM: Personal Relationship Management
 
-Audit the health and robustness of the user's social support system. Grounded in Dunbar's layer model, House's four-dimension support framework, and the cached research at `$OV/cache/dunbar-energy-allocation-plosone-2025.md`.
+Audit the health and robustness of the user's social support system. Grounded in Dunbar's layer model, House's four-dimension support framework, and the cached research at `<paths.cache>/dunbar-energy-allocation-plosone-2025.md`.
 
 ## Prerequisites
 
 1. Check if `profile/identity.md` exists. If not, tell the user: "No profile found. Run `/introspect` first to build your self-model." and stop.
 2. Read `profile/identity.md`. Check the `Last built:` date. If older than 7 days, warn: "Your profile is stale (built on [date]). Consider running `/introspect` to refresh. Continuing with current profile."
-3. Verify `$OV/archive/people/` exists and contains DL-tagged files. Run `Grep(pattern: "DL[0-5]", path: "$OV/archive/people/")` to count coverage. If fewer than 10 DL-tagged files, warn: "Low DL coverage (N files tagged). Results will be incomplete. Consider running `/prm enrich` after the audit."
+3. Verify `<paths.people>/` exists and contains DL-tagged files. Run `Grep(pattern: "DL[0-5]", path: "<paths.people>/")` to count coverage. If fewer than 10 DL-tagged files, warn: "Low DL coverage (N files tagged). Results will be incomplete. Consider running `/prm enrich` after the audit."
 4. Filter out `#author` files (public figures, book authors) from the audit scope. These are reference entries, not personal contacts.
 
 ## Data Sources
 
-- **People files:** `$OV/archive/people/*.md` (each file has Bio, Notes, and Relationship sections with Dunbar layer tags [[DL0]] through [[DL5]])
-- **PRM template:** `$OV/archive/templates/` PRM template file (layer definitions and scoring rules)
-- **Daily notes:** `$OV/daily-notes/` (for interaction frequency detection)
+- **People files:** `<paths.people>/*.md` (each file has Bio, Notes, and Relationship sections with Dunbar layer tags [[DL0]] through [[DL5]])
+- **PRM template:** `<paths.archive>/templates/` PRM template file (layer definitions and scoring rules)
+- **Daily notes:** `<paths.daily_notes>/` (for interaction frequency detection)
 - **Profile:** `profile/identity.md` (Key People section, Active Life Areas: Social & Emotional)
-- **Prior reflections:** `$OV/reflections/` (Support System Log sections from prior sessions)
+- **Prior reflections:** `<paths.reflections>/` (Support System Log sections from prior sessions)
 
 ## Reference Frameworks
 
@@ -55,7 +55,7 @@ Audit the health and robustness of the user's social support system. Grounded in
 Scan all people files (excluding `#author`-tagged entries) and build the current map.
 
 Use `Grep` for the structural census:
-- `Grep(pattern: "\\[\\[DL0\\]\\]", path: "$OV/archive/people/", output_mode: "files_with_matches")` for each layer DL0 through DL5
+- `Grep(pattern: "\\[\\[DL0\\]\\]", path: "<paths.people>/", output_mode: "files_with_matches")` for each layer DL0 through DL5
 - For each matched file, `Grep(pattern: "#author", path: "<file>")` to exclude public figures
 
 For each person in DL0 and DL1, extract:
@@ -137,7 +137,7 @@ Proposed enhanced Relationship section format:
 
 ## Output
 
-Write a report to `$OV/reflections/YYYY-MM-DD-prm-audit.md`:
+Write a report to `<paths.reflections>/YYYY-MM-DD-prm-audit.md`:
 
 ```markdown
 # PRM Audit: YYYY-MM-DD
@@ -183,7 +183,7 @@ After writing the PRM audit file, emit a session log:
 
 ## Wrap Up
 
-The PRM audit file in `$OV/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them. Tell the user the audit has been saved and where to find it.
+The PRM audit file in `<paths.reflections>/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them. Tell the user the audit has been saved and where to find it.
 
 ## Usage Patterns
 

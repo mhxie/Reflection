@@ -34,6 +34,10 @@ __pycache__/
 # Device-dependent config (each machine gets its own)
 semantic.toml
 
+# Per-user path registry overrides (localized wikis, sandbox vaults, etc.)
+# Canonical names ship in harness/paths.toml; user overrides go here.
+harness/paths.local.toml
+
 # One-off / migration scripts that hardcode private vault content
 # (TOPIC_MAPs, lab lists, wiki entry titles). The steady-state generic
 # tools live at scripts/fission.py and scripts/relink.py.
@@ -41,3 +45,6 @@ scripts/oneoff/
 
 # Local-first data layer (symlink or subdir; never commit the vault)
 zk
+
+# Scheduled-tasks runtime lock (created by /loop and similar)
+.claude/scheduled_tasks.lock

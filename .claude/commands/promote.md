@@ -4,7 +4,7 @@
 > `/hi create wiki entry`). See `harness/intents.toml` `[intents.promote]` for the full
 > pattern list. Both paths execute this same procedure.
 
-Two-step workflow to promote existing L2 working notes (daily notes, reflections, agent findings, drafts) into a schema-compliant L4 wiki entry under `$OV/wiki/`. Inspired by llm_wiki's analyze-then-generate ingest pipeline, adapted for atelier's claim-level trust architecture.
+Two-step workflow to promote existing L2 working notes (daily notes, reflections, agent findings, drafts) into a schema-compliant L4 wiki entry under `<paths.wiki>/`. Inspired by llm_wiki's analyze-then-generate ingest pipeline, adapted for atelier's claim-level trust architecture.
 
 **Scope:** one wiki entry per invocation. The user names a topic or set of source notes; the command produces a draft wiki entry with pre-populated `@anchor` markers for user review.
 
@@ -18,7 +18,7 @@ Two-step workflow to promote existing L2 working notes (daily notes, reflections
 
 The user provides one of:
 - A **topic** (e.g., "promote distributed locking") and the Researcher finds relevant source notes.
-- One or more **file paths** (e.g., `$OV/daily-notes/2026-04-08.md`, `$OV/agent-findings/lance-brief.md`).
+- One or more **file paths** (e.g., `<paths.daily_notes>/2026-04-08.md`, `<paths.agent_findings>/lance-brief.md`).
 
 ## Process
 
@@ -31,14 +31,14 @@ Research brief request: identify all notes related to [topic/paths] that contain
 claims suitable for L4 promotion. For each candidate:
   - Extract factual claims (not opinions or speculation)
   - Note any external sources referenced (URLs, paper citations, DOIs)
-  - Flag claims that overlap with existing wiki entries under $OV/wiki/
+  - Flag claims that overlap with existing wiki entries under <paths.wiki>/
   - Report the validation depth of each source note (L1 raw, L2 working, L3 external)
 
 Search strategy:
   1. scripts/semantic.py query "[topic]" --top 20  (primary)
   2. Grep for exact terms across $OV/ (structural follow-up)
   3. Read candidate files in full
-  4. Cross-reference against existing $OV/wiki/ entries via trust.py --json
+  4. Cross-reference against existing <paths.wiki>/ entries via trust.py --json
 
 Return a structured brief with:
   - candidate_notes: [{path, title, relevant_claims: [text, source_url?]}]
@@ -59,7 +59,7 @@ After user approval of the brief, dispatch the **Curator** agent with the approv
 ```
 Wiki entry draft request.
 
-Target path: $OV/wiki/<Title>.md   (title-case with spaces, matching the H1)
+Target path: <paths.wiki>/<Title>.md   (title-case with spaces, matching the H1)
 Schema reference: protocols/wiki-schema.md
 
 Approved claims and anchors:
@@ -87,25 +87,28 @@ Instructions:
 ### Phase 3: Validate and Write
 
 1. **Present the draft** to the user for review. Show the full markdown.
-2. On user approval, **write the file** to `$OV/wiki/<Title>.md` (title-case with spaces, matching the H1).
-3. Run `scripts/trust.py --note "$OV/wiki/<Title>.md"` to verify structural integrity.
+2. On user approval, **write the file** to `<paths.wiki>/<Title>.md` (title-case with spaces, matching the H1).
+3. Run `scripts/trust.py --note "<paths.wiki>/<Title>.md"` to verify structural integrity.
    - If errors: show them, ask the user if they want to fix or abort.
    - If clean: report the initial trust score (will be raw PageRank, no floor until a reviewer pass).
 4. Run `scripts/lint.py` to check for corpus-level issues (shared anchors, etc.).
 5. Regenerate the wiki index: `scripts/trust.py --index`.
 
-### Phase 4: Chinese Shadow (`wiki-cn`)
+### Phase 4: Localized Shadows
 
-After the English entry passes validation, generate a Chinese shadow copy:
+After the English entry passes validation, generate a shadow copy for each language configured under `[paths.wiki_localized]` in `harness/paths.local.toml`. If the table is empty, skip this phase.
 
-1. **Translate** the entry to Chinese following these rules:
+For each `(language_code, shadow_dir)` entry:
+
+1. **Translate** the entry to the target language following these rules:
    - Translate all prose (Summary, claim text, body paragraphs, Revision Log)
-   - DO NOT translate: technical terms (Lance, Ray Data, PyArrow, MVCC, etc.), code identifiers, URLs, file paths
+   - DO NOT translate: technical terms (e.g., Lance, Ray Data, PyArrow, MVCC), code identifiers, URLs, file paths
    - DO NOT translate `@anchor`/`@pass` blocks or `@cite` lines: copy exactly as-is
-   - DO NOT translate `^cn` block IDs
-   - Keep the `# Title` in English (filename must match)
-   - Add at the top: `> 本文为 [[English Title]] 的中文版本。核心技术术语保留英文原文。`
-2. **Write** to `$OV/wiki-cn/<Title>.md` (same filename as the English version).
+   - DO NOT translate block IDs
+   - Keep the `# Title` in English (filename must match the source)
+   - Add a localized backreference at the top, e.g. for Chinese:
+     `> 本文为 [[English Title]] 的中文版本。核心技术术语保留英文原文。`
+2. **Write** to `$OV/<shadow_dir>/<Title>.md` (same filename as the English version).
 3. This step is automatic and does not require additional user approval.
 
 ### Phase 5: Post-Creation Suggestions

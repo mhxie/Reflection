@@ -1,4 +1,4 @@
-# /lint — Structural + corpus-level checks over `$OV/wiki/`
+# /lint — Structural + corpus-level checks over `<paths.wiki>/`
 
 > Also reachable via `/hi <natural language>` (e.g., `/hi lint the wiki`, `/hi wiki audit`,
 > `/hi wiki orphans`). See `harness/intents.toml` `[intents.lint]` for the full pattern
@@ -6,7 +6,7 @@
 
 Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint.py` is the single source of truth, mirroring the `scripts/trust.py` pattern.
 
-**Scope:** Three passes. (0) Harness portability, $OV ingestion hygiene, and privacy checks. (1) Structural: everything under `$OV/wiki/`. (2) Staleness: L2 working-layer directories (`$OV/agent-findings/`, `$OV/drafts/`, `$OV/gtd/`, `$OV/preprints/`, `$OV/reflections/`, `$OV/research/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).
+**Scope:** Three passes. (0) Harness portability, $OV ingestion hygiene, and privacy checks. (1) Structural: everything under `<paths.wiki>/`. (2) Staleness: L2 working-layer directories (`<paths.agent_findings>/`, `<paths.wip>/`, `<paths.gtd>/`, `<paths.preprints>/`, `<paths.reflections>/`, `<paths.research>/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).
 
 **What gets checked:**
 
@@ -18,10 +18,10 @@ Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint
 | Orphan entry — no inbound `@cite` from any other wiki entry (trust cannot propagate to it) | WARN | `scripts/lint.py` graph topology |
 | No outbound cite — entry does not `@cite` any other wiki entry | INFO | `scripts/lint.py` graph topology |
 | Shared anchor, no cite — two entries reference the same `@anchor` but lack a `@cite` edge | INFO | `scripts/lint.py` graph topology |
-| `url:` or `gist:` anchor missing `readwise:` field (`readwise-missing`) | WARN | `scripts/lint.py` — save to Readwise with `anchor-evidence` tag and backfill the document ID; fix via `uv run scripts/snapshot_anchors.py --apply --note "$OV/wiki/<Title>.md"` |
+| `url:` or `gist:` anchor missing `readwise:` field (`readwise-missing`) | WARN | `scripts/lint.py` — save to Readwise with `anchor-evidence` tag and backfill the document ID; fix via `uv run scripts/snapshot_anchors.py --apply --note "<paths.wiki>/<Title>.md"` |
 | Technical term in claim body not in vocabulary allowlist and not matching any wiki entry title (`unfounded-term`) | INFO | `scripts/lint.py` — add term to `scripts/wiki_vocabulary.txt` if common knowledge, or add a wiki entry, or add a parenthetical definition inline |
-| Chinese shadow missing in `$OV/wiki-cn/` (`cn-shadow-missing`) | WARN | `scripts/lint.py` — run /promote Phase 4 or regenerate the CN shadow manually |
-| Chinese shadow older than English source (`cn-shadow-stale`) | WARN | `scripts/lint.py` — re-translate the CN shadow to match the updated English source |
+| Localized shadow missing for a configured language (`shadow-missing`) | WARN | `scripts/lint.py` — run /promote Phase 4 or regenerate the shadow manually. Configured shadow paths live under `[paths.wiki_localized]` in `harness/paths.local.toml`. |
+| Localized shadow older than English source (`shadow-stale`) | WARN | `scripts/lint.py` — re-translate the localized shadow to match the updated English source |
 | Claude/Codex harness portability (`missing-agents-md`, `models-agent-missing`, `capability-agent-missing`, `agents-registry-entry-missing`, `commands-entry-missing`, `skill-missing`, etc.) | ERROR/WARN/INFO | `scripts/harness_lint.py` |
 | `$OV` ingestion hygiene (missing READMEs, raw-without-digest, archive↔working-tier overlap, root-level orphans, empty .md files, suspicious top-level dirs) | INFO (advisory) | `scripts/zk_audit.py` — see `protocols/drive-zk-ingestion.md` § Post-ingestion verification |
 | Auto-memory hygiene (`dead-link`, `orphan-file`, `index-bloat`, `stale-mtime`, `provisional-marker`, `frontmatter-missing`) | WARN/INFO (advisory) | `scripts/auto_memory_audit.py` — capability-side check on `~/.claude-personal/projects/<encoded-cwd>/memory/`; surfaces entries the recall pipeline can't reach (orphan/dead-link), entries past the index truncation horizon (>200 lines), and entries the human should re-verify (mtime/provisional). The (A) path of bi-temporal forgetting; frontmatter-level expiry is (B). |
@@ -201,7 +201,7 @@ For WARN-level findings: show them but mark them as non-blocking.
 For INFO-level findings: roll them up into a one-line summary (e.g., "4 entries with no outbound `@cite`: consider adding cross-references") unless the user asks for the full list.
 
 **Staleness section** (from Phase 1b): present after the structural findings, under a separate heading. Group by category:
-- **stale** notes: list paths, suggest archiving to `$OV/archive/`
+- **stale** notes: list paths, suggest archiving to `<paths.archive>/`
 - **dormant** notes: list paths, suggest review or compaction
 - **promote** candidates: list paths, suggest `/promote` to create L4 wiki entries
 - If all notes are active, say so in one line and move on.

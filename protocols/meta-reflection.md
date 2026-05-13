@@ -12,7 +12,7 @@ Reflect on the reflection process itself. This is how the system becomes self-aw
 ## The Meta-Reflection Process
 
 ### Step 1: Gather Session Data
-Read session logs from the last 5-10 sessions in `$OV/sessions/`:
+Read session logs from the last 5-10 sessions in `<paths.sessions>/`:
 - Agent dispatch patterns (which agents run, how many turns they use)
 - Search effectiveness (hit rates, useful-signal rates from Search Log)
 - Gate pass rates (from Gate Results)
@@ -21,7 +21,7 @@ Read session logs from the last 5-10 sessions in `$OV/sessions/`:
 - Anomaly frequency and types
 - Harness assumptions exercised
 
-Also read reflection outputs from `$OV/reflections/`:
+Also read reflection outputs from `<paths.reflections>/`:
 - Score cards (overall scores, per-dimension scores)
 - Session meta (engagement levels, questions that landed)
 - Patterns identified
